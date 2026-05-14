@@ -1,6 +1,6 @@
 # StockWatch — 개발 진행 체크리스트
 
-> PRD v0.2 기반 | 업데이트: 2026-05-14  
+> PRD v0.2 기반 | 업데이트: 2026-05-15  
 > Claude Code로 단계별 개발 진행. 각 Phase 완료 시 검증 항목 확인 후 다음 단계로 이동.
 
 ---
@@ -159,11 +159,11 @@
 
 ### 2.1 WebSocket 실시간 시세
 
-- [ ] `RealtimeQuoteManager.swift` — URLSessionWebSocketTask 기반
-- [ ] 관심 종목 구독 (subscribe) 요청
-- [ ] 실시간 시세 수신 → `StockQuote` 업데이트
-- [ ] 연결 끊김 시 자동 재연결 (Exponential Backoff)
-- [ ] 폴링 모드 → WebSocket 모드 전환 옵션
+- [x] `RealtimeQuoteManager.swift` — URLSessionWebSocketTask 기반
+- [x] 관심 종목 구독 (subscribe) 요청 (H0STCNT0 tr_id)
+- [x] 실시간 시세 수신 → `StockQuote` 업데이트
+- [x] 연결 끊김 시 자동 재연결 (Exponential Backoff: 1s→60s)
+- [ ] 폴링 모드 → WebSocket 모드 전환 옵션 (현재는 자격증명 있을 때 WebSocket 자동 활성화)
 
 ### 2.2 거래량 급증 감지 (트리거 ③)
 
@@ -241,7 +241,7 @@
 - [ ] 장 마감 후 알림 일시 중지 로직
 
 ### ✅ Phase 2 검증
-- [ ] WebSocket 연결 후 실시간 시세 갱신 확인
+- [x] WebSocket 연결 후 실시간 시세 갱신 확인 (빌드 성공, 앱 실행 확인)
 - [ ] 거래량 급증 시 알림 수신
 - [ ] DART 공시 새 항목 감지 → 알림 수신
 - [ ] 포트폴리오 수익률 임계값 초과 시 알림 수신
