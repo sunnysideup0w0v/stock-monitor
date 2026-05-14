@@ -595,6 +595,7 @@ struct AccountSettingsView: View {
 
 struct AlertHistoryView: View {
     @State private var history: [AlertHistory] = []
+    @State private var symbolNames: [String: String] = [:]  // symbol → 표시명 (alias ?? name)
     @State private var symbolFilter = ""
     @State private var typeFilter: TriggerType? = nil
     @State private var startDate: Date = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
@@ -606,9 +607,11 @@ struct AlertHistoryView: View {
         let end   = cal.date(bySettingHour: 23, minute: 59, second: 59, of: endDate) ?? endDate
         return history.filter { item in
             let dateOK   = item.triggeredAt >= start && item.triggeredAt <= end
-            let symbolOK = symbolFilter.isEmpty || item.symbol.localizedCaseInsensitiveContains(symbolFilter)
+            let nameOK   = symbolFilter.isEmpty
+                        || item.symbol.localizedCaseInsensitiveContains(symbolFilter)
+                        || (symbolNames[item.symbol] ?? "").localizedCaseInsensitiveContains(symbolFilter)
             let typeOK   = typeFilter == nil || item.triggerType == typeFilter
-            return dateOK && symbolOK && typeOK
+            return dateOK && nameOK && typeOK
         }
     }
 
@@ -657,7 +660,7 @@ struct AlertHistoryView: View {
             } else {
                 List {
                     ForEach(filtered, id: \.id) { item in
-                        AlertHistoryRowView(item: item)
+                        AlertHistoryRowView(item: item, symbolName: symbolNames[item.symbol])
                     }
                 }
                 .listStyle(.bordered)
@@ -680,16 +683,30 @@ struct AlertHistoryView: View {
 
     private func load() {
         history = (try? DatabaseManager.shared.fetchAlertHistory(limit: 500)) ?? []
+
+        var names: [String: String] = [:]
+        let watchlist  = (try? DatabaseManager.shared.fetchWatchlist())  ?? []
+        let portfolio  = (try? DatabaseManager.shared.fetchPortfolio())  ?? []
+        for item in portfolio  { names[item.symbol] = item.name }
+        for item in watchlist  { names[item.symbol] = item.alias ?? item.name }  // watchlist 우선, alias 적용
+        symbolNames = names
     }
 }
 
 struct AlertHistoryRowView: View {
     let item: AlertHistory
+    let symbolName: String?
+
+    private var displaySymbol: String {
+        if item.symbol == "PORTFOLIO" { return "전체 포트폴리오" }
+        if let name = symbolName      { return "\(name)(\(item.symbol))" }
+        return item.symbol
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack(spacing: 6) {
-                Text(item.symbol == "PORTFOLIO" ? "전체 포트폴리오" : item.symbol)
+                Text(displaySymbol)
                     .font(.body).fontWeight(.medium)
                 Text(item.triggerType.displayName)
                     .font(.caption)
