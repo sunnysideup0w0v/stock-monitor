@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 프로젝트 개요
 
 **StockWatch** — macOS 메뉴바 상주형 주식 시세 모니터링 앱 (개인 사용 목적).  
-한국투자증권(KIS) REST API로 국내 주식 시세를 폴링하고, 조건 충족 시 macOS 네이티브 알림을 발송한다.
+한국투자증권(KIS) REST/WebSocket API로 국내 주식 시세를 수신하고, DART 공시 감지·포트폴리오 수익률 도달 등 다양한 조건 충족 시 macOS 네이티브 알림을 발송한다.
 
 ## 기술 스택
 
@@ -45,33 +45,60 @@ pkill -x StockWatch
 
 ```
 AppDelegate (NSApplicationDelegate, @MainActor)
-│  메뉴바 아이콘·팝오버·설정 윈도우 생성
+│  메뉴바 아이콘·팝오버·설정 윈도우(660×500) 생성
 │  QuoteManager.$connectionState 구독 → 아이콘 상태 반영
+│  앱 시작 시 DB 관심종목으로 폴링·DART·스냅샷 자동 시작
 │
 ├── QuoteManager (@MainActor, ObservableObject)  ← 시세 폴링 허브
 │    3초 간격 폴링 | 연속 2회 실패 → connectionState = .error
 │    any BrokerAdapter 교체 가능 (KISAdapter / MockBrokerAdapter)
+│    WebSocket 실시간 시세도 지원 (자격증명 있을 때 자동 활성화)
 │
 ├── BrokerAdapter (protocol, Sendable)
-│    KISAdapter (actor)  — KIS REST API, OAuth 토큰 캐싱, 실전/모의 전환
+│    KISAdapter (actor)  — KIS REST/WebSocket API, OAuth 토큰 캐싱, 실전/모의 전환
 │    MockBrokerAdapter   — 오프라인 개발용 랜덤 시세
 │
 ├── AlertEvaluator (@MainActor)
 │    QuoteManager.fetchAll() 완료마다 호출
-│    DB의 AlertCondition 목록과 현재가 비교 → 조건 충족 시 fire()
+│    종목별: DB AlertCondition vs 현재가 비교 (isPortfolioLevel=false 항목만)
+│    포트폴리오: evaluatePortfolio() — 총평가액/손익률 기준 4가지 트리거
 │    fire() : NotificationManager.send() + AlertHistory 저장 + 쿨다운 갱신
 │
+├── DARTManager (@MainActor, singleton)
+│    5분 간격 공시 폴링 (DART Open API /api/list.json)
+│    corp_code 자동 조회 및 인메모리 캐시
+│    새 공시 감지 → 알림 발송 + AlertHistory 저장 (metadata = rcept_no)
+│    UserDefaults "DART.filterTypes"로 공시 종류 필터
+│
+├── SnapshotManager (@MainActor, singleton)
+│    1분 간격 포트폴리오 스냅샷 저장 (portfolio_snapshots 테이블)
+│    marketHoursOnly(기본 ON): 평일 09:00~15:30 중에만 수집
+│    customRanges: 추가 시간대(JSON) — 프리/애프터 마켓 대응
+│    keepDays: 보존 기간 (UserDefaults 0 저장 = 365일 적용, UI -1 태그 = 무제한 = 0 저장)
+│
 ├── DatabaseManager (@unchecked Sendable, singleton)
-│    GRDB DatabaseQueue, Migration v1~v4
-│    테이블: watchlist / portfolio / alert_conditions / alert_history
+│    GRDB DatabaseQueue, Migration v1~v6 (현재)
+│    테이블: watchlist / portfolio / alert_conditions / alert_history / portfolio_snapshots
 │
 ├── NotificationManager (UNUserNotificationCenterDelegate)
-│    알림 클릭 → .openPopover 포스트 → AppDelegate가 팝오버 오픈
+│    send(title:body:symbol:urlString:) — urlString이 있으면 userInfo["url"]에 저장
+│    알림 클릭: url 있으면 NSWorkspace.open(url), 없으면 .openPopover 포스트
 │
 └── KeychainHelper (enum, static)
-     account 키 prefix: "kis." (kis.appKey / kis.appSecret / kis.accountNumber)
-     UserDefaults 키: KIS.isMock, KIS.loginDate
+     KIS: kis.appKey / kis.appSecret / kis.accountNumber
+     DART: dart.apiKey
+     UserDefaults: KIS.isMock, KIS.loginDate, DART.filterTypes, DART.seenRceptNos
+                   SnapshotManager.marketHoursOnly, SnapshotManager.customRanges,
+                   SnapshotManager.keepDays
 ```
+
+**SettingsView 탭 구성** (현재 6개):
+1. 계좌 연결 (KIS API 키 + DART API 키 + 공시 종류 필터)
+2. 관심종목
+3. 포트폴리오
+4. 알림설정
+5. 알림 이력 (날짜 범위 필터 + 타입 필터 + CSV 내보내기)
+6. 자산 차트 (AssetChartView — Swift Charts 기반)
 
 ## 커밋 규칙
 
@@ -133,10 +160,34 @@ pkill -x StockWatch 2>/dev/null; sleep 0.5 && open "$(find ~/Library/Developer/X
 **DB 스키마 변경 시**
 - `DatabaseManager.swift`에 새 `migrator.registerMigration("vN_...")` 추가
 - 기존 Migration은 절대 수정하지 않는다
+- 현재 최신: v6 (portfolio_snapshots). 다음 마이그레이션은 v7부터
+
+**AlertCondition.TriggerType 추가 시**
+`TriggerType`은 여러 곳에서 exhaustive switch로 사용된다. 새 케이스 추가 시 아래 모두 업데이트 필요:
+- `AlertEvaluator`: `isTriggered()`, `makeMessage()`, `evaluatePortfolio()` 내 switch
+- `SettingsView`: `formatThreshold()`, 알림 추가 폼의 트리거 타입 선택
+- `AlertHistoryView`: 필터 Picker의 타입 목록
+현재 케이스: `priceAbove`, `priceBelow`, `changeRateUp`, `changeRateDown`, `volumeSpike`, `portfolioGain`, `portfolioLoss`, `portfolioGainRate`, `portfolioLossRate`, `dartDisclosure`
+- `.dartDisclosure`와 portfolio 계열은 종목별 `isTriggered()`에서 `false` 반환 (별도 경로로 평가)
 
 **NSNotification 기반 컴포넌트 간 통신**
 - `AppDelegate.swift`의 `NSNotification.Name` extension에 이름 정의
 - 현재 정의된 이름: `.openSettings`, `.openPopover`, `.popoverWillShow`
+
+**Swift Charts (`AssetChartView`) 패턴**
+- 중첩 `ForEach` + `LineMark` 조합은 컴파일러 타입 체크 타임아웃 유발 → `chartBody` computed property와 `@ChartContentBuilder` 메서드로 분리
+- 세그먼트 분리(데이터 공백 처리): `series: .value("s", idx)` 로 시리즈를 달리 지정
+- `PortfolioSnapshot`은 `Identifiable` 미구현 → `ForEach(seg, id: \.timestamp)` 사용
+- SourceKit이 "Cannot find type in scope" 오류를 표시해도 실제 빌드는 성공하는 경우가 많음 — 빌드 결과로만 판단할 것
+
+**CSV 내보내기**
+- UTF-8 BOM 필수 (`Data([0xEF, 0xBB, 0xBF])`) — Excel 한글 호환
+- `NSSavePanel` 기본 디렉토리: `~/Downloads`
+
+**DART 관련**
+- 공시 URL 패턴: `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=\(rceptNo)`
+- `AlertHistory.metadata`에 `rcept_no` 저장 → 이력 화면에서 "공시 보기" 버튼 URL 복원
+- 공시 종류 코드: A=정기, B=주요사항, C=발행, D=지분, E=기타, I=거래소
 
 ## KIS API 참고
 
