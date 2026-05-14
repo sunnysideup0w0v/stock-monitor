@@ -209,19 +209,10 @@
 
 ### 2.6 포트폴리오 스냅샷 수집
 
-- [ ] Migration 5: `portfolio_snapshots` 테이블 생성
-  ```sql
-  CREATE TABLE portfolio_snapshots (
-    id         INTEGER PRIMARY KEY,
-    timestamp  DATETIME,
-    total_value INTEGER,
-    total_gain  INTEGER,
-    gain_pct    REAL
-  )
-  ```
-- [ ] `SnapshotManager.swift` — 1분 간격 스냅샷 저장
-- [ ] 장 시간(09:00~15:30) 중에만 스냅샷 저장 (설정 가능)
-- [ ] 오래된 스냅샷 자동 정리 (기본 1년 보존)
+- [x] Migration 6: `portfolio_snapshots` 테이블 생성 (timestamp, totalValue, totalGain, gainPct)
+- [x] `SnapshotManager.swift` — 1분 간격 스냅샷 저장
+- [x] 장 시간(09:00~15:30) 중에만 스냅샷 저장 (설정 가능, 포트폴리오 탭 토글)
+- [x] 오래된 스냅샷 자동 정리 (기본 1년 보존, `cleanupSnapshots()`)
 
 ### 2.7 포트폴리오 자산 변화 꺾은선 그래프
 

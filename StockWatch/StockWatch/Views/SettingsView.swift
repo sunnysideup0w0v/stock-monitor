@@ -203,6 +203,15 @@ struct PortfolioSettingsView: View {
                 Button("추가") { addItem() }
                     .disabled(!isFormValid)
             }
+
+            SettingsFormSection(title: "스냅샷 수집") {
+                Toggle("장 시간(09:00~15:30)에만 수집", isOn: Binding(
+                    get: { SnapshotManager.shared.marketHoursOnly },
+                    set: { SnapshotManager.shared.marketHoursOnly = $0 }
+                ))
+                Text("1분 간격으로 포트폴리오 평가금액을 기록합니다. 자산 변화 차트에 사용됩니다.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
         }
         .onAppear { loadItems() }
     }

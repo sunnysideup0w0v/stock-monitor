@@ -25,10 +25,12 @@
 		7ED9AE857C8A1EE7F0B46043 /* StockQuote.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58693606248BA2082C34DD2C /* StockQuote.swift */; };
 		896F1D508E1C6C42CFCE8329 /* StockWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F629436FD4ED83B8E8A6E26 /* StockWatchApp.swift */; };
 		89BE3ADB288DE36A8DF219A2 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBCBCB15EE3D06F83CF8F3BB /* SettingsView.swift */; };
+		8EA0E82137CCEFF9C26C985E /* SnapshotManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF76FE9576C82370C6293FD /* SnapshotManager.swift */; };
 		9895C317774C9E7C480E7D6A /* BrokerAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 120E543584AD0CEC78ACF6F1 /* BrokerAdapter.swift */; };
 		9DEB07B30156A5FD72A26689 /* AlertHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CA6753273E034494E5C9BFE /* AlertHistory.swift */; };
 		D355B90BDD80617758C47DA9 /* WatchlistItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD0E3054289D0C4A03DA88CB /* WatchlistItem.swift */; };
 		DD5602121F5D40899A8BD823 /* DatabaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A8DC0F7F8A2B927ACAF68A1 /* DatabaseManager.swift */; };
+		DEDBC6DE11D10ABBA6D36D0B /* PortfolioSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF1EFC104DBC0940A231707B /* PortfolioSnapshot.swift */; };
 		F2F9D0EE68C04C87CEA667EC /* ToastWindowManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCBB017D66E4027E867F5D48 /* ToastWindowManager.swift */; };
 /* End PBXBuildFile section */
 
@@ -57,7 +59,9 @@
 		CBCBCB15EE3D06F83CF8F3BB /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		CCBB017D66E4027E867F5D48 /* ToastWindowManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastWindowManager.swift; sourceTree = "<group>"; };
 		DC7646622AD611A41C94A421 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		DDF76FE9576C82370C6293FD /* SnapshotManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotManager.swift; sourceTree = "<group>"; };
 		E7DAC0DBAF002A53BAA7238E /* MockBrokerAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockBrokerAdapter.swift; sourceTree = "<group>"; };
+		FF1EFC104DBC0940A231707B /* PortfolioSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioSnapshot.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -113,6 +117,7 @@
 				3CA6753273E034494E5C9BFE /* AlertHistory.swift */,
 				B73C72C6F1D88F72B97D7362 /* DARTDisclosure.swift */,
 				687A817AB4EE034AB2D0D112 /* PortfolioItem.swift */,
+				FF1EFC104DBC0940A231707B /* PortfolioSnapshot.swift */,
 				58693606248BA2082C34DD2C /* StockQuote.swift */,
 				BD0E3054289D0C4A03DA88CB /* WatchlistItem.swift */,
 			);
@@ -127,6 +132,7 @@
 				96036A94BC463B8118C8EB3D /* KeychainHelper.swift */,
 				5E5AB112AF506EF87D40BA14 /* QuoteManager.swift */,
 				9F5A6472AE55E5203993C25F /* RealtimeQuoteManager.swift */,
+				DDF76FE9576C82370C6293FD /* SnapshotManager.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -273,9 +279,11 @@
 				1D1A8F945D66A67A6CFA06A9 /* MockBrokerAdapter.swift in Sources */,
 				68A053190EE46F1D1EBCAA6F /* NotificationManager.swift in Sources */,
 				4F05F2C0A6A0FC238A10F859 /* PortfolioItem.swift in Sources */,
+				DEDBC6DE11D10ABBA6D36D0B /* PortfolioSnapshot.swift in Sources */,
 				61396F92FB6DF6646F9B79C2 /* QuoteManager.swift in Sources */,
 				0EF0D8B07242A577BA15B2DE /* RealtimeQuoteManager.swift in Sources */,
 				89BE3ADB288DE36A8DF219A2 /* SettingsView.swift in Sources */,
+				8EA0E82137CCEFF9C26C985E /* SnapshotManager.swift in Sources */,
 				7ED9AE857C8A1EE7F0B46043 /* StockQuote.swift in Sources */,
 				896F1D508E1C6C42CFCE8329 /* StockWatchApp.swift in Sources */,
 				F2F9D0EE68C04C87CEA667EC /* ToastWindowManager.swift in Sources */,

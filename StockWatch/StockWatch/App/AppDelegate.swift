@@ -62,6 +62,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard !symbols.isEmpty else { return }
         QuoteManager.shared.startPolling(symbols: symbols)
         DARTManager.shared.start(symbols: symbols)
+        SnapshotManager.shared.start()
     }
 
     @objc private func handleOpenSettings() {

@@ -75,6 +75,16 @@ final class DatabaseManager: @unchecked Sendable {
             }
         }
 
+        migrator.registerMigration("v6_portfolio_snapshots") { db in
+            try db.create(table: "portfolio_snapshots") { t in
+                t.autoIncrementedPrimaryKey("id")
+                t.column("timestamp",  .datetime).notNull()
+                t.column("totalValue", .integer).notNull()
+                t.column("totalGain",  .integer).notNull()
+                t.column("gainPct",    .double).notNull()
+            }
+        }
+
         try migrator.migrate(dbQueue)
     }
 
@@ -150,6 +160,28 @@ final class DatabaseManager: @unchecked Sendable {
         try dbQueue.write { db in
             try history.insert(db)
             try condition.update(db)
+        }
+    }
+
+    // MARK: - Portfolio Snapshots
+
+    func insert(_ snapshot: inout PortfolioSnapshot) throws {
+        try dbQueue.write { db in try snapshot.insert(db) }
+    }
+
+    func fetchSnapshots(from start: Date, to end: Date) throws -> [PortfolioSnapshot] {
+        try dbQueue.read { db in
+            try PortfolioSnapshot
+                .filter(Column("timestamp") >= start && Column("timestamp") <= end)
+                .order(Column("timestamp").asc)
+                .fetchAll(db)
+        }
+    }
+
+    func cleanupSnapshots(keepDays: Int = 365) throws {
+        let cutoff = Calendar.current.date(byAdding: .day, value: -keepDays, to: Date()) ?? Date()
+        try dbQueue.write { db in
+            try PortfolioSnapshot.filter(Column("timestamp") < cutoff).deleteAll(db)
         }
     }
 }
