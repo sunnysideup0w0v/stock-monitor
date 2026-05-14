@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct SettingsView: View {
     var body: some View {
@@ -647,6 +648,9 @@ struct AlertHistoryView: View {
                     TextField("검색", text: $symbolFilter).frame(width: 80)
                     Spacer()
                     Text("\(filtered.count)건").font(.caption).foregroundStyle(.tertiary)
+                    Button("내보내기") { exportCSV() }
+                        .buttonStyle(.borderless)
+                        .font(.caption)
                     Button("새로고침") { load() }
                         .buttonStyle(.borderless)
                         .font(.caption)
@@ -685,11 +689,37 @@ struct AlertHistoryView: View {
         history = (try? DatabaseManager.shared.fetchAlertHistory(limit: 500)) ?? []
 
         var names: [String: String] = [:]
-        let watchlist  = (try? DatabaseManager.shared.fetchWatchlist())  ?? []
-        let portfolio  = (try? DatabaseManager.shared.fetchPortfolio())  ?? []
-        for item in portfolio  { names[item.symbol] = item.name }
-        for item in watchlist  { names[item.symbol] = item.alias ?? item.name }  // watchlist 우선, alias 적용
+        let watchlist = (try? DatabaseManager.shared.fetchWatchlist()) ?? []
+        let portfolio = (try? DatabaseManager.shared.fetchPortfolio()) ?? []
+        for item in portfolio { names[item.symbol] = item.name }
+        for item in watchlist { names[item.symbol] = item.alias ?? item.name }
         symbolNames = names
+    }
+
+    private func exportCSV() {
+        let header = "날짜,시간,종목코드,종목명,알림유형,내용\n"
+        let dateFmt = DateFormatter(); dateFmt.dateFormat = "yyyy-MM-dd"
+        let timeFmt = DateFormatter(); timeFmt.dateFormat = "HH:mm:ss"
+
+        let rows = filtered.map { item -> String in
+            let date  = dateFmt.string(from: item.triggeredAt)
+            let time  = timeFmt.string(from: item.triggeredAt)
+            let name  = item.symbol == "PORTFOLIO" ? "전체 포트폴리오" : (symbolNames[item.symbol] ?? "")
+            let msg   = item.message.replacingOccurrences(of: "\"", with: "\"\"")
+            return "\"\(date)\",\"\(time)\",\"\(item.symbol)\",\"\(name)\",\"\(item.triggerType.displayName)\",\"\(msg)\""
+        }.joined(separator: "\n")
+
+        let csvString = header + rows
+
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = "alert_history_\(dateFmt.string(from: Date())).csv"
+        panel.begin { response in
+            guard response == .OK, let url = panel.url else { return }
+            // UTF-8 BOM 추가 — Excel에서 한글 깨짐 방지
+            var data = Data([0xEF, 0xBB, 0xBF])
+            if let body = csvString.data(using: .utf8) { data.append(body) }
+            try? data.write(to: url)
+        }
     }
 }
 
