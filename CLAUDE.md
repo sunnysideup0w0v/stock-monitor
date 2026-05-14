@@ -95,6 +95,19 @@ Phase 2: WebSocket 실시간 시세 구현
 - 제목은 한국어로 간결하게, 무엇을 했는지 중심으로 작성
 - 본문은 생략해도 무방하나, 설계 결정이나 트레이드오프가 있었다면 기록
 
+## 앱 재실행 규칙
+
+아래 시점에는 반드시 앱을 종료 후 재실행한다. 별도 요청 없이도 자동으로 수행한다.
+
+```bash
+pkill -x StockWatch 2>/dev/null; sleep 0.5 && open "$(find ~/Library/Developer/Xcode/DerivedData -name 'StockWatch.app' -path '*/Debug/*' | head -1)"
+```
+
+**재실행 시점**
+- Phase 구현이 완료되고 커밋한 직후
+- 버그 수정(fix 커밋) 후
+- UI 변경이 포함된 작업 완료 후
+
 ## TODO.md 관리 규칙
 
 `TODO.md`는 프로젝트 진행 상황의 단일 진실 공급원이다. 아래 규칙을 반드시 따른다.
