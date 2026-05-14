@@ -61,6 +61,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let symbols = (try? DatabaseManager.shared.fetchWatchlist().map { $0.symbol }) ?? []
         guard !symbols.isEmpty else { return }
         QuoteManager.shared.startPolling(symbols: symbols)
+        DARTManager.shared.start(symbols: symbols)
     }
 
     @objc private func handleOpenSettings() {

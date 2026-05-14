@@ -405,6 +405,7 @@ struct AccountSettingsView: View {
             } else {
                 loginFormView
             }
+            DARTSettingsView()
             Spacer()
         }
         .onAppear { loadState() }
@@ -571,6 +572,71 @@ struct AccountSettingsView: View {
     private func maskedKey(_ key: String) -> String {
         guard key.count > 8 else { return String(repeating: "•", count: key.count) }
         return String(key.prefix(4)) + String(repeating: "•", count: 12) + String(key.suffix(4))
+    }
+}
+
+// MARK: - DART Settings
+
+struct DARTSettingsView: View {
+    @State private var isConfigured = false
+    @State private var apiKeyInput = ""
+    @State private var isSaving = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Divider()
+            Text("DART 공시 알림").font(.headline)
+
+            if isConfigured {
+                dartConfiguredView
+            } else {
+                dartSetupView
+            }
+        }
+        .onAppear { isConfigured = DARTManager.shared.isConfigured }
+    }
+
+    private var dartConfiguredView: some View {
+        HStack(spacing: 8) {
+            Circle().fill(.green).frame(width: 8, height: 8)
+            Text("공시 알림 활성화됨").font(.subheadline).foregroundStyle(.secondary)
+            Spacer()
+            Button("삭제", role: .destructive) {
+                KeychainHelper.delete(account: "dart.apiKey")
+                DARTManager.shared.stop()
+                isConfigured = false
+            }
+            .buttonStyle(.borderless)
+            .foregroundStyle(.red)
+            .font(.caption)
+        }
+        .padding(10)
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
+    }
+
+    private var dartSetupView: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("DART Open API 키를 입력하면 관심종목의 공시를 5분마다 확인합니다.")
+                .font(.caption).foregroundStyle(.secondary)
+            HStack(spacing: 8) {
+                SecureField("API 키 입력", text: $apiKeyInput)
+                Button("저장") { saveKey() }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(apiKeyInput.trimmingCharacters(in: .whitespaces).isEmpty || isSaving)
+            }
+        }
+    }
+
+    private func saveKey() {
+        let key = apiKeyInput.trimmingCharacters(in: .whitespaces)
+        guard !key.isEmpty else { return }
+        isSaving = true
+        KeychainHelper.save(key, account: "dart.apiKey")
+        let symbols = (try? DatabaseManager.shared.fetchWatchlist().map { $0.symbol }) ?? []
+        DARTManager.shared.start(symbols: symbols)
+        apiKeyInput = ""
+        isConfigured = true
+        isSaving = false
     }
 }
 

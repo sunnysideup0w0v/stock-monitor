@@ -176,12 +176,12 @@
 
 ### 2.3 DART 공시 연동 (트리거 ④)
 
-- [ ] DART Open API 키 발급 및 Keychain 저장
-- [ ] `DARTAdapter.swift` — 공시 목록 조회 (`/api/list.json`)
-- [ ] 종목별 공시 폴링 (5분 간격)
-- [ ] 새 공시 감지 → macOS 알림 발송
+- [x] DART Open API 키 발급 및 Keychain 저장 (`dart.apiKey`)
+- [x] `DARTManager.swift` — 공시 목록 조회 (`/api/list.json`), corp_code 자동 조회 및 캐시
+- [x] 종목별 공시 폴링 (5분 간격)
+- [x] 새 공시 감지 → macOS 알림 발송 (rcept_no 기반 중복 방지)
 - [ ] 공시 종류 필터 (실적 발표, 유상증자, 자사주 매입 등)
-- [ ] 알림 설정 UI에 공시 트리거 추가
+- [x] 계좌 연결 탭에 DART API 키 설정 UI 추가
 
 ### 2.4 포트폴리오 수익률 알림 (트리거 ⑤)
 

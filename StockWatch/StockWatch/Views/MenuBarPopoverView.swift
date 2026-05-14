@@ -105,6 +105,7 @@ struct MenuBarPopoverView: View {
         watchlist = (try? DatabaseManager.shared.fetchWatchlist()) ?? []
         let symbols = watchlist.map { $0.symbol }
         QuoteManager.shared.startPolling(symbols: symbols)
+        DARTManager.shared.start(symbols: symbols)
         calculatePortfolio()
     }
 
