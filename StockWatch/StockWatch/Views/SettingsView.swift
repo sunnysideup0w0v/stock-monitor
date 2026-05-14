@@ -305,7 +305,7 @@ struct AlertSettingsView: View {
                         }
                     }
                     GridRow {
-                        Color.clear
+                        Text("").gridColumnAlignment(.trailing)
                         Toggle("트리거 후 자동 비활성화", isOn: $disableAfterTrigger)
                             .gridCellColumns(3)
                     }
@@ -479,7 +479,7 @@ struct AccountSettingsView: View {
                     TextField("예: 50123456-01", text: $accountNumber).gridCellColumns(3)
                 }
                 GridRow {
-                    Color.clear
+                    Text("").gridColumnAlignment(.trailing)
                     Toggle("모의투자 계정", isOn: $isMock).gridCellColumns(3)
                 }
             }
