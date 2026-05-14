@@ -17,6 +17,45 @@ struct SettingsView: View {
     }
 }
 
+// MARK: - Shared Components
+
+// React의 children prop과 동일. @ViewBuilder가 클로저 안의 뷰들을 하나의 Content로 합쳐준다.
+struct SettingsTabContainer<Content: View>: View {
+    let title: String
+    let content: Content
+
+    init(title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title).font(.title2).bold()
+            content
+        }
+        .padding([.horizontal, .bottom], 8)
+    }
+}
+
+struct SettingsFormSection<Content: View>: View {
+    let title: String
+    let content: Content
+
+    init(title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Divider()
+            Text(title).font(.headline)
+            content
+        }
+    }
+}
+
 // MARK: - Watchlist
 
 struct WatchlistSettingsView: View {
@@ -27,10 +66,7 @@ struct WatchlistSettingsView: View {
     @State private var group: WatchlistGroup = .watchlist
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("관심종목")
-                .font(.title2).bold()
-
+        SettingsTabContainer(title: "관심종목") {
             List {
                 ForEach(items, id: \.id) { item in
                     HStack {
@@ -54,34 +90,32 @@ struct WatchlistSettingsView: View {
             }
             .listStyle(.bordered)
 
-            Divider()
-
-            Text("종목 추가").font(.headline)
-
-            Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 8) {
-                GridRow {
-                    Text("종목코드").gridColumnAlignment(.trailing)
-                    TextField("예: 005930", text: $symbol).frame(width: 120)
-                    Text("종목명").gridColumnAlignment(.trailing)
-                    TextField("예: 삼성전자", text: $name).frame(width: 120)
-                }
-                GridRow {
-                    Text("별칭").gridColumnAlignment(.trailing)
-                    TextField("선택사항", text: $alias).frame(width: 120)
-                    Text("그룹").gridColumnAlignment(.trailing)
-                    Picker("", selection: $group) {
-                        ForEach([WatchlistGroup.watchlist, .longTerm, .shortTerm], id: \.self) {
-                            Text($0.displayName).tag($0)
-                        }
+            SettingsFormSection(title: "종목 추가") {
+                Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 8) {
+                    GridRow {
+                        Text("종목코드").gridColumnAlignment(.trailing)
+                        TextField("예: 005930", text: $symbol).frame(width: 120)
+                        Text("종목명").gridColumnAlignment(.trailing)
+                        TextField("예: 삼성전자", text: $name).frame(width: 120)
                     }
-                    .labelsHidden()
-                    .frame(width: 120)
+                    GridRow {
+                        Text("별칭").gridColumnAlignment(.trailing)
+                        TextField("선택사항", text: $alias).frame(width: 120)
+                        Text("그룹").gridColumnAlignment(.trailing)
+                        Picker("", selection: $group) {
+                            ForEach([WatchlistGroup.watchlist, .longTerm, .shortTerm], id: \.self) {
+                                Text($0.displayName).tag($0)
+                            }
+                        }
+                        .labelsHidden()
+                        .frame(width: 120)
+                    }
                 }
-            }
 
-            Button("추가") { addItem() }
-                .disabled(symbol.trimmingCharacters(in: .whitespaces).isEmpty ||
-                          name.trimmingCharacters(in: .whitespaces).isEmpty)
+                Button("추가") { addItem() }
+                    .disabled(symbol.trimmingCharacters(in: .whitespaces).isEmpty ||
+                              name.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
         }
         .onAppear { loadItems() }
     }
@@ -121,10 +155,7 @@ struct PortfolioSettingsView: View {
     @State private var quantityText = ""
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("포트폴리오")
-                .font(.title2).bold()
-
+        SettingsTabContainer(title: "포트폴리오") {
             List {
                 ForEach(items, id: \.id) { item in
                     HStack {
@@ -150,27 +181,25 @@ struct PortfolioSettingsView: View {
             }
             .listStyle(.bordered)
 
-            Divider()
-
-            Text("종목 추가").font(.headline)
-
-            Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 8) {
-                GridRow {
-                    Text("종목코드").gridColumnAlignment(.trailing)
-                    TextField("예: 005930", text: $symbol).frame(width: 120)
-                    Text("종목명").gridColumnAlignment(.trailing)
-                    TextField("예: 삼성전자", text: $name).frame(width: 120)
+            SettingsFormSection(title: "종목 추가") {
+                Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 8) {
+                    GridRow {
+                        Text("종목코드").gridColumnAlignment(.trailing)
+                        TextField("예: 005930", text: $symbol).frame(width: 120)
+                        Text("종목명").gridColumnAlignment(.trailing)
+                        TextField("예: 삼성전자", text: $name).frame(width: 120)
+                    }
+                    GridRow {
+                        Text("평균매입가").gridColumnAlignment(.trailing)
+                        TextField("원", text: $averagePriceText).frame(width: 120)
+                        Text("수량").gridColumnAlignment(.trailing)
+                        TextField("주", text: $quantityText).frame(width: 120)
+                    }
                 }
-                GridRow {
-                    Text("평균매입가").gridColumnAlignment(.trailing)
-                    TextField("원", text: $averagePriceText).frame(width: 120)
-                    Text("수량").gridColumnAlignment(.trailing)
-                    TextField("주", text: $quantityText).frame(width: 120)
-                }
+
+                Button("추가") { addItem() }
+                    .disabled(!isFormValid)
             }
-
-            Button("추가") { addItem() }
-                .disabled(!isFormValid)
         }
         .onAppear { loadItems() }
     }
@@ -217,10 +246,7 @@ struct AlertSettingsView: View {
     @State private var cooldownMinutes = 60
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("알림설정")
-                .font(.title2).bold()
-
+        SettingsTabContainer(title: "알림설정") {
             List {
                 ForEach(conditions, id: \.id) { condition in
                     HStack {
@@ -252,44 +278,42 @@ struct AlertSettingsView: View {
             }
             .listStyle(.bordered)
 
-            Divider()
-
-            Text("알림 추가").font(.headline)
-
-            Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 8) {
-                GridRow {
-                    Text("종목코드").gridColumnAlignment(.trailing)
-                    TextField("예: 005930", text: $symbol).frame(width: 120)
-                    Text("유형").gridColumnAlignment(.trailing)
-                    Picker("", selection: $triggerType) {
-                        ForEach([TriggerType.targetPrice, .stopLoss, .rateUp, .rateDown], id: \.self) {
-                            Text($0.displayName).tag($0)
+            SettingsFormSection(title: "알림 추가") {
+                Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 8) {
+                    GridRow {
+                        Text("종목코드").gridColumnAlignment(.trailing)
+                        TextField("예: 005930", text: $symbol).frame(width: 120)
+                        Text("유형").gridColumnAlignment(.trailing)
+                        Picker("", selection: $triggerType) {
+                            ForEach([TriggerType.targetPrice, .stopLoss, .rateUp, .rateDown], id: \.self) {
+                                Text($0.displayName).tag($0)
+                            }
+                        }
+                        .labelsHidden()
+                        .frame(width: 120)
+                    }
+                    GridRow {
+                        Text("임계값").gridColumnAlignment(.trailing)
+                        HStack(spacing: 4) {
+                            TextField("값 입력", text: $thresholdText).frame(width: 80)
+                            Text(triggerType.unit).foregroundStyle(.secondary)
+                        }
+                        Text("쿨다운").gridColumnAlignment(.trailing)
+                        HStack(spacing: 4) {
+                            TextField("분", value: $cooldownMinutes, format: .number).frame(width: 60)
+                            Text("분").foregroundStyle(.secondary)
                         }
                     }
-                    .labelsHidden()
-                    .frame(width: 120)
-                }
-                GridRow {
-                    Text("임계값").gridColumnAlignment(.trailing)
-                    HStack(spacing: 4) {
-                        TextField("값 입력", text: $thresholdText).frame(width: 80)
-                        Text(triggerType.unit).foregroundStyle(.secondary)
-                    }
-                    Text("쿨다운").gridColumnAlignment(.trailing)
-                    HStack(spacing: 4) {
-                        TextField("분", value: $cooldownMinutes, format: .number).frame(width: 60)
-                        Text("분").foregroundStyle(.secondary)
+                    GridRow {
+                        Color.clear
+                        Toggle("트리거 후 자동 비활성화", isOn: $disableAfterTrigger)
+                            .gridCellColumns(3)
                     }
                 }
-                GridRow {
-                    Color.clear
-                    Toggle("트리거 후 자동 비활성화", isOn: $disableAfterTrigger)
-                        .gridCellColumns(3)
-                }
-            }
 
-            Button("추가") { addCondition() }
-                .disabled(symbol.trimmingCharacters(in: .whitespaces).isEmpty || Double(thresholdText) == nil)
+                Button("추가") { addCondition() }
+                    .disabled(symbol.trimmingCharacters(in: .whitespaces).isEmpty || Double(thresholdText) == nil)
+            }
         }
         .onAppear { loadConditions() }
     }
@@ -340,19 +364,16 @@ struct AlertSettingsView: View {
 // MARK: - Account
 
 struct AccountSettingsView: View {
-    // 로그인 폼 입력값
     @State private var appKey = ""
     @State private var appSecret = ""
     @State private var accountNumber = ""
     @State private var isMock = false
 
-    // 로그인 상태
     @State private var isLoggedIn = false
     @State private var loginDate: Date? = nil
     @State private var savedAccountNumber = ""
     @State private var savedIsMock = false
 
-    // 연결 테스트 상태
     @State private var testStatus: TestStatus = .idle
 
     enum TestStatus: Equatable {
@@ -376,18 +397,14 @@ struct AccountSettingsView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text("계좌 연결").font(.title2).bold()
-
+        SettingsTabContainer(title: "계좌 연결") {
             if isLoggedIn {
                 loggedInView
             } else {
                 loginFormView
             }
-
             Spacer()
         }
-        .padding(.horizontal, 8)
         .onAppear { loadState() }
     }
 
@@ -395,7 +412,6 @@ struct AccountSettingsView: View {
 
     private var loggedInView: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // 연결 상태 배지
             HStack(spacing: 8) {
                 Circle().fill(.green).frame(width: 10, height: 10)
                 Text("연결됨").font(.headline).foregroundStyle(.green)
@@ -406,7 +422,6 @@ struct AccountSettingsView: View {
 
             Divider()
 
-            // 계좌 정보
             Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 10) {
                 GridRow {
                     Text("계좌번호").foregroundStyle(.secondary).gridColumnAlignment(.trailing)
