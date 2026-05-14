@@ -184,4 +184,17 @@ final class DatabaseManager: @unchecked Sendable {
             try PortfolioSnapshot.filter(Column("timestamp") < cutoff).deleteAll(db)
         }
     }
+
+    func snapshotStats() throws -> (count: Int, oldest: Date?, newest: Date?) {
+        try dbQueue.read { db in
+            let count  = try PortfolioSnapshot.fetchCount(db)
+            let oldest = try PortfolioSnapshot.order(Column("timestamp").asc).fetchOne(db)?.timestamp
+            let newest = try PortfolioSnapshot.order(Column("timestamp").desc).fetchOne(db)?.timestamp
+            return (count, oldest, newest)
+        }
+    }
+
+    func deleteAllSnapshots() throws {
+        try dbQueue.write { db in try PortfolioSnapshot.deleteAll(db) }
+    }
 }

@@ -1,5 +1,24 @@
 import Foundation
 
+// 커스텀 수집 시간대 (UserDefaults JSON 직렬화)
+struct SnapshotTimeRange: Codable, Identifiable {
+    var id: UUID
+    var startMinute: Int  // 자정 기준 분, 예) 07:00 = 420
+    var endMinute: Int    // 예) 09:00 = 540
+
+    init(startMinute: Int, endMinute: Int) {
+        self.id = UUID()
+        self.startMinute = startMinute
+        self.endMinute = endMinute
+    }
+
+    var displayString: String {
+        String(format: "%02d:%02d ~ %02d:%02d",
+               startMinute / 60, startMinute % 60,
+               endMinute   / 60, endMinute   % 60)
+    }
+}
+
 @MainActor
 final class SnapshotManager {
     static let shared = SnapshotManager()
@@ -7,10 +26,36 @@ final class SnapshotManager {
 
     private var task: Task<Void, Never>?
 
+    // MARK: - Settings (UserDefaults)
+
     var marketHoursOnly: Bool {
         get { UserDefaults.standard.object(forKey: "Snapshot.marketHoursOnly") as? Bool ?? true }
         set { UserDefaults.standard.set(newValue, forKey: "Snapshot.marketHoursOnly") }
     }
+
+    var customRanges: [SnapshotTimeRange] {
+        get {
+            guard let data = UserDefaults.standard.data(forKey: "Snapshot.customRanges"),
+                  let ranges = try? JSONDecoder().decode([SnapshotTimeRange].self, from: data)
+            else { return [] }
+            return ranges
+        }
+        set {
+            let data = try? JSONEncoder().encode(newValue)
+            UserDefaults.standard.set(data, forKey: "Snapshot.customRanges")
+        }
+    }
+
+    // 0 = 무제한 (자동 정리 안 함)
+    var keepDays: Int {
+        get {
+            let v = UserDefaults.standard.integer(forKey: "Snapshot.keepDays")
+            return v == 0 ? 365 : v
+        }
+        set { UserDefaults.standard.set(newValue, forKey: "Snapshot.keepDays") }
+    }
+
+    // MARK: - Lifecycle
 
     func start() {
         stop()
@@ -27,8 +72,10 @@ final class SnapshotManager {
         task = nil
     }
 
+    // MARK: - Snapshot
+
     private func takeSnapshot() {
-        if marketHoursOnly && !isMarketHours() { return }
+        guard isActiveTime() else { return }
 
         guard let portfolio = try? DatabaseManager.shared.fetchPortfolio(),
               !portfolio.isEmpty else { return }
@@ -55,19 +102,28 @@ final class SnapshotManager {
             gainPct: pct
         )
         try? DatabaseManager.shared.insert(&snapshot)
-        try? DatabaseManager.shared.cleanupSnapshots()
+
+        if keepDays > 0 {
+            try? DatabaseManager.shared.cleanupSnapshots(keepDays: keepDays)
+        }
     }
 
-    // 평일 09:00~15:30 (한국 장 시간)
-    private func isMarketHours() -> Bool {
+    // MARK: - Time Check
+
+    private func isActiveTime() -> Bool {
         let cal     = Calendar.current
         let now     = Date()
         let weekday = cal.component(.weekday, from: now) // 1=일, 7=토
-        guard weekday != 1 && weekday != 7 else { return false }
-
         let hour    = cal.component(.hour,   from: now)
         let minute  = cal.component(.minute, from: now)
-        let minutes = hour * 60 + minute
-        return minutes >= 9 * 60 && minutes <= 15 * 60 + 30
+        let current = hour * 60 + minute
+
+        // 장 시간 체크 (평일 09:00~15:30)
+        if marketHoursOnly && weekday != 1 && weekday != 7 {
+            if current >= 9 * 60 && current <= 15 * 60 + 30 { return true }
+        }
+
+        // 커스텀 시간대 체크 (요일 무관)
+        return customRanges.contains { current >= $0.startMinute && current <= $0.endMinute }
     }
 }
