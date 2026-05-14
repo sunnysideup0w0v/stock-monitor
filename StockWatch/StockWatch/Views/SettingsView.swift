@@ -14,8 +14,10 @@ struct SettingsView: View {
                 .tabItem { Label("알림설정", systemImage: "bell") }
             AlertHistoryView()
                 .tabItem { Label("알림 이력", systemImage: "clock.arrow.circlepath") }
+            AssetChartView()
+                .tabItem { Label("자산 차트", systemImage: "chart.xyaxis.line") }
         }
-        .frame(width: 620, height: 480)
+        .frame(width: 660, height: 500)
         .padding()
     }
 }
