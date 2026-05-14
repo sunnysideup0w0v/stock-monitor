@@ -41,13 +41,13 @@ final class AlertEvaluator {
         let message = makeMessage(quote: quote, condition: condition)
         NotificationManager.shared.send(title: "[\(quote.name)] 알림", body: message, symbol: quote.symbol)
 
-        var history = AlertHistory(id: nil, symbol: quote.symbol, triggerType: condition.triggerType, message: message, triggeredAt: now)
-        try? DatabaseManager.shared.insert(&history)
-
         var updated = condition
         updated.lastTriggeredAt = now
         if condition.disableAfterTrigger { updated.isActive = false }
-        try? DatabaseManager.shared.update(updated)
+
+        // 이력 저장 + 쿨다운 업데이트를 단일 트랜잭션으로 — 쿨다운 미적용으로 인한 중복 알림 방지
+        var history = AlertHistory(id: nil, symbol: quote.symbol, triggerType: condition.triggerType, message: message, triggeredAt: now)
+        try? DatabaseManager.shared.recordAlertFired(history: &history, condition: updated)
     }
 
     private func makeMessage(quote: StockQuote, condition: AlertCondition) -> String {

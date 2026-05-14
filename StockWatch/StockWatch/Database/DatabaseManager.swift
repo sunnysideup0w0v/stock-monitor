@@ -137,4 +137,13 @@ final class DatabaseManager: @unchecked Sendable {
     func insert(_ history: inout AlertHistory) throws {
         try dbQueue.write { db in try history.insert(db) }
     }
+
+    /// 알림 이력 저장 + 쿨다운 업데이트를 단일 트랜잭션으로 처리
+    /// 둘 중 하나라도 실패하면 모두 롤백되어 중복 알림을 방지한다
+    func recordAlertFired(history: inout AlertHistory, condition: AlertCondition) throws {
+        try dbQueue.write { db in
+            try history.insert(db)
+            try condition.update(db)
+        }
+    }
 }

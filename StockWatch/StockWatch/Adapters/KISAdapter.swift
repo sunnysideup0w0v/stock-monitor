@@ -30,6 +30,10 @@ actor KISAdapter: BrokerAdapter {
     }
 
     func fetchQuote(symbol: String) async throws -> StockQuote {
+        try await fetchQuote(symbol: symbol, retryOnUnauthorized: true)
+    }
+
+    private func fetchQuote(symbol: String, retryOnUnauthorized: Bool) async throws -> StockQuote {
         let token = try await validToken()
         guard let creds = credentials else { throw BrokerError.notConnected }
 
@@ -54,19 +58,19 @@ actor KISAdapter: BrokerAdapter {
             throw BrokerError.apiError("응답 오류")
         }
 
-        // 토큰 만료 시 재발급 후 1회 재시도
+        // 토큰 만료 시 재발급 후 1회만 재시도 — retryOnUnauthorized=false면 바로 에러
         if http.statusCode == 401 {
+            guard retryOnUnauthorized else { throw BrokerError.tokenExpired }
             cachedToken = nil
             tokenExpiry = nil
             try await issueToken()
-            return try await fetchQuote(symbol: symbol)
+            return try await fetchQuote(symbol: symbol, retryOnUnauthorized: false)
         }
 
         guard http.statusCode == 200 else {
             throw BrokerError.apiError("HTTP \(http.statusCode)")
         }
 
-        // 디버그: 원시 응답 출력
         if let rawString = String(data: data, encoding: .utf8) {
             print("[KISAdapter] fetchQuote response: \(rawString.prefix(500))")
         }
