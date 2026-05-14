@@ -7,7 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0C649CA67BBEF3201E143D91 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96036A94BC463B8118C8EB3D /* KeychainHelper.swift */; };
+		1D1A8F945D66A67A6CFA06A9 /* MockBrokerAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7DAC0DBAF002A53BAA7238E /* MockBrokerAdapter.swift */; };
 		1E4A8C3EB5C2AAD27B10C9B5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B18D1CB241596D88278D7F25 /* Assets.xcassets */; };
+		379BEF80E8AA0999738268D2 /* KISAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454863BF153C297039535D2A /* KISAdapter.swift */; };
+		41F67B1BF667E423262F4837 /* AlertCondition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BEA35216A296059CBB811EE /* AlertCondition.swift */; };
+		4F05F2C0A6A0FC238A10F859 /* PortfolioItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 687A817AB4EE034AB2D0D112 /* PortfolioItem.swift */; };
+		5C32C172B9F267DD888430FB /* AlertEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 485F5E3B2F81922FF587857A /* AlertEvaluator.swift */; };
 		61396F92FB6DF6646F9B79C2 /* QuoteManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E5AB112AF506EF87D40BA14 /* QuoteManager.swift */; };
 		647CB488BA748CF9E75DC473 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 7799957FF90B2FF48DC7C87F /* GRDB */; };
 		687F91821C4C630BA708C4A0 /* MenuBarPopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14A3725923C78C18CCFFECD6 /* MenuBarPopoverView.swift */; };
@@ -15,8 +21,12 @@
 		74A2E886B82508C5D7E02DCA /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC7646622AD611A41C94A421 /* AppDelegate.swift */; };
 		7ED9AE857C8A1EE7F0B46043 /* StockQuote.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58693606248BA2082C34DD2C /* StockQuote.swift */; };
 		896F1D508E1C6C42CFCE8329 /* StockWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F629436FD4ED83B8E8A6E26 /* StockWatchApp.swift */; };
+		89BE3ADB288DE36A8DF219A2 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBCBCB15EE3D06F83CF8F3BB /* SettingsView.swift */; };
 		9895C317774C9E7C480E7D6A /* BrokerAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 120E543584AD0CEC78ACF6F1 /* BrokerAdapter.swift */; };
+		9DEB07B30156A5FD72A26689 /* AlertHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CA6753273E034494E5C9BFE /* AlertHistory.swift */; };
+		D355B90BDD80617758C47DA9 /* WatchlistItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD0E3054289D0C4A03DA88CB /* WatchlistItem.swift */; };
 		DD5602121F5D40899A8BD823 /* DatabaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A8DC0F7F8A2B927ACAF68A1 /* DatabaseManager.swift */; };
+		F2F9D0EE68C04C87CEA667EC /* ToastWindowManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCBB017D66E4027E867F5D48 /* ToastWindowManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,14 +34,24 @@
 		14A3725923C78C18CCFFECD6 /* MenuBarPopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarPopoverView.swift; sourceTree = "<group>"; };
 		1A8DC0F7F8A2B927ACAF68A1 /* DatabaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseManager.swift; sourceTree = "<group>"; };
 		27964784296E0D3236DF6643 /* StockWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = StockWatch.entitlements; sourceTree = "<group>"; };
+		3CA6753273E034494E5C9BFE /* AlertHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertHistory.swift; sourceTree = "<group>"; };
+		454863BF153C297039535D2A /* KISAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KISAdapter.swift; sourceTree = "<group>"; };
+		485F5E3B2F81922FF587857A /* AlertEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertEvaluator.swift; sourceTree = "<group>"; };
 		58693606248BA2082C34DD2C /* StockQuote.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockQuote.swift; sourceTree = "<group>"; };
 		5E5AB112AF506EF87D40BA14 /* QuoteManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteManager.swift; sourceTree = "<group>"; };
+		687A817AB4EE034AB2D0D112 /* PortfolioItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioItem.swift; sourceTree = "<group>"; };
 		693BBA6F9D04AC0BDD39110D /* StockWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StockWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6F629436FD4ED83B8E8A6E26 /* StockWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockWatchApp.swift; sourceTree = "<group>"; };
+		96036A94BC463B8118C8EB3D /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
+		9BEA35216A296059CBB811EE /* AlertCondition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertCondition.swift; sourceTree = "<group>"; };
 		B18D1CB241596D88278D7F25 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		BD0E3054289D0C4A03DA88CB /* WatchlistItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistItem.swift; sourceTree = "<group>"; };
 		BD0FBD6F5A164FABC04C9358 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		C98C3F9477E7B17A8E9D72F0 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		CBCBCB15EE3D06F83CF8F3BB /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		CCBB017D66E4027E867F5D48 /* ToastWindowManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastWindowManager.swift; sourceTree = "<group>"; };
 		DC7646622AD611A41C94A421 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		E7DAC0DBAF002A53BAA7238E /* MockBrokerAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockBrokerAdapter.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,6 +95,7 @@
 			isa = PBXGroup;
 			children = (
 				C98C3F9477E7B17A8E9D72F0 /* NotificationManager.swift */,
+				CCBB017D66E4027E867F5D48 /* ToastWindowManager.swift */,
 			);
 			path = Notifications;
 			sourceTree = "<group>";
@@ -82,7 +103,11 @@
 		9569A68403C87C14F8CF84C7 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				9BEA35216A296059CBB811EE /* AlertCondition.swift */,
+				3CA6753273E034494E5C9BFE /* AlertHistory.swift */,
+				687A817AB4EE034AB2D0D112 /* PortfolioItem.swift */,
 				58693606248BA2082C34DD2C /* StockQuote.swift */,
+				BD0E3054289D0C4A03DA88CB /* WatchlistItem.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -90,6 +115,8 @@
 		9A35F8E4F822F863D4F9FBD5 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				485F5E3B2F81922FF587857A /* AlertEvaluator.swift */,
+				96036A94BC463B8118C8EB3D /* KeychainHelper.swift */,
 				5E5AB112AF506EF87D40BA14 /* QuoteManager.swift */,
 			);
 			path = Core;
@@ -99,6 +126,8 @@
 			isa = PBXGroup;
 			children = (
 				120E543584AD0CEC78ACF6F1 /* BrokerAdapter.swift */,
+				454863BF153C297039535D2A /* KISAdapter.swift */,
+				E7DAC0DBAF002A53BAA7238E /* MockBrokerAdapter.swift */,
 			);
 			path = Adapters;
 			sourceTree = "<group>";
@@ -132,6 +161,7 @@
 			isa = PBXGroup;
 			children = (
 				14A3725923C78C18CCFFECD6 /* MenuBarPopoverView.swift */,
+				CBCBCB15EE3D06F83CF8F3BB /* SettingsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -220,14 +250,24 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				41F67B1BF667E423262F4837 /* AlertCondition.swift in Sources */,
+				5C32C172B9F267DD888430FB /* AlertEvaluator.swift in Sources */,
+				9DEB07B30156A5FD72A26689 /* AlertHistory.swift in Sources */,
 				74A2E886B82508C5D7E02DCA /* AppDelegate.swift in Sources */,
 				9895C317774C9E7C480E7D6A /* BrokerAdapter.swift in Sources */,
 				DD5602121F5D40899A8BD823 /* DatabaseManager.swift in Sources */,
+				379BEF80E8AA0999738268D2 /* KISAdapter.swift in Sources */,
+				0C649CA67BBEF3201E143D91 /* KeychainHelper.swift in Sources */,
 				687F91821C4C630BA708C4A0 /* MenuBarPopoverView.swift in Sources */,
+				1D1A8F945D66A67A6CFA06A9 /* MockBrokerAdapter.swift in Sources */,
 				68A053190EE46F1D1EBCAA6F /* NotificationManager.swift in Sources */,
+				4F05F2C0A6A0FC238A10F859 /* PortfolioItem.swift in Sources */,
 				61396F92FB6DF6646F9B79C2 /* QuoteManager.swift in Sources */,
+				89BE3ADB288DE36A8DF219A2 /* SettingsView.swift in Sources */,
 				7ED9AE857C8A1EE7F0B46043 /* StockQuote.swift in Sources */,
 				896F1D508E1C6C42CFCE8329 /* StockWatchApp.swift in Sources */,
+				F2F9D0EE68C04C87CEA667EC /* ToastWindowManager.swift in Sources */,
+				D355B90BDD80617758C47DA9 /* WatchlistItem.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

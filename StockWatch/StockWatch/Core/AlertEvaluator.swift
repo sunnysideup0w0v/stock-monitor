@@ -1,0 +1,66 @@
+import Foundation
+
+@MainActor
+final class AlertEvaluator {
+    static let shared = AlertEvaluator()
+    private init() {}
+
+    func evaluate(quotes: [String: StockQuote]) {
+        guard let conditions = try? DatabaseManager.shared.fetchAlertConditions() else { return }
+        let now = Date()
+
+        for (_, quote) in quotes {
+            let symbolConditions = conditions.filter { $0.symbol == quote.symbol && $0.isActive }
+            for condition in symbolConditions {
+                guard canFire(condition: condition, now: now) else { continue }
+                guard isTriggered(quote: quote, condition: condition) else { continue }
+                fire(quote: quote, condition: condition, now: now)
+            }
+        }
+    }
+
+    private func canFire(condition: AlertCondition, now: Date) -> Bool {
+        guard let last = condition.lastTriggeredAt else { return true }
+        return now.timeIntervalSince(last) >= Double(condition.cooldownMinutes * 60)
+    }
+
+    private func isTriggered(quote: StockQuote, condition: AlertCondition) -> Bool {
+        switch condition.triggerType {
+        case .targetPrice: return Double(quote.price) >= condition.threshold
+        case .stopLoss:    return Double(quote.price) <= condition.threshold
+        case .rateUp:      return quote.changeRate >= condition.threshold
+        case .rateDown:    return quote.changeRate <= -condition.threshold
+        }
+    }
+
+    private func fire(quote: StockQuote, condition: AlertCondition, now: Date) {
+        let message = makeMessage(quote: quote, condition: condition)
+        NotificationManager.shared.send(title: "[\(quote.name)] 알림", body: message, symbol: quote.symbol)
+
+        var history = AlertHistory(id: nil, symbol: quote.symbol, triggerType: condition.triggerType, message: message, triggeredAt: now)
+        try? DatabaseManager.shared.insert(&history)
+
+        var updated = condition
+        updated.lastTriggeredAt = now
+        if condition.disableAfterTrigger { updated.isActive = false }
+        try? DatabaseManager.shared.update(updated)
+    }
+
+    private func makeMessage(quote: StockQuote, condition: AlertCondition) -> String {
+        let fmt = NumberFormatter()
+        fmt.numberStyle = .decimal
+
+        func fmtPrice(_ v: Int) -> String { fmt.string(from: NSNumber(value: v)) ?? "\(v)" }
+
+        switch condition.triggerType {
+        case .targetPrice:
+            return "목표가 \(fmtPrice(Int(condition.threshold)))원 도달 (현재가: \(fmtPrice(quote.price))원)"
+        case .stopLoss:
+            return "손절가 \(fmtPrice(Int(condition.threshold)))원 도달 (현재가: \(fmtPrice(quote.price))원)"
+        case .rateUp:
+            return String(format: "등락률 +%.1f%% 도달 (현재: %+.2f%%)", condition.threshold, quote.changeRate)
+        case .rateDown:
+            return String(format: "등락률 -%.1f%% 도달 (현재: %+.2f%%)", condition.threshold, quote.changeRate)
+        }
+    }
+}
