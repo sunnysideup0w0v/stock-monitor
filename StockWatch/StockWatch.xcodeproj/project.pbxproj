@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0C649CA67BBEF3201E143D91 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96036A94BC463B8118C8EB3D /* KeychainHelper.swift */; };
+		0EF0D8B07242A577BA15B2DE /* RealtimeQuoteManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F5A6472AE55E5203993C25F /* RealtimeQuoteManager.swift */; };
 		1D1A8F945D66A67A6CFA06A9 /* MockBrokerAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7DAC0DBAF002A53BAA7238E /* MockBrokerAdapter.swift */; };
 		1E4A8C3EB5C2AAD27B10C9B5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B18D1CB241596D88278D7F25 /* Assets.xcassets */; };
 		379BEF80E8AA0999738268D2 /* KISAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454863BF153C297039535D2A /* KISAdapter.swift */; };
@@ -44,6 +45,7 @@
 		6F629436FD4ED83B8E8A6E26 /* StockWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockWatchApp.swift; sourceTree = "<group>"; };
 		96036A94BC463B8118C8EB3D /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		9BEA35216A296059CBB811EE /* AlertCondition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertCondition.swift; sourceTree = "<group>"; };
+		9F5A6472AE55E5203993C25F /* RealtimeQuoteManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealtimeQuoteManager.swift; sourceTree = "<group>"; };
 		B18D1CB241596D88278D7F25 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BD0E3054289D0C4A03DA88CB /* WatchlistItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistItem.swift; sourceTree = "<group>"; };
 		BD0FBD6F5A164FABC04C9358 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -118,6 +120,7 @@
 				485F5E3B2F81922FF587857A /* AlertEvaluator.swift */,
 				96036A94BC463B8118C8EB3D /* KeychainHelper.swift */,
 				5E5AB112AF506EF87D40BA14 /* QuoteManager.swift */,
+				9F5A6472AE55E5203993C25F /* RealtimeQuoteManager.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -263,6 +266,7 @@
 				68A053190EE46F1D1EBCAA6F /* NotificationManager.swift in Sources */,
 				4F05F2C0A6A0FC238A10F859 /* PortfolioItem.swift in Sources */,
 				61396F92FB6DF6646F9B79C2 /* QuoteManager.swift in Sources */,
+				0EF0D8B07242A577BA15B2DE /* RealtimeQuoteManager.swift in Sources */,
 				89BE3ADB288DE36A8DF219A2 /* SettingsView.swift in Sources */,
 				7ED9AE857C8A1EE7F0B46043 /* StockQuote.swift in Sources */,
 				896F1D508E1C6C42CFCE8329 /* StockWatchApp.swift in Sources */,

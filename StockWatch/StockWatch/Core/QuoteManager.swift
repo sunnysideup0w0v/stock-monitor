@@ -14,6 +14,7 @@ final class QuoteManager: ObservableObject {
     private var adapter: (any BrokerAdapter)?
     private var pollingTask: Task<Void, Never>?
     private var consecutiveFailures = 0
+    private(set) var currentSymbols: [String] = []
 
     private init() {}
 
@@ -24,6 +25,7 @@ final class QuoteManager: ObservableObject {
     }
 
     func startPolling(symbols: [String]) {
+        currentSymbols = symbols
         stopPolling()
         guard !symbols.isEmpty else { return }
         pollingTask = Task {
@@ -32,6 +34,29 @@ final class QuoteManager: ObservableObject {
                 try? await Task.sleep(for: .seconds(3))
             }
         }
+    }
+
+    func startRealtime(credentials: BrokerCredentials, isMock: Bool) {
+        let manager = RealtimeQuoteManager.shared
+        Task {
+            await manager.setOnUpdate { quote in
+                await MainActor.run {
+                    QuoteManager.shared.updateFromRealtime(quote: quote)
+                }
+            }
+            await manager.start(credentials: credentials, isMock: isMock, symbols: currentSymbols)
+        }
+    }
+
+    func stopRealtime() {
+        Task { await RealtimeQuoteManager.shared.stop() }
+    }
+
+    func updateFromRealtime(quote: StockQuote) {
+        quotes[quote.symbol] = quote
+        consecutiveFailures = 0
+        connectionState = .connected
+        AlertEvaluator.shared.evaluate(quotes: quotes)
     }
 
     func stopPolling() {

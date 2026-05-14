@@ -46,12 +46,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
            !appKey.isEmpty, !appSecret.isEmpty {
             let isMock = UserDefaults.standard.bool(forKey: "KIS.isMock")
             let accountNumber = KeychainHelper.load(account: "kis.accountNumber")
+            let creds = BrokerCredentials(appKey: appKey, appSecret: appSecret, accountNumber: accountNumber)
             let adapter = KISAdapter(isMock: isMock)
             QuoteManager.shared.setAdapter(adapter)
-            let creds = BrokerCredentials(appKey: appKey, appSecret: appSecret, accountNumber: accountNumber)
-            Task {
-                try? await adapter.connect(credentials: creds)
-            }
+            Task { try? await adapter.connect(credentials: creds) }
+            QuoteManager.shared.startRealtime(credentials: creds, isMock: isMock)
         } else {
             QuoteManager.shared.setAdapter(MockBrokerAdapter())
         }
