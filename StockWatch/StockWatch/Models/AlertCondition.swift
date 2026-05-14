@@ -19,27 +19,44 @@ struct AlertCondition: Codable, FetchableRecord, MutablePersistableRecord {
 }
 
 enum TriggerType: String, Codable {
-    case targetPrice = "target_price"
-    case stopLoss = "stop_loss"
-    case rateUp = "rate_up"
-    case rateDown = "rate_down"
-    case volumeSpike = "volume_spike"
+    case targetPrice       = "target_price"
+    case stopLoss          = "stop_loss"
+    case rateUp            = "rate_up"
+    case rateDown          = "rate_down"
+    case volumeSpike       = "volume_spike"
+    case portfolioGain     = "portfolio_gain"      // 전체 평가손익 >= N원
+    case portfolioLoss     = "portfolio_loss"      // 전체 평가손익 <= -N원
+    case portfolioGainRate = "portfolio_gain_rate" // 전체 수익률 >= N%
+    case portfolioLossRate = "portfolio_loss_rate" // 전체 수익률 <= -N%
 
     var displayName: String {
         switch self {
-        case .targetPrice:  return "목표가 도달"
-        case .stopLoss:     return "손절가 도달"
-        case .rateUp:       return "등락률 상승"
-        case .rateDown:     return "등락률 하락"
-        case .volumeSpike:  return "거래량 급증"
+        case .targetPrice:       return "목표가 도달"
+        case .stopLoss:          return "손절가 도달"
+        case .rateUp:            return "등락률 상승"
+        case .rateDown:          return "등락률 하락"
+        case .volumeSpike:       return "거래량 급증"
+        case .portfolioGain:     return "포트폴리오 목표손익"
+        case .portfolioLoss:     return "포트폴리오 손절손익"
+        case .portfolioGainRate: return "포트폴리오 목표수익률"
+        case .portfolioLossRate: return "포트폴리오 손절수익률"
         }
     }
 
     var unit: String {
         switch self {
-        case .targetPrice, .stopLoss: return "원"
-        case .rateUp, .rateDown:      return "%"
-        case .volumeSpike:            return "배"
+        case .targetPrice, .stopLoss:              return "원"
+        case .rateUp, .rateDown:                   return "%"
+        case .volumeSpike:                         return "배"
+        case .portfolioGain, .portfolioLoss:       return "원"
+        case .portfolioGainRate, .portfolioLossRate: return "%"
+        }
+    }
+
+    var isPortfolioLevel: Bool {
+        switch self {
+        case .portfolioGain, .portfolioLoss, .portfolioGainRate, .portfolioLossRate: return true
+        default: return false
         }
     }
 }

@@ -252,7 +252,7 @@ struct AlertSettingsView: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             HStack(spacing: 4) {
-                                Text(condition.symbol).font(.body)
+                                Text(condition.symbol == "PORTFOLIO" ? "전체 포트폴리오" : condition.symbol).font(.body)
                                 Text(condition.triggerType.displayName)
                                     .font(.caption)
                                     .padding(.horizontal, 6).padding(.vertical, 2)
@@ -282,15 +282,23 @@ struct AlertSettingsView: View {
                 Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 8) {
                     GridRow {
                         Text("종목코드").gridColumnAlignment(.trailing)
-                        TextField("예: 005930", text: $symbol).frame(width: 120)
+                        if triggerType.isPortfolioLevel {
+                            Text("전체 포트폴리오")
+                                .foregroundStyle(.secondary)
+                                .frame(width: 120, alignment: .leading)
+                        } else {
+                            TextField("예: 005930", text: $symbol).frame(width: 120)
+                        }
                         Text("유형").gridColumnAlignment(.trailing)
                         Picker("", selection: $triggerType) {
-                            ForEach([TriggerType.targetPrice, .stopLoss, .rateUp, .rateDown, .volumeSpike], id: \.self) {
+                            ForEach([TriggerType.targetPrice, .stopLoss, .rateUp, .rateDown, .volumeSpike,
+                                     .portfolioGain, .portfolioLoss, .portfolioGainRate, .portfolioLossRate],
+                                    id: \.self) {
                                 Text($0.displayName).tag($0)
                             }
                         }
                         .labelsHidden()
-                        .frame(width: 120)
+                        .frame(width: 150)
                     }
                     GridRow {
                         Text("임계값").gridColumnAlignment(.trailing)
@@ -312,7 +320,13 @@ struct AlertSettingsView: View {
                 }
 
                 Button("추가") { addCondition() }
-                    .disabled(symbol.trimmingCharacters(in: .whitespaces).isEmpty || Double(thresholdText) == nil)
+                    .disabled(
+                        (!triggerType.isPortfolioLevel && symbol.trimmingCharacters(in: .whitespaces).isEmpty)
+                        || Double(thresholdText) == nil
+                    )
+            }
+            .onChange(of: triggerType) { _, newType in
+                if newType.isPortfolioLevel { symbol = "PORTFOLIO" }
             }
         }
         .onAppear { loadConditions() }
@@ -320,9 +334,9 @@ struct AlertSettingsView: View {
 
     private func formatThreshold(_ c: AlertCondition) -> String {
         switch c.triggerType {
-        case .targetPrice, .stopLoss:
+        case .targetPrice, .stopLoss, .portfolioGain, .portfolioLoss:
             return (NumberFormatter.decimal.string(from: NSNumber(value: Int(c.threshold))) ?? "") + "원"
-        case .rateUp, .rateDown:
+        case .rateUp, .rateDown, .portfolioGainRate, .portfolioLossRate:
             return String(format: "%.1f%%", c.threshold)
         case .volumeSpike:
             return String(format: "%.1f배", c.threshold)
