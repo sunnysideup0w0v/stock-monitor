@@ -111,6 +111,9 @@ struct AssetChartView: View {
         return (diff, pct)
     }
 
+    @State private var isMockGenerating = false
+    @State private var mockMessage: String? = nil
+
     // MARK: - Body
 
     var body: some View {
@@ -176,18 +179,48 @@ struct AssetChartView: View {
 
             // 차트
             if snapshots.isEmpty {
-                Text("선택한 기간에 데이터가 없습니다")
-                    .font(.caption).foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                VStack(spacing: 10) {
+                    Text("선택한 기간에 데이터가 없습니다")
+                        .font(.caption).foregroundStyle(.secondary)
+                    mockDataControls
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 chartBody
-                    .frame(height: 220)
+                    .frame(height: 200)
+                mockDataControls
             }
         }
         .onChange(of: period)       { _, _ in loadData() }
         .onChange(of: selectedDate) { _, _ in loadData() }
-        .onChange(of: showValue)    { _, _ in } // 재계산만 (DB 재로딩 불필요)
+        .onChange(of: showValue)    { _, _ in }
         .onAppear { loadData() }
+    }
+
+    @ViewBuilder
+    private var mockDataControls: some View {
+        HStack(spacing: 8) {
+            Button(isMockGenerating ? "생성 중…" : "테스트 데이터 생성") {
+                generateMockData()
+            }
+            .buttonStyle(.borderless)
+            .font(.caption)
+            .foregroundStyle(.blue)
+            .disabled(isMockGenerating)
+
+            Button("테스트 데이터 삭제") {
+                try? DatabaseManager.shared.deleteAllSnapshots()
+                loadData()
+                mockMessage = "삭제 완료"
+            }
+            .buttonStyle(.borderless)
+            .font(.caption)
+            .foregroundStyle(.red)
+
+            if let msg = mockMessage {
+                Text(msg).font(.caption2).foregroundStyle(.secondary)
+            }
+        }
     }
 
     // MARK: - Chart Body
@@ -256,6 +289,48 @@ struct AssetChartView: View {
     private func loadData() {
         let (start, end) = dateRange
         snapshots = (try? DatabaseManager.shared.fetchSnapshots(from: start, to: end)) ?? []
+        if mockMessage != nil { mockMessage = nil }
+    }
+
+    // 30일치 Mock 스냅샷 생성 (평일 09:00~15:30, 5분 간격)
+    // 총평가액 기준: 시작 10,000,000원 (매입원가 9,500,000원 가정), 랜덤 워크
+    private func generateMockData() {
+        isMockGenerating = true
+        Task.detached {
+            let cal = Calendar.current
+            let now = Date()
+            let baseCost = 9_500_000
+            var value = 10_000_000
+            var batch: [PortfolioSnapshot] = []
+
+            for dayOffset in stride(from: -29, through: 0, by: 1) {
+                guard let day = cal.date(byAdding: .day, value: dayOffset, to: now) else { continue }
+                let weekday = cal.component(.weekday, from: day)
+                guard weekday != 1 && weekday != 7 else { continue }
+
+                var minuteCursor = 9 * 60
+                while minuteCursor <= 15 * 60 + 30 {
+                    let h = minuteCursor / 60, m = minuteCursor % 60
+                    guard let ts = cal.date(bySettingHour: h, minute: m, second: 0, of: day),
+                          ts <= now else { minuteCursor += 5; continue }
+
+                    let delta = Double.random(in: -0.003...0.003)
+                    value = max(6_000_000, Int(Double(value) * (1 + delta)))
+                    let gain = value - baseCost
+                    let gainPct = Double(gain) / Double(baseCost) * 100
+                    batch.append(PortfolioSnapshot(id: nil, timestamp: ts, totalValue: value, totalGain: gain, gainPct: gainPct))
+                    minuteCursor += 5
+                }
+            }
+
+            try? DatabaseManager.shared.insertSnapshots(batch)
+
+            await MainActor.run {
+                isMockGenerating = false
+                mockMessage = "\(batch.count)건 생성 완료"
+                loadData()
+            }
+        }
     }
 
     private func fmt(_ v: Int) -> String {

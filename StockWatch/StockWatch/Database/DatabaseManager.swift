@@ -169,6 +169,12 @@ final class DatabaseManager: @unchecked Sendable {
         try dbQueue.write { db in try snapshot.insert(db) }
     }
 
+    func insertSnapshots(_ snapshots: [PortfolioSnapshot]) throws {
+        try dbQueue.write { db in
+            for var s in snapshots { try s.insert(db) }
+        }
+    }
+
     func fetchSnapshots(from start: Date, to end: Date) throws -> [PortfolioSnapshot] {
         try dbQueue.read { db in
             try PortfolioSnapshot
