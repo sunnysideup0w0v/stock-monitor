@@ -30,6 +30,10 @@ final class AlertEvaluator {
         case .stopLoss:    return Double(quote.price) <= condition.threshold
         case .rateUp:      return quote.changeRate >= condition.threshold
         case .rateDown:    return quote.changeRate <= -condition.threshold
+        case .volumeSpike:
+            let avgVol = QuoteManager.shared.avgVolumes[condition.symbol] ?? 0
+            guard avgVol > 0 else { return false }
+            return quote.volume >= Int(Double(avgVol) * condition.threshold)
         }
     }
 
@@ -61,6 +65,13 @@ final class AlertEvaluator {
             return String(format: "등락률 +%.1f%% 도달 (현재: %+.2f%%)", condition.threshold, quote.changeRate)
         case .rateDown:
             return String(format: "등락률 -%.1f%% 도달 (현재: %+.2f%%)", condition.threshold, quote.changeRate)
+        case .volumeSpike:
+            let avgVol = QuoteManager.shared.avgVolumes[quote.symbol] ?? 0
+            let multiple = avgVol > 0 ? Double(quote.volume) / Double(avgVol) : 0
+            return String(format: "거래량 급증 %.1f배 (현재: %@, 5일평균: %@)",
+                          multiple,
+                          fmt.string(from: NSNumber(value: quote.volume)) ?? "",
+                          fmt.string(from: NSNumber(value: avgVol)) ?? "")
         }
     }
 }

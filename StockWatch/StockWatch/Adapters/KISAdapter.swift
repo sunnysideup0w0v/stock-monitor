@@ -111,6 +111,44 @@ actor KISAdapter: BrokerAdapter {
         return []
     }
 
+    func fetchDailyVolumes(symbol: String, days: Int) async throws -> [Int] {
+        let token = try await validToken()
+        guard let creds = credentials else { throw BrokerError.notConnected }
+
+        let trID = isMock ? "VHKST01010400" : "FHKST01010400"
+
+        var components = URLComponents(
+            string: "\(baseURL)/uapi/domestic-stock/v1/quotations/inquire-daily-price"
+        )!
+        components.queryItems = [
+            URLQueryItem(name: "FID_COND_MRKT_DIV_CODE", value: "J"),
+            URLQueryItem(name: "FID_INPUT_ISCD", value: symbol),
+            URLQueryItem(name: "FID_PERIOD_DIV_CODE", value: "D"),
+            URLQueryItem(name: "FID_ORG_ADJ_PRC", value: "0")
+        ]
+
+        var request = URLRequest(url: components.url!)
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "authorization")
+        request.setValue(creds.appKey, forHTTPHeaderField: "appkey")
+        request.setValue(creds.appSecret, forHTTPHeaderField: "appsecret")
+        request.setValue(trID, forHTTPHeaderField: "tr_id")
+        request.setValue("P", forHTTPHeaderField: "custtype")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            throw BrokerError.apiError("일별 시세 조회 실패")
+        }
+
+        let decoded = try JSONDecoder().decode(KISDailyPriceResponse.self, from: data)
+        guard decoded.rtCd == "0" else {
+            throw BrokerError.apiError(decoded.msg1 ?? "일별 시세 오류")
+        }
+
+        return (decoded.output2 ?? [])
+            .prefix(days)
+            .compactMap { Int($0.acmlVol ?? "0") }
+    }
+
     // MARK: - Token Management
 
     private func validToken() async throws -> String {
@@ -161,6 +199,26 @@ actor KISAdapter: BrokerAdapter {
 }
 
 // MARK: - Response Models
+
+private struct KISDailyPriceResponse: Decodable {
+    let rtCd: String
+    let msg1: String?
+    let output2: [KISDailyOutput]?
+
+    enum CodingKeys: String, CodingKey {
+        case rtCd = "rt_cd"
+        case msg1
+        case output2
+    }
+}
+
+private struct KISDailyOutput: Decodable {
+    let acmlVol: String?
+
+    enum CodingKeys: String, CodingKey {
+        case acmlVol = "acml_vol"
+    }
+}
 
 private struct KISQuoteResponse: Decodable {
     let rtCd: String

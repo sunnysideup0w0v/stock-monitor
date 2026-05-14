@@ -285,7 +285,7 @@ struct AlertSettingsView: View {
                         TextField("예: 005930", text: $symbol).frame(width: 120)
                         Text("유형").gridColumnAlignment(.trailing)
                         Picker("", selection: $triggerType) {
-                            ForEach([TriggerType.targetPrice, .stopLoss, .rateUp, .rateDown], id: \.self) {
+                            ForEach([TriggerType.targetPrice, .stopLoss, .rateUp, .rateDown, .volumeSpike], id: \.self) {
                                 Text($0.displayName).tag($0)
                             }
                         }
@@ -324,6 +324,8 @@ struct AlertSettingsView: View {
             return (NumberFormatter.decimal.string(from: NSNumber(value: Int(c.threshold))) ?? "") + "원"
         case .rateUp, .rateDown:
             return String(format: "%.1f%%", c.threshold)
+        case .volumeSpike:
+            return String(format: "%.1f배", c.threshold)
         }
     }
 

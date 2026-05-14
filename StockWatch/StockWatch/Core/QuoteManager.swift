@@ -6,6 +6,8 @@ final class QuoteManager: ObservableObject {
 
     @Published private(set) var quotes: [String: StockQuote] = [:]
     @Published private(set) var connectionState: ConnectionState = .disconnected
+    /// symbol → 최근 5일 평균 거래량 캐시
+    private(set) var avgVolumes: [String: Int] = [:]
 
     enum ConnectionState {
         case connected, disconnected, error
@@ -28,10 +30,22 @@ final class QuoteManager: ObservableObject {
         currentSymbols = symbols
         stopPolling()
         guard !symbols.isEmpty else { return }
+        refreshAverageVolumes(symbols: symbols)
         pollingTask = Task {
             while !Task.isCancelled {
                 await fetchAll(symbols: symbols)
                 try? await Task.sleep(for: .seconds(3))
+            }
+        }
+    }
+
+    func refreshAverageVolumes(symbols: [String]) {
+        guard let adapter, !symbols.isEmpty else { return }
+        Task {
+            for symbol in symbols {
+                let volumes = (try? await adapter.fetchDailyVolumes(symbol: symbol, days: 5)) ?? []
+                guard !volumes.isEmpty else { continue }
+                avgVolumes[symbol] = volumes.reduce(0, +) / volumes.count
             }
         }
     }
