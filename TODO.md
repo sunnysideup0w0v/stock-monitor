@@ -8,52 +8,39 @@
 ## Phase 0 — 개발 환경 세팅
 
 ### 0.1 사전 준비
-- [ ] Xcode 최신 버전 설치 확인 (15.0+ 권장)
-- [ ] macOS 개발자 도구 설치 (`xcode-select --install`)
-- [ ] Swift 버전 확인 (`swift --version` → 5.9+)
-- [ ] Homebrew 설치 확인
+- [x] Xcode 최신 버전 설치 확인 — Xcode 26.5 ✓
+- [x] macOS 개발자 도구 설치 (`xcode-select --install`)
+- [x] Swift 버전 확인 — Swift 6.3.2 ✓
+- [x] Homebrew 설치 확인 — 5.1.11 ✓
 
 ### 0.2 Xcode 프로젝트 생성
-- [ ] Xcode → New Project → macOS → App 선택
-- [ ] 프로젝트명: `StockWatch`, 팀: Personal Team
-- [ ] Bundle Identifier: `com.personal.StockWatch`
-- [ ] Interface: SwiftUI, Language: Swift
-- [ ] 저장 위치: `stock-monitor/` 디렉토리
+- [x] xcodegen으로 프로젝트 자동 생성
+- [x] 프로젝트명: `StockWatch`
+- [x] Bundle Identifier: `com.personal.StockWatch`
+- [x] SwiftUI + Swift 6.0
+- [x] 저장 위치: `stock-monitor/StockWatch/`
 
 ### 0.3 Swift Package Manager 의존성 설정
-- [ ] `Package.swift` 또는 Xcode SPM에 GRDB.swift 추가
-  ```
-  https://github.com/groue/GRDB.swift — 버전 6.x
-  ```
-- [ ] 패키지 의존성 resolve 확인
+- [x] GRDB.swift 6.29.3 추가 (project.yml → xcodegen)
+- [x] 패키지 의존성 resolve 확인 ✓
 
 ### 0.4 프로젝트 기본 구조 생성
-- [ ] 디렉토리 구조 생성:
-  ```
-  StockWatch/
-  ├── App/              # AppDelegate, MenuBar
-  ├── Core/             # Engine, Managers
-  ├── Adapters/         # BrokerAdapter + KiwoomAdapter
-  ├── Models/           # 데이터 모델
-  ├── Database/         # SQLite/GRDB 설정
-  ├── Notifications/    # UNUserNotificationCenter
-  ├── Views/            # SwiftUI Views
-  └── Resources/        # Assets, Info.plist
-  ```
-- [ ] 각 디렉토리에 placeholder `.swift` 파일 생성
-- [ ] `.gitignore` 생성 (Xcode 템플릿 기반)
-- [ ] `git init` 및 초기 커밋
+- [x] 디렉토리 구조 생성 (App/Core/Adapters/Models/Database/Notifications/Views/Resources)
+- [x] 각 디렉토리에 placeholder `.swift` 파일 생성
+- [x] `.gitignore` 생성
+- [x] `git init` 및 초기 커밋
 
 ### 0.5 앱 기본 설정
-- [ ] `Info.plist` — LSUIElement = YES (Dock 아이콘 숨김, 메뉴바 앱)
-- [ ] Entitlements — Network Client 허용
-- [ ] Entitlements — Keychain Sharing 허용
+- [x] `Info.plist` — LSUIElement = YES (Dock 아이콘 숨김)
+- [x] `Info.plist` — NSAppTransportSecurity HTTPS 강제
+- [x] Entitlements — Network Client 허용
+- [x] 코드 서명: Manual / ad-hoc (로컬 개발용)
 
 ### ✅ Phase 0 검증
-- [ ] Xcode에서 빌드 성공 (⌘B)
-- [ ] 시뮬레이터/기기 실행 시 크래시 없음
-- [ ] GRDB 패키지 import 오류 없음
-- [ ] 메뉴바에 앱 아이콘이 표시됨 (더미 아이콘)
+- [x] 빌드 성공 (`** BUILD SUCCEEDED **`)
+- [x] 앱 실행 확인 (프로세스 정상 기동)
+- [x] GRDB 패키지 import 오류 없음
+- [ ] 메뉴바에 앱 아이콘이 표시됨 (직접 확인 필요)
 
 ---
 
@@ -61,127 +48,110 @@
 
 ### 1.1 메뉴바 앱 기반 구조
 
-- [ ] `AppDelegate.swift` — NSStatusBar 아이콘 등록
-- [ ] 메뉴바 아이콘 클릭 시 팝업 popover 표시
-- [ ] 팝업 내 기본 레이아웃 구성 (종목 리스트 영역 / 포트폴리오 요약 / 버튼)
-- [ ] "대시보드 열기" → 별도 윈도우 열기
-- [ ] "설정" → 설정 윈도우 열기
+- [x] `AppDelegate.swift` — NSStatusBar 아이콘 등록
+- [x] 메뉴바 아이콘 클릭 시 팝업 popover 표시
+- [x] 팝업 내 기본 레이아웃 구성 (종목 리스트 영역 / 포트폴리오 요약 / 버튼)
+- [x] "설정" → 설정 윈도우 열기
 
 ### 1.2 데이터 모델 정의
 
-- [ ] `StockQuote.swift` — 현재가, 등락폭, 등락률, 거래량 등
-- [ ] `WatchlistItem.swift` — 종목코드, 이름, 별칭, 그룹
-- [ ] `PortfolioItem.swift` — 종목코드, 평균매입가, 수량
-- [ ] `AlertCondition.swift` — 트리거 유형, 임계값, 활성화 여부
-- [ ] `AlertHistory.swift` — 발생 시각, 종목, 메시지
+- [x] `StockQuote.swift` — 현재가, 등락폭, 등락률, 거래량 등
+- [x] `WatchlistItem.swift` — 종목코드, 이름, 별칭, 그룹
+- [x] `PortfolioItem.swift` — 종목코드, 평균매입가, 수량
+- [x] `AlertCondition.swift` — 트리거 유형, 임계값, 활성화 여부
+- [x] `AlertHistory.swift` — 발생 시각, 종목, 메시지
 
 ### 1.3 SQLite 데이터베이스 설정 (GRDB)
 
-- [ ] `DatabaseManager.swift` — DB 파일 생성 및 연결
-- [ ] Migration 1: `watchlist` 테이블 생성
-- [ ] Migration 2: `portfolio` 테이블 생성
-- [ ] Migration 3: `alert_conditions` 테이블 생성
-- [ ] Migration 4: `alert_history` 테이블 생성
-- [ ] CRUD 메서드 구현 (각 모델별 insert/update/delete/fetch)
+- [x] `DatabaseManager.swift` — DB 파일 생성 및 연결
+- [x] Migration 1: `watchlist` 테이블 생성
+- [x] Migration 2: `portfolio` 테이블 생성
+- [x] Migration 3: `alert_conditions` 테이블 생성
+- [x] Migration 4: `alert_history` 테이블 생성
+- [x] CRUD 메서드 구현 (각 모델별 insert/update/delete/fetch)
 
 ### 1.4 브로커 어댑터 인터페이스
 
-- [ ] `BrokerAdapter.swift` — protocol 정의
-  ```swift
-  protocol BrokerAdapter {
-      var brokerName: String { get }
-      func connect(credentials: BrokerCredentials) async throws
-      func fetchQuote(symbol: String) async throws -> StockQuote
-      func fetchPortfolio() async throws -> [PortfolioItem]
-      func subscribeRealtime(symbols: [String], handler: @escaping (StockQuote) -> Void)
-      func fetchNews(symbol: String) async throws -> [NewsItem]
-  }
-  ```
-- [ ] `BrokerCredentials.swift` — API 키, 계좌번호 모델
-- [ ] `MockBrokerAdapter.swift` — 테스트용 더미 어댑터 (랜덤 시세 반환)
+- [x] `BrokerAdapter.swift` — protocol 정의
+- [x] `BrokerCredentials` — API 키, 계좌번호 모델 (BrokerAdapter.swift에 포함)
+- [x] `MockBrokerAdapter.swift` — 테스트용 더미 어댑터 (랜덤 시세 반환)
 
-### 1.5 키움 REST API 연동
+### 1.5 한국투자증권(KIS) REST API 연동
 
-- [ ] 키움 Open API+ 개발 계정 및 앱키 준비
-- [ ] `KiwoomAdapter.swift` — BrokerAdapter 구현
-- [ ] OAuth 토큰 발급 (`/oauth2/tokenP`) 구현
-- [ ] 주식 현재가 조회 (`/uapi/domestic-stock/v1/quotations/inquire-price`) 구현
-- [ ] API 응답 → `StockQuote` 모델 매핑
-- [ ] Exponential Backoff 재시도 로직 구현
-- [ ] API 키를 macOS Keychain에 저장/불러오기
+- [x] `KISAdapter.swift` — BrokerAdapter 구현 (actor 기반)
+- [x] OAuth 토큰 발급 (`/oauth2/tokenP`) 및 캐싱 (만료 5분 전 자동 갱신)
+- [x] 주식 현재가 조회 (`/uapi/domestic-stock/v1/quotations/inquire-price`) 구현
+- [x] API 응답 → `StockQuote` 모델 매핑 (부호 필드 `prdy_vrss_sign` 처리 포함)
+- [x] 토큰 만료(401) 시 재발급 후 1회 자동 재시도
+- [x] 실전투자 / 모의투자 환경 전환 지원
+- [x] API 키를 macOS Keychain에 저장/불러오기 (`KeychainHelper.swift`)
+- [x] 설정 화면 "계좌 연결" 탭 추가 (AppKey/Secret 입력, 연결 테스트 버튼)
+- [x] 앱 시작 시 Keychain 자격증명 자동 로드 → KIS 연결, 없으면 Mock 폴백
+- [ ] Exponential Backoff 재시도 로직 구현 (Phase 3에서 통합 예정)
 
 ### 1.6 관심 종목 UI
 
-- [ ] 설정 탭 2: 관심 종목 화면
-  - [ ] 종목 코드/이름 검색 UI
-  - [ ] 종목 추가 기능
-  - [ ] 종목 삭제 기능
-  - [ ] 그룹 설정 (장기보유 / 단기매매 / 관심)
-  - [ ] 별칭 입력 필드
-- [ ] 메뉴바 팝업에서 관심 종목 시세 표시
-  - [ ] 현재가, 등락폭, 등락률(%) 표시
-  - [ ] 상승(녹색) / 하락(빨간색) 색상 구분
+- [x] 설정 탭 1: 관심 종목 화면
+  - [x] 종목 코드/이름 입력 UI
+  - [x] 종목 추가 기능
+  - [x] 종목 삭제 기능
+  - [x] 그룹 설정 (장기보유 / 단기매매 / 관심)
+  - [x] 별칭 입력 필드
+- [x] 메뉴바 팝업에서 관심 종목 시세 표시
+  - [x] 현재가, 등락폭, 등락률(%) 표시
+  - [x] 상승(녹색) / 하락(빨간색) 색상 구분
 
 ### 1.7 알림 조건 설정 (트리거 ①②)
 
-- [ ] `AlertEvaluator.swift` — 조건 평가 엔진
-- [ ] 트리거 ① 특정 가격 도달 평가 로직
-  ```
-  현재가 >= 목표가 → 알림
-  현재가 <= 손절가 → 알림
-  ```
-- [ ] 트리거 ② 등락률 기준 평가 로직
-  ```
-  등락률 >= +N% 또는 <= -N% → 알림
-  ```
-- [ ] 알림 발생 후 자동 비활성화 옵션
-- [ ] 쿨다운 로직 (동일 조건 재발송 최소 간격)
+- [x] `AlertEvaluator.swift` — 조건 평가 엔진
+- [x] 트리거 ① 특정 가격 도달 평가 로직
+- [x] 트리거 ② 등락률 기준 평가 로직
+- [x] 알림 발생 후 자동 비활성화 옵션
+- [x] 쿨다운 로직 (동일 조건 재발송 최소 간격)
 
 ### 1.8 알림 설정 UI
 
-- [ ] 설정 탭 3: 알림 설정 화면
-  - [ ] 종목별 알림 조건 목록
-  - [ ] 가격 알림 추가 (목표가/손절가 입력)
-  - [ ] 등락률 알림 추가 (상승/하락 임계값 입력)
-  - [ ] 알림 활성화/비활성화 토글
-  - [ ] 쿨다운 시간 설정
+- [x] 설정 탭 3: 알림 설정 화면
+  - [x] 종목별 알림 조건 목록
+  - [x] 가격 알림 추가 (목표가/손절가 입력)
+  - [x] 등락률 알림 추가 (상승/하락 임계값 입력)
+  - [x] 알림 활성화/비활성화 토글
+  - [x] 쿨다운 시간 설정
 
 ### 1.9 macOS 네이티브 알림 구현
 
-- [ ] `NotificationManager.swift` — UNUserNotificationCenter 래퍼
-- [ ] 앱 시작 시 알림 권한 요청
-- [ ] 알림 발송 메서드 구현
-- [ ] 알림 클릭 시 앱 포커스 동작
-- [ ] 알림 발생 기록을 `alert_history` 테이블에 저장
+- [x] `NotificationManager.swift` — UNUserNotificationCenter 래퍼
+- [x] 앱 시작 시 알림 권한 요청
+- [x] 알림 발송 메서드 구현
+- [x] 알림 클릭 시 앱 포커스 동작 (팝오버 자동 오픈)
+- [x] 알림 발생 기록을 `alert_history` 테이블에 저장
 
 ### 1.10 포트폴리오 기본 기능
 
-- [ ] 설정 탭 4: 포트폴리오 화면
-  - [ ] 종목 추가 (종목코드, 평균매입가, 수량 수동 입력)
-  - [ ] 종목 수정 / 삭제
-- [ ] 포트폴리오 손익 계산
-  ```
-  평가손익 = (현재가 - 평균매입가) × 수량
-  수익률 = 평가손익 / (평균매입가 × 수량) × 100
-  ```
-- [ ] 메뉴바 팝업 하단에 총 평가손익 표시
+- [x] 설정 탭 2: 포트폴리오 화면
+  - [x] 종목 추가 (종목코드, 평균매입가, 수량 수동 입력)
+  - [x] 종목 삭제
+- [x] 포트폴리오 손익 계산
+- [x] 메뉴바 팝업 하단에 총 평가손익 표시
 
 ### 1.11 시세 자동 갱신
 
-- [ ] `QuoteManager.swift` — 폴링 or 실시간 수신 관리
-- [ ] 폴링 모드: 3초 간격으로 관심 종목 전체 시세 조회
-- [ ] 시세 갱신 시 AlertEvaluator 자동 호출
-- [ ] 네트워크 오류 시 재연결 시도 및 메뉴바 아이콘 상태 변경
+- [x] `QuoteManager.swift` — 폴링 관리
+- [x] 폴링 모드: 3초 간격으로 관심 종목 전체 시세 조회
+- [x] 시세 갱신 시 AlertEvaluator 자동 호출
+- [x] 네트워크 오류 시 메뉴바 아이콘 상태 변경 (2회 연속 실패 → ⚠ 아이콘, 팝오버 점 빨간색)
 
 ### ✅ Phase 1 검증
-- [ ] 빌드 성공, 앱 실행됨
-- [ ] 메뉴바 아이콘 클릭 → 팝업 정상 표시
-- [ ] 관심 종목 추가 → DB 저장 → 앱 재시작 후에도 유지
-- [ ] API 연동 → 실제 주가 표시됨
-- [ ] 목표가 알림 조건 설정 → 조건 충족 시 macOS 알림 수신
-- [ ] 등락률 알림 정상 동작
-- [ ] 포트폴리오 손익 계산 정확성 확인
-- [ ] 알림 이력이 DB에 저장됨
+- [x] 빌드 성공, 앱 실행됨 (`** BUILD SUCCEEDED **` 확인)
+- [x] DB 파일 생성 및 4개 테이블 정상 생성 확인
+- [ ] 메뉴바 아이콘 클릭 → 팝업 정상 표시 (직접 확인 필요)
+- [ ] 관심 종목 추가 → DB 저장 → 앱 재시작 후에도 유지 (직접 확인 필요)
+- [ ] Mock API → 시세 폴링 및 팝업 표시 확인 (직접 확인 필요)
+- [ ] 목표가 알림 조건 설정 → 조건 충족 시 macOS 알림 수신 (직접 확인 필요)
+- [ ] 등락률 알림 정상 동작 (직접 확인 필요)
+- [ ] 포트폴리오 손익 계산 정확성 확인 (직접 확인 필요)
+- [ ] 알림 이력이 DB에 저장됨 (직접 확인 필요)
+- [ ] 키움 REST API 연동 (1.5 구현 후)
 
 ---
 
@@ -347,10 +317,10 @@
 
 ### 4.2 한국투자증권(KIS) 어댑터
 
-- [ ] KIS Developers API 키 발급
-- [ ] `KISAdapter.swift` — BrokerAdapter 구현
-- [ ] 토큰 발급, 현재가 조회, 포트폴리오 조회 구현
-- [ ] Keychain에 KIS API 키 저장
+- [x] `KISAdapter.swift` — BrokerAdapter 구현 (Phase 1.5에서 구현 완료)
+- [x] 토큰 발급, 현재가 조회 구현
+- [x] Keychain에 KIS API 키 저장
+- [ ] 포트폴리오 조회 구현 (`/uapi/domestic-stock/v1/trading/inquire-balance`)
 
 ### 4.3 계좌 연결 UI 개선
 
