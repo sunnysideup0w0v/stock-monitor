@@ -1,0 +1,35 @@
+name: StockWatch
+options:
+  bundleIdPrefix: com.personal
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "16.0"
+  Swift: "6.0"
+
+packages:
+  GRDB:
+    url: https://github.com/groue/GRDB.swift
+    from: 6.0.0
+
+targets:
+  StockWatch:
+    type: application
+    platform: macOS
+    sources:
+      - path: StockWatch
+    resources:
+      - path: StockWatch/Resources
+    dependencies:
+      - package: GRDB
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.personal.StockWatch
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1
+        SWIFT_VERSION: 6.0
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "-"
+        DEVELOPMENT_TEAM: ""
+        INFOPLIST_FILE: StockWatch/Resources/Info.plist
+        CODE_SIGN_ENTITLEMENTS: StockWatch/StockWatch.entitlements
