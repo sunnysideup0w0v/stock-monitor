@@ -597,32 +597,57 @@ struct AlertHistoryView: View {
     @State private var history: [AlertHistory] = []
     @State private var symbolFilter = ""
     @State private var typeFilter: TriggerType? = nil
+    @State private var startDate: Date = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
+    @State private var endDate: Date = Date()
 
     private var filtered: [AlertHistory] {
-        history.filter { item in
-            let symbolOK = symbolFilter.isEmpty ||
-                item.symbol.localizedCaseInsensitiveContains(symbolFilter)
-            let typeOK = typeFilter == nil || item.triggerType == typeFilter
-            return symbolOK && typeOK
+        let cal = Calendar.current
+        let start = cal.startOfDay(for: startDate)
+        let end   = cal.date(bySettingHour: 23, minute: 59, second: 59, of: endDate) ?? endDate
+        return history.filter { item in
+            let dateOK   = item.triggeredAt >= start && item.triggeredAt <= end
+            let symbolOK = symbolFilter.isEmpty || item.symbol.localizedCaseInsensitiveContains(symbolFilter)
+            let typeOK   = typeFilter == nil || item.triggerType == typeFilter
+            return dateOK && symbolOK && typeOK
         }
     }
 
     var body: some View {
         SettingsTabContainer(title: "알림 이력") {
-            HStack(spacing: 8) {
-                TextField("종목 검색", text: $symbolFilter)
-                    .frame(width: 100)
-                Picker("유형", selection: $typeFilter) {
-                    Text("전체").tag(Optional<TriggerType>.none)
-                    ForEach(TriggerType.allCases, id: \.self) { type in
-                        Text(type.displayName).tag(Optional(type))
+            VStack(alignment: .leading, spacing: 6) {
+                // 날짜 범위 행
+                HStack(spacing: 6) {
+                    Text("기간").font(.caption).foregroundStyle(.secondary).frame(width: 24, alignment: .trailing)
+                    DatePicker("", selection: $startDate, displayedComponents: .date).labelsHidden()
+                    Text("~").foregroundStyle(.secondary)
+                    DatePicker("", selection: $endDate, in: startDate..., displayedComponents: .date).labelsHidden()
+                    Spacer()
+                    ForEach(["오늘", "1주", "1달", "전체"], id: \.self) { preset in
+                        Button(preset) { applyPreset(preset) }
+                            .buttonStyle(.borderless)
+                            .font(.caption)
                     }
                 }
-                .frame(width: 160)
-                Spacer()
-                Button("새로고침") { load() }
-                    .buttonStyle(.borderless)
-                    .font(.caption)
+
+                // 유형·종목 필터 행
+                HStack(spacing: 6) {
+                    Text("유형").font(.caption).foregroundStyle(.secondary).frame(width: 24, alignment: .trailing)
+                    Picker("", selection: $typeFilter) {
+                        Text("전체").tag(Optional<TriggerType>.none)
+                        ForEach(TriggerType.allCases, id: \.self) { type in
+                            Text(type.displayName).tag(Optional(type))
+                        }
+                    }
+                    .labelsHidden()
+                    .frame(width: 160)
+                    Text("종목").font(.caption).foregroundStyle(.secondary)
+                    TextField("검색", text: $symbolFilter).frame(width: 80)
+                    Spacer()
+                    Text("\(filtered.count)건").font(.caption).foregroundStyle(.tertiary)
+                    Button("새로고침") { load() }
+                        .buttonStyle(.borderless)
+                        .font(.caption)
+                }
             }
 
             if filtered.isEmpty {
@@ -641,8 +666,20 @@ struct AlertHistoryView: View {
         .onAppear { load() }
     }
 
+    private func applyPreset(_ preset: String) {
+        let now = Date()
+        endDate = now
+        switch preset {
+        case "오늘": startDate = Calendar.current.startOfDay(for: now)
+        case "1주":  startDate = Calendar.current.date(byAdding: .day,   value: -7,  to: now) ?? now
+        case "1달":  startDate = Calendar.current.date(byAdding: .month, value: -1,  to: now) ?? now
+        case "전체": startDate = Date(timeIntervalSince1970: 0)
+        default: break
+        }
+    }
+
     private func load() {
-        history = (try? DatabaseManager.shared.fetchAlertHistory(limit: 200)) ?? []
+        history = (try? DatabaseManager.shared.fetchAlertHistory(limit: 500)) ?? []
     }
 }
 
