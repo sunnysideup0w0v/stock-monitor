@@ -57,13 +57,17 @@ final class DARTManager {
             let seenKey = "DART.seen.\(symbol)"
             var seenIds = Set(UserDefaults.standard.stringArray(forKey: seenKey) ?? [])
             let newDisclosures = disclosures.filter { !seenIds.contains($0.rceptNo) }
+            let filterTypes = UserDefaults.standard.stringArray(forKey: "DART.filterTypes") ?? []
 
             for disclosure in newDisclosures {
-                NotificationManager.shared.send(
-                    title: "[\(disclosure.corpName)] 공시",
-                    body: disclosure.reportName,
-                    symbol: symbol
-                )
+                let shouldNotify = filterTypes.isEmpty || filterTypes.contains(disclosure.disclosureType)
+                if shouldNotify {
+                    NotificationManager.shared.send(
+                        title: "[\(disclosure.corpName)] 공시",
+                        body: disclosure.reportName,
+                        symbol: symbol
+                    )
+                }
                 seenIds.insert(disclosure.rceptNo)
             }
 
@@ -127,12 +131,14 @@ final class DARTManager {
                 let stockCode: String?
                 let reportNm: String
                 let rceptDt: String
+                let pblntfTy: String?
                 enum CodingKeys: String, CodingKey {
-                    case rceptNo  = "rcept_no"
-                    case corpName = "corp_name"
+                    case rceptNo   = "rcept_no"
+                    case corpName  = "corp_name"
                     case stockCode = "stock_code"
-                    case reportNm = "report_nm"
-                    case rceptDt  = "rcept_dt"
+                    case reportNm  = "report_nm"
+                    case rceptDt   = "rcept_dt"
+                    case pblntfTy  = "pblntf_ty"
                 }
             }
         }
@@ -149,7 +155,8 @@ final class DARTManager {
                 corpName: $0.corpName,
                 stockCode: $0.stockCode ?? "",
                 reportName: $0.reportNm,
-                receivedDate: $0.rceptDt
+                receivedDate: $0.rceptDt,
+                disclosureType: $0.pblntfTy ?? ""
             )
         }
     }
