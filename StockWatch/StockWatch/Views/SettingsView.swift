@@ -713,6 +713,7 @@ struct AlertHistoryView: View {
 
         let panel = NSSavePanel()
         panel.nameFieldStringValue = "alert_history_\(dateFmt.string(from: Date())).csv"
+        panel.directoryURL = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
         panel.begin { response in
             guard response == .OK, let url = panel.url else { return }
             // UTF-8 BOM 추가 — Excel에서 한글 깨짐 방지
