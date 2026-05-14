@@ -224,16 +224,44 @@ struct AssetChartView: View {
 
     // MARK: - Chart Body
 
+    private var overallColor: Color {
+        guard let last = snapshots.last else { return .blue }
+        return chartValue(last) >= baseline ? .green : .red
+    }
+
+    // 타입 추론 타임아웃 방지: 각 mark 종류를 별도 @ChartContentBuilder 프로퍼티로 분리
+    @ChartContentBuilder private var areaAboveContent: some ChartContent {
+        ForEach(Array(segments.enumerated()), id: \.offset) { idx, seg in
+            ForEach(seg, id: \.timestamp) { snap in
+                areaAboveMark(snap, seriesIdx: idx)
+            }
+        }
+    }
+
+    @ChartContentBuilder private var areaBelowContent: some ChartContent {
+        ForEach(Array(segments.enumerated()), id: \.offset) { idx, seg in
+            ForEach(seg, id: \.timestamp) { snap in
+                areaBelowMark(snap, seriesIdx: idx)
+            }
+        }
+    }
+
+    @ChartContentBuilder private var lineContent: some ChartContent {
+        ForEach(Array(segments.enumerated()), id: \.offset) { idx, seg in
+            ForEach(seg, id: \.timestamp) { snap in
+                lineMarkFor(snap, seriesIdx: idx)
+            }
+        }
+    }
+
     private var chartBody: some View {
         Chart {
-            ForEach(Array(segments.enumerated()), id: \.offset) { idx, seg in
-                ForEach(seg, id: \.timestamp) { snap in
-                    lineMarkFor(snap, seriesIdx: idx)
-                }
-            }
+            areaAboveContent   // 기준선 위 초록 면적
+            areaBelowContent   // 기준선 아래 빨간 면적
+            lineContent        // 선 (면적 위에 렌더)
             RuleMark(y: .value("기준", baseline))
-                .foregroundStyle(.gray.opacity(0.4))
-                .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 4]))
+                .foregroundStyle(.gray.opacity(0.5))
+                .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 3]))
                 .annotation(position: .trailing, alignment: .trailing) {
                     Text(showValue ? "기준" : "0%")
                         .font(.caption2).foregroundStyle(.secondary)
@@ -255,15 +283,43 @@ struct AssetChartView: View {
     }
 
     @ChartContentBuilder
+    private func areaAboveMark(_ snap: PortfolioSnapshot, seriesIdx: Int) -> some ChartContent {
+        let y = chartValue(snap)
+        let base = baseline
+        AreaMark(
+            x: .value("시간", snap.timestamp),
+            yStart: .value("기준", base),
+            yEnd: .value("값", max(y, base)),
+            series: .value("up", seriesIdx)
+        )
+        .foregroundStyle(.green.opacity(0.15))
+        .interpolationMethod(.monotone)
+    }
+
+    @ChartContentBuilder
+    private func areaBelowMark(_ snap: PortfolioSnapshot, seriesIdx: Int) -> some ChartContent {
+        let y = chartValue(snap)
+        let base = baseline
+        AreaMark(
+            x: .value("시간", snap.timestamp),
+            yStart: .value("값", min(y, base)),
+            yEnd: .value("기준", base),
+            series: .value("dn", seriesIdx)
+        )
+        .foregroundStyle(.red.opacity(0.15))
+        .interpolationMethod(.monotone)
+    }
+
+    @ChartContentBuilder
     private func lineMarkFor(_ snap: PortfolioSnapshot, seriesIdx: Int) -> some ChartContent {
-        let yLabel = showValue ? "금액" : "수익률"
         LineMark(
             x: .value("시간", snap.timestamp),
-            y: .value(yLabel, chartValue(snap)),
-            series: .value("s", seriesIdx)
+            y: .value(showValue ? "금액" : "수익률", chartValue(snap)),
+            series: .value("l", seriesIdx)
         )
-        .foregroundStyle(.blue)
+        .foregroundStyle(overallColor)
         .interpolationMethod(.monotone)
+        .lineStyle(StrokeStyle(lineWidth: 1.5))
     }
 
     @ViewBuilder
