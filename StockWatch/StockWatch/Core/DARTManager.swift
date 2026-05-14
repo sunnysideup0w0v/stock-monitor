@@ -62,11 +62,22 @@ final class DARTManager {
             for disclosure in newDisclosures {
                 let shouldNotify = filterTypes.isEmpty || filterTypes.contains(disclosure.disclosureType)
                 if shouldNotify {
+                    let dartURL = "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=\(disclosure.rceptNo)"
                     NotificationManager.shared.send(
                         title: "[\(disclosure.corpName)] 공시",
                         body: disclosure.reportName,
-                        symbol: symbol
+                        symbol: symbol,
+                        urlString: dartURL
                     )
+                    var history = AlertHistory(
+                        id: nil,
+                        symbol: disclosure.stockCode.isEmpty ? symbol : disclosure.stockCode,
+                        triggerType: .dartDisclosure,
+                        message: disclosure.reportName,
+                        triggeredAt: Date(),
+                        metadata: disclosure.rceptNo
+                    )
+                    try? DatabaseManager.shared.insert(&history)
                 }
                 seenIds.insert(disclosure.rceptNo)
             }

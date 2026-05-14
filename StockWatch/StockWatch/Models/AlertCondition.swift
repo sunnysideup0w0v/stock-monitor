@@ -18,7 +18,7 @@ struct AlertCondition: Codable, FetchableRecord, MutablePersistableRecord {
     }
 }
 
-enum TriggerType: String, Codable {
+enum TriggerType: String, Codable, CaseIterable {
     case targetPrice       = "target_price"
     case stopLoss          = "stop_loss"
     case rateUp            = "rate_up"
@@ -28,6 +28,7 @@ enum TriggerType: String, Codable {
     case portfolioLoss     = "portfolio_loss"      // 전체 평가손익 <= -N원
     case portfolioGainRate = "portfolio_gain_rate" // 전체 수익률 >= N%
     case portfolioLossRate = "portfolio_loss_rate" // 전체 수익률 <= -N%
+    case dartDisclosure    = "dart_disclosure"     // DART 공시 (사용자가 직접 설정 불가)
 
     var displayName: String {
         switch self {
@@ -40,16 +41,18 @@ enum TriggerType: String, Codable {
         case .portfolioLoss:     return "포트폴리오 손절손익"
         case .portfolioGainRate: return "포트폴리오 목표수익률"
         case .portfolioLossRate: return "포트폴리오 손절수익률"
+        case .dartDisclosure:    return "DART 공시"
         }
     }
 
     var unit: String {
         switch self {
-        case .targetPrice, .stopLoss:              return "원"
-        case .rateUp, .rateDown:                   return "%"
-        case .volumeSpike:                         return "배"
-        case .portfolioGain, .portfolioLoss:       return "원"
+        case .targetPrice, .stopLoss:                return "원"
+        case .rateUp, .rateDown:                     return "%"
+        case .volumeSpike:                           return "배"
+        case .portfolioGain, .portfolioLoss:         return "원"
         case .portfolioGainRate, .portfolioLossRate: return "%"
+        case .dartDisclosure:                        return ""
         }
     }
 
@@ -58,5 +61,11 @@ enum TriggerType: String, Codable {
         case .portfolioGain, .portfolioLoss, .portfolioGainRate, .portfolioLossRate: return true
         default: return false
         }
+    }
+
+    // 알림 설정 UI의 조건 추가 폼에 표시할 유형 목록 (DART 공시는 DARTManager가 자동 생성)
+    static var userConfigurable: [TriggerType] {
+        [.targetPrice, .stopLoss, .rateUp, .rateDown, .volumeSpike,
+         .portfolioGain, .portfolioLoss, .portfolioGainRate, .portfolioLossRate]
     }
 }

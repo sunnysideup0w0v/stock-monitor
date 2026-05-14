@@ -11,8 +11,10 @@ struct SettingsView: View {
                 .tabItem { Label("포트폴리오", systemImage: "chart.pie") }
             AlertSettingsView()
                 .tabItem { Label("알림설정", systemImage: "bell") }
+            AlertHistoryView()
+                .tabItem { Label("알림 이력", systemImage: "clock.arrow.circlepath") }
         }
-        .frame(width: 580, height: 460)
+        .frame(width: 620, height: 480)
         .padding()
     }
 }
@@ -291,9 +293,7 @@ struct AlertSettingsView: View {
                         }
                         Text("유형").gridColumnAlignment(.trailing)
                         Picker("", selection: $triggerType) {
-                            ForEach([TriggerType.targetPrice, .stopLoss, .rateUp, .rateDown, .volumeSpike,
-                                     .portfolioGain, .portfolioLoss, .portfolioGainRate, .portfolioLossRate],
-                                    id: \.self) {
+                            ForEach(TriggerType.userConfigurable, id: \.self) {
                                 Text($0.displayName).tag($0)
                             }
                         }
@@ -340,6 +340,8 @@ struct AlertSettingsView: View {
             return String(format: "%.1f%%", c.threshold)
         case .volumeSpike:
             return String(format: "%.1f배", c.threshold)
+        case .dartDisclosure:
+            return "-"
         }
     }
 
@@ -586,6 +588,96 @@ struct AccountSettingsView: View {
     private func maskedKey(_ key: String) -> String {
         guard key.count > 8 else { return String(repeating: "•", count: key.count) }
         return String(key.prefix(4)) + String(repeating: "•", count: 12) + String(key.suffix(4))
+    }
+}
+
+// MARK: - Alert History
+
+struct AlertHistoryView: View {
+    @State private var history: [AlertHistory] = []
+    @State private var symbolFilter = ""
+    @State private var typeFilter: TriggerType? = nil
+
+    private var filtered: [AlertHistory] {
+        history.filter { item in
+            let symbolOK = symbolFilter.isEmpty ||
+                item.symbol.localizedCaseInsensitiveContains(symbolFilter)
+            let typeOK = typeFilter == nil || item.triggerType == typeFilter
+            return symbolOK && typeOK
+        }
+    }
+
+    var body: some View {
+        SettingsTabContainer(title: "알림 이력") {
+            HStack(spacing: 8) {
+                TextField("종목 검색", text: $symbolFilter)
+                    .frame(width: 100)
+                Picker("유형", selection: $typeFilter) {
+                    Text("전체").tag(Optional<TriggerType>.none)
+                    ForEach(TriggerType.allCases, id: \.self) { type in
+                        Text(type.displayName).tag(Optional(type))
+                    }
+                }
+                .frame(width: 160)
+                Spacer()
+                Button("새로고침") { load() }
+                    .buttonStyle(.borderless)
+                    .font(.caption)
+            }
+
+            if filtered.isEmpty {
+                Text("이력이 없습니다")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                List {
+                    ForEach(filtered, id: \.id) { item in
+                        AlertHistoryRowView(item: item)
+                    }
+                }
+                .listStyle(.bordered)
+            }
+        }
+        .onAppear { load() }
+    }
+
+    private func load() {
+        history = (try? DatabaseManager.shared.fetchAlertHistory(limit: 200)) ?? []
+    }
+}
+
+struct AlertHistoryRowView: View {
+    let item: AlertHistory
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 6) {
+                Text(item.symbol == "PORTFOLIO" ? "전체 포트폴리오" : item.symbol)
+                    .font(.body).fontWeight(.medium)
+                Text(item.triggerType.displayName)
+                    .font(.caption)
+                    .padding(.horizontal, 6).padding(.vertical, 2)
+                    .background(.quaternary, in: Capsule())
+                Spacer()
+                Text(item.triggeredAt.formatted(date: .omitted, time: .shortened))
+                    .font(.caption2).foregroundStyle(.tertiary)
+                Text(item.triggeredAt.formatted(.dateTime.month().day()))
+                    .font(.caption2).foregroundStyle(.tertiary)
+                if item.triggerType == .dartDisclosure, let rceptNo = item.metadata {
+                    Button("공시 보기") {
+                        let urlStr = "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=\(rceptNo)"
+                        if let url = URL(string: urlStr) { NSWorkspace.shared.open(url) }
+                    }
+                    .buttonStyle(.borderless)
+                    .font(.caption)
+                    .foregroundStyle(.blue)
+                }
+            }
+            Text(item.message)
+                .font(.caption).foregroundStyle(.secondary)
+                .lineLimit(2)
+        }
+        .padding(.vertical, 2)
     }
 }
 

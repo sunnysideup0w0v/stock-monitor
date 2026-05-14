@@ -9,7 +9,19 @@
       "Bash(brew list *)",
       "Bash(brew install *)",
       "Bash(xcodegen generate *)",
-      "Bash(sudo xcodebuild *)"
+      "Bash(sudo xcodebuild *)",
+      "Bash(open *)",
+      "Bash(screencapture -x /tmp/stockwatch_check.png)",
+      "Bash(pkill -x StockWatch)",
+      "Bash(screencapture -x /tmp/stockwatch_debug.png)",
+      "Bash(screencapture -x /tmp/stockwatch_debug2.png)",
+      "Bash(pkill -f StockWatch)",
+      "Bash(log show *)",
+      "Bash(sample StockWatch 1)",
+      "Bash(pkill -9 -f StockWatch)",
+      "WebSearch",
+      "Bash(git -C /Users/sunny/Documents/study/stock-monitor log --oneline)",
+      "Bash(git *)"
     ]
   }
 }

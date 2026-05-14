@@ -69,6 +69,12 @@ final class DatabaseManager: @unchecked Sendable {
             }
         }
 
+        migrator.registerMigration("v5_alert_history_metadata") { db in
+            try db.alter(table: "alert_history") { t in
+                t.add(column: "metadata", .text)
+            }
+        }
+
         try migrator.migrate(dbQueue)
     }
 

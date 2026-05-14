@@ -16,22 +16,21 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, @un
         }
     }
 
-    func send(title: String, body: String, symbol: String) {
-        // 소리: NSSound로 직접 재생 (UNUserNotificationCenter 소리가 막히는 경우 대비)
+    func send(title: String, body: String, symbol: String, urlString: String? = nil) {
         DispatchQueue.main.async {
             NSSound(named: "Glass")?.play()
         }
 
-        // 화면 배너: 커스텀 오버레이 윈도우
         DispatchQueue.main.async {
             ToastWindowManager.shared.show(title: title, body: body)
         }
 
-        // 알림 센터 등록 (NC에도 기록)
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
-        content.userInfo = ["symbol": symbol]
+        var userInfo: [String: Any] = ["symbol": symbol]
+        if let urlString { userInfo["url"] = urlString }
+        content.userInfo = userInfo
 
         let request = UNNotificationRequest(
             identifier: UUID().uuidString,
@@ -46,8 +45,14 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, @un
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
-        DispatchQueue.main.async {
-            NotificationCenter.default.post(name: .openPopover, object: nil)
+        let userInfo = response.notification.request.content.userInfo
+        if let urlStr = userInfo["url"] as? String, let url = URL(string: urlStr) {
+            // DART 공시 등 URL이 있는 알림 → 브라우저에서 직접 오픈
+            DispatchQueue.main.async { NSWorkspace.shared.open(url) }
+        } else {
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: .openPopover, object: nil)
+            }
         }
         completionHandler()
     }

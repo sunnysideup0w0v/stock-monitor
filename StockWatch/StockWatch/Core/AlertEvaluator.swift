@@ -40,6 +40,8 @@ final class AlertEvaluator {
             return quote.volume >= Int(Double(avgVol) * condition.threshold)
         case .portfolioGain, .portfolioLoss, .portfolioGainRate, .portfolioLossRate:
             return false // evaluatePortfolio()에서 별도 처리
+        case .dartDisclosure:
+            return false // DARTManager에서 별도 처리
         }
     }
 
@@ -146,6 +148,8 @@ final class AlertEvaluator {
                           fmt.string(from: NSNumber(value: avgVol)) ?? "")
         case .portfolioGain, .portfolioLoss, .portfolioGainRate, .portfolioLossRate:
             return "포트폴리오 알림" // makePortfolioMessage에서 별도 생성
+        case .dartDisclosure:
+            return "DART 공시"
         }
     }
 }
