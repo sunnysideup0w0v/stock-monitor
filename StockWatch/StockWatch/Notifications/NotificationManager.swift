@@ -10,6 +10,17 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, @un
         UNUserNotificationCenter.current().delegate = self
     }
 
+    // macOS 기본 제공 시스템 사운드 목록
+    static let availableSounds: [String] = [
+        "없음", "Basso", "Blow", "Bottle", "Frog", "Funk",
+        "Glass", "Hero", "Morse", "Ping", "Pop", "Purr", "Sosumi", "Submarine", "Tink"
+    ]
+
+    static var selectedSound: String {
+        get { UserDefaults.standard.string(forKey: "Notification.sound") ?? "Glass" }
+        set { UserDefaults.standard.set(newValue, forKey: "Notification.sound") }
+    }
+
     func requestAuthorization() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { _, error in
             if let error { print("알림 권한 요청 실패: \(error)") }
@@ -17,8 +28,11 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, @un
     }
 
     func send(title: String, body: String, symbol: String, urlString: String? = nil) {
-        DispatchQueue.main.async {
-            NSSound(named: "Glass")?.play()
+        let soundName = NotificationManager.selectedSound
+        if soundName != "없음" {
+            DispatchQueue.main.async {
+                NSSound(named: soundName)?.play()
+            }
         }
 
         DispatchQueue.main.async {

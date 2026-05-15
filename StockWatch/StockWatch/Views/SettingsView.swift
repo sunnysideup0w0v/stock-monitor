@@ -436,6 +436,7 @@ struct AlertSettingsView: View {
     @State private var cooldownMinutes = 60
     @State private var marketHoursOnly: Bool = AlertEvaluator.marketHoursOnly
     @State private var disconnectAlert: Bool = QuoteManager.disconnectAlertEnabled
+    @State private var selectedSound: String = NotificationManager.selectedSound
 
     var body: some View {
         SettingsTabContainer(title: "알림설정") {
@@ -447,6 +448,20 @@ struct AlertSettingsView: View {
             HStack {
                 Toggle("네트워크 단절·복구 시 알림 발송", isOn: $disconnectAlert)
                     .onChange(of: disconnectAlert) { _, v in QuoteManager.disconnectAlertEnabled = v }
+                Spacer()
+            }
+            HStack(spacing: 8) {
+                Text("알림 소리")
+                    .font(.body)
+                Picker("", selection: $selectedSound) {
+                    ForEach(NotificationManager.availableSounds, id: \.self) { Text($0).tag($0) }
+                }
+                .labelsHidden()
+                .frame(width: 120)
+                .onChange(of: selectedSound) { _, v in
+                    NotificationManager.selectedSound = v
+                    if v != "없음" { NSSound(named: v)?.play() }
+                }
                 Spacer()
             }
             .padding(.bottom, 2)

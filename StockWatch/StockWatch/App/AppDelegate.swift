@@ -13,6 +13,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var popover: NSPopover?
     private var settingsWindow: NSWindow?
+    private var onboardingWindow: NSWindow?
     private var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -24,6 +25,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         if CommandLine.arguments.contains("--uitesting") {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { self.openSettings() }
+        } else if !UserDefaults.standard.bool(forKey: "Onboarding.completed") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { self.openOnboarding() }
         }
 
         NotificationCenter.default.addObserver(
@@ -127,6 +130,27 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             popover?.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         }
+    }
+
+    func openOnboarding() {
+        if onboardingWindow == nil {
+            var isPresented = true
+            let controller = NSHostingController(rootView: OnboardingView(isPresented: .init(
+                get: { isPresented },
+                set: { isPresented = $0
+                    if !$0 { self.onboardingWindow?.close() }
+                }
+            )))
+            let window = NSWindow(contentViewController: controller)
+            window.title = "StockWatch 시작하기"
+            window.styleMask = [.titled, .closable]
+            window.setContentSize(NSSize(width: 420, height: 360))
+            window.isReleasedWhenClosed = false
+            window.center()
+            onboardingWindow = window
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        onboardingWindow?.makeKeyAndOrderFront(nil)
     }
 
     func openSettings() {
