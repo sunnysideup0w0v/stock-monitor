@@ -8,6 +8,9 @@ enum AccountManager {
 
     /// 현재 Keychain에 자격증명이 존재하는 모든 계좌 ID 목록.
     static var connectedAccountIds: [String] {
+        #if DEBUG
+        if let override = testAccountId { return [override] }
+        #endif
         var ids: [String] = []
         if let appKey = KeychainHelper.load(account: "kis.appKey"), !appKey.isEmpty {
             ids.append("KIS-" + String(appKey.prefix(8)))

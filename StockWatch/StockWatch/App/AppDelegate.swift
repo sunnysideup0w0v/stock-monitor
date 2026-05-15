@@ -15,6 +15,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsWindow: NSWindow?
     private var onboardingWindow: NSWindow?
     private var cancellables = Set<AnyCancellable>()
+    private var eventMonitor: Any?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         CrashLogger.install()
@@ -119,6 +120,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
         if let popover, !popover.isShown {
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            startEventMonitor()
         }
     }
 
@@ -153,9 +155,29 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard let button = statusItem?.button else { return }
 
         if let popover, popover.isShown {
-            popover.performClose(nil)
+            closePopover()
         } else {
             popover?.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            startEventMonitor()
+        }
+    }
+
+    private func closePopover() {
+        popover?.performClose(nil)
+        stopEventMonitor()
+    }
+
+    private func startEventMonitor() {
+        guard eventMonitor == nil else { return }
+        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            self?.closePopover()
+        }
+    }
+
+    private func stopEventMonitor() {
+        if let monitor = eventMonitor {
+            NSEvent.removeMonitor(monitor)
+            eventMonitor = nil
         }
     }
 
@@ -203,5 +225,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 extension AppDelegate: NSPopoverDelegate {
     func popoverWillShow(_ notification: Notification) {
         NotificationCenter.default.post(name: .popoverWillShow, object: nil)
+    }
+
+    func popoverDidClose(_ notification: Notification) {
+        stopEventMonitor()
     }
 }

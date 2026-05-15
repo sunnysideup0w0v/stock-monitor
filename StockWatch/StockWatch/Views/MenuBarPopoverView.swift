@@ -7,6 +7,13 @@ struct MenuBarPopoverView: View {
     @State private var totalGain: Int = 0
     @State private var hasPortfolio = false
 
+    private var groupedHoldings: [(brokerId: String, items: [PortfolioItem])] {
+        AccountManager.connectedAccountIds.compactMap { id in
+            let filtered = portfolioHoldings.filter { $0.accountId == id }
+            return filtered.isEmpty ? nil : (brokerId: id, items: filtered)
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             header
@@ -95,14 +102,35 @@ struct MenuBarPopoverView: View {
             .padding(.vertical, 8)
 
             // 선택된 보유 종목 현재가
-            ForEach(portfolioHoldings, id: \.id) { item in
-                PortfolioHoldingRowView(
-                    item: item,
-                    quote: quoteManager.quotes[item.symbol]
-                )
+            let groups = groupedHoldings
+            if AccountManager.connectedAccountIds.count > 1 {
+                ForEach(groups, id: \.brokerId) { group in
+                    brokerDivider(group.brokerId)
+                    ForEach(group.items, id: \.id) { item in
+                        PortfolioHoldingRowView(item: item, quote: quoteManager.quotes[item.symbol])
+                    }
+                }
+            } else {
+                ForEach(portfolioHoldings, id: \.id) { item in
+                    PortfolioHoldingRowView(item: item, quote: quoteManager.quotes[item.symbol])
+                }
             }
         }
         .padding(.bottom, portfolioHoldings.isEmpty ? 0 : 6)
+    }
+
+    private func brokerDivider(_ brokerId: String) -> some View {
+        let name = brokerId.hasPrefix("KIS-") ? "KIS" : brokerId.hasPrefix("KIWOOM-") ? "키움" : brokerId
+        return HStack(spacing: 6) {
+            Text(name)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(.tertiary)
+            Rectangle()
+                .frame(height: 0.5)
+                .foregroundStyle(Color.secondary.opacity(0.25))
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 6)
     }
 
     private var bottomBar: some View {

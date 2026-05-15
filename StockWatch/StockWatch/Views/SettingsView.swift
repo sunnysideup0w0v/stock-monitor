@@ -222,6 +222,10 @@ struct PortfolioSettingsView: View {
         return selectedBrokerIds.map { brokerDisplayName($0) }.joined(separator: ", ")
     }
 
+    private var isShowingAllBrokers: Bool {
+        isMultiBroker && (selectedBrokerIds.isEmpty || selectedBrokerIds.count == connectedBrokerIds.count)
+    }
+
     private func brokerDisplayName(_ accountId: String) -> String {
         if accountId.hasPrefix("KIS-") { return "KIS" }
         if accountId.hasPrefix("KIWOOM-") { return "키움" }
@@ -312,44 +316,17 @@ struct PortfolioSettingsView: View {
             }
 
             List {
-                ForEach(filteredItems, id: \.id) { item in
-                    HStack(spacing: 10) {
-                        Button {
-                            togglePopoverVisibility(item)
-                        } label: {
-                            Image(systemName: item.showInPopover ? "eye.fill" : "eye.slash")
-                                .foregroundStyle(item.showInPopover ? .blue : .secondary)
-                                .frame(width: 16)
-                        }
-                        .buttonStyle(.borderless)
-                        .help(item.showInPopover ? "메뉴바 팝오버에서 숨기기" : "메뉴바 팝오버에 표시")
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            HStack(spacing: 4) {
-                                Text(item.name).font(.body)
-                                if isMultiBroker {
-                                    Text(item.brokerName)
-                                        .font(.caption2)
-                                        .padding(.horizontal, 5).padding(.vertical, 1)
-                                        .background(.blue.opacity(0.12), in: Capsule())
-                                        .foregroundStyle(.blue)
-                                }
+                if isShowingAllBrokers {
+                    ForEach(connectedBrokerIds, id: \.self) { brokerId in
+                        Section(brokerDisplayName(brokerId)) {
+                            ForEach(items.filter { $0.accountId == brokerId }, id: \.id) { item in
+                                portfolioRow(item)
                             }
-                            Text(item.symbol).font(.caption).foregroundStyle(.secondary)
                         }
-                        Spacer()
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text("평균 \(NumberFormatter.decimal.string(from: NSNumber(value: item.averagePrice)) ?? "")원")
-                                .font(.caption)
-                            Text("\(item.quantity)주")
-                                .font(.caption).foregroundStyle(.secondary)
-                        }
-                        Button {
-                            deleteItem(item)
-                        } label: {
-                            Image(systemName: "trash").foregroundStyle(.red)
-                        }
-                        .buttonStyle(.borderless)
+                    }
+                } else {
+                    ForEach(filteredItems, id: \.id) { item in
+                        portfolioRow(item)
                     }
                 }
             }
@@ -381,6 +358,39 @@ struct PortfolioSettingsView: View {
             }
 
             SnapshotSettingsSection()
+        }
+    }
+
+    @ViewBuilder
+    private func portfolioRow(_ item: PortfolioItem) -> some View {
+        HStack(spacing: 10) {
+            Button {
+                togglePopoverVisibility(item)
+            } label: {
+                Image(systemName: item.showInPopover ? "eye.fill" : "eye.slash")
+                    .foregroundStyle(item.showInPopover ? .blue : .secondary)
+                    .frame(width: 16)
+            }
+            .buttonStyle(.borderless)
+            .help(item.showInPopover ? "메뉴바 팝오버에서 숨기기" : "메뉴바 팝오버에 표시")
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.name).font(.body)
+                Text(item.symbol).font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("평균 \(NumberFormatter.decimal.string(from: NSNumber(value: item.averagePrice)) ?? "")원")
+                    .font(.caption)
+                Text("\(item.quantity)주")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Button {
+                deleteItem(item)
+            } label: {
+                Image(systemName: "trash").foregroundStyle(.red)
+            }
+            .buttonStyle(.borderless)
         }
     }
 
