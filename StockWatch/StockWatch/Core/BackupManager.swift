@@ -53,6 +53,8 @@ final class BackupManager {
             decoder.dateDecodingStrategy = .iso8601
             let backup = try decoder.decode(Backup.self, from: data)
             try restore(from: backup)
+            showAlert(title: "복원 완료",
+                      message: "관심종목 \(backup.watchlist.count)개, 포트폴리오 \(backup.portfolio.count)개, 알림 조건 \(backup.alertConditions.count)개를 가져왔습니다.")
         } catch {
             showAlert(title: "복원 실패", message: error.localizedDescription)
         }
@@ -97,9 +99,6 @@ final class BackupManager {
                                     lastTriggeredAt: nil)
             try db.insert(&new)
         }
-
-        showAlert(title: "복원 완료",
-                  message: "관심종목 \(backup.watchlist.count)개, 포트폴리오 \(backup.portfolio.count)개, 알림 조건 \(backup.alertConditions.count)개를 가져왔습니다.")
     }
 
     private static func backupFileName() -> String {
