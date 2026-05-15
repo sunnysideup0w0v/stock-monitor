@@ -39,6 +39,7 @@ struct SettingsTabContainer<Content: View>: View {
             Text(title).font(.title2).bold()
             content
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding([.horizontal, .bottom], 8)
     }
 }
