@@ -65,6 +65,7 @@ struct MenuBarPopoverView: View {
 
     private var portfolioSection: some View {
         VStack(spacing: 0) {
+
             // 포트폴리오 요약
             HStack {
                 Text("포트폴리오")
@@ -92,6 +93,7 @@ struct MenuBarPopoverView: View {
                 )
             }
         }
+        .padding(.bottom, portfolioHoldings.isEmpty ? 0 : 6)
     }
 
     private var bottomBar: some View {
