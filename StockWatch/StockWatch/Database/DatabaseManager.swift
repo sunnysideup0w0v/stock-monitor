@@ -294,4 +294,15 @@ final class DatabaseManager: @unchecked Sendable {
             try Date.fetchOne(db, sql: "SELECT MAX(updatedAt) FROM stock_universe")
         }
     }
+
+    func fetchStockUniverse(matching request: QueryInterfaceRequest<StockUniverseItem>) throws -> [StockUniverseItem] {
+        try dbQueue.read { db in try request.fetchAll(db) }
+    }
+
+    func fetchDistinctValues(column: String, table: String) throws -> [String] {
+        try dbQueue.read { db in
+            let rows = try Row.fetchAll(db, sql: "SELECT DISTINCT \(column) FROM \(table) WHERE \(column) IS NOT NULL ORDER BY \(column)")
+            return rows.compactMap { $0[column] as? String }
+        }
+    }
 }

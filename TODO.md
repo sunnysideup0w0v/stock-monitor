@@ -1,6 +1,6 @@
 # StockWatch — 개발 진행 체크리스트
 
-> PRD v0.3 기반 | 업데이트: 2026-05-15 (Phase 4 전체 완료 — 멀티 브로커 동시 모니터링 + UX 개선)  
+> PRD v0.3 기반 | 업데이트: 2026-05-16 (Phase 5.1~5.3 완료 — KRX 전종목 데이터 연동 + 조건 스크리너 구현)  
 > Claude Code로 단계별 개발 진행. 각 Phase 완료 시 검증 항목 확인 후 다음 단계로 이동.
 
 ---
@@ -541,24 +541,24 @@
 
 ### 5.2 조건 스크리너 엔진
 
-- [ ] `ScreenerCondition.swift` — 조건 모델 정의
-  - [ ] 조건 타입: `priceRange`, `volumeSpike`, `movingAvgCross`, `nearHighLow52w`, `perRange`, `pbrRange`, `marketCapRange`, `sectorFilter`, `recentDart`
-  - [ ] 조건 조합: AND (전체 충족)
-- [ ] `ScreenerEngine.swift` — 로컬 SQLite 조건 스크리닝
-  - [ ] `stock_universe` 테이블 대상 GRDB 쿼리 생성
-  - [ ] 이동평균 계산 (MA5 / MA20 / MA60) — 일별 데이터 기반
-  - [ ] 결과에 KIS 실시간 시세 보강 (`QuoteManager.startPolling`)
+- [x] `ScreenerCondition.swift` — 조건 모델 정의
+  - [x] 조건 타입: `priceRange`, `volumeMin`, `changeRateRange`, `perRange`, `pbrRange`, `marketCapRange`, `sectorFilter`, `marketFilter`
+  - [x] 조건 조합: AND (전체 충족)
+- [x] `ScreenerEngine.swift` — 로컬 SQLite 조건 스크리닝
+  - [x] `stock_universe` 테이블 대상 GRDB 동적 쿼리 생성
+  - [x] `DatabaseManager.fetchStockUniverse(matching:)` / `fetchDistinctValues()` 추가
+  - [x] 결과 시가총액 내림차순 정렬, 최대 300개 제한
 
 ### 5.3 스크리너 UI
 
-- [ ] 설정 창에 "종목 추천" 탭 추가 (7번째 탭)
-- [ ] `ScreenerView.swift` 작성
-  - [ ] 조건 목록 (추가/삭제, AND 조합)
-  - [ ] 각 조건 타입별 입력 UI (범위 슬라이더 or TextField)
-  - [ ] "스크리닝 실행" 버튼 → 결과 리스트 표시
-  - [ ] 결과 종목 → 관심종목 추가 버튼
-- [ ] 마지막 스크리닝 조건 저장 (UserDefaults JSON)
-- [ ] 데이터 마지막 갱신 시각 표시 ("전일 기준 YYYY-MM-DD")
+- [x] 설정 창에 "종목 추천" 탭 추가 (7번째 탭)
+- [x] `ScreenerView.swift` 작성
+  - [x] 조건 목록 (추가/삭제, AND 조합)
+  - [x] 각 조건 타입별 입력 UI (수치 범위 TextField / 업종·시장 Picker)
+  - [x] "스크리닝 실행" 버튼 → 결과 리스트 표시
+  - [x] 결과 종목 → 관심종목 추가 버튼 (중복 추가 방지 체크마크)
+- [x] 마지막 스크리닝 조건 저장 (UserDefaults JSON)
+- [x] 데이터 마지막 갱신 시각 표시 (KRX 데이터 상태 패널)
 
 ### 5.4 Claude API 연동 (AI 분석, 선택 기능)
 

@@ -24,6 +24,8 @@ struct SettingsView: View {
                     .tabItem { Label("알림 이력", systemImage: "clock.arrow.circlepath") }
                 AssetChartView()
                     .tabItem { Label("자산 차트", systemImage: "chart.xyaxis.line") }
+                ScreenerView()
+                    .tabItem { Label("종목 추천", systemImage: "wand.and.stars") }
             }
 
             Text(versionString)
