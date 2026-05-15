@@ -60,7 +60,8 @@ final class DARTManager {
             let filterTypes = UserDefaults.standard.stringArray(forKey: "DART.filterTypes") ?? []
 
             for disclosure in newDisclosures {
-                let shouldNotify = filterTypes.isEmpty || filterTypes.contains(disclosure.disclosureType)
+                let shouldNotify = (filterTypes.isEmpty || filterTypes.contains(disclosure.disclosureType))
+                    && (!AlertEvaluator.marketHoursOnly || AlertEvaluator.isWithinMarketHours())
                 if shouldNotify {
                     let dartURL = "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=\(disclosure.rceptNo)"
                     NotificationManager.shared.send(

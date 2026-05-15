@@ -252,9 +252,17 @@ struct AlertSettingsView: View {
     @State private var thresholdText = ""
     @State private var disableAfterTrigger = false
     @State private var cooldownMinutes = 60
+    @State private var marketHoursOnly: Bool = AlertEvaluator.marketHoursOnly
 
     var body: some View {
         SettingsTabContainer(title: "알림설정") {
+            HStack {
+                Toggle("장 시간(09:00~15:30)에만 알림 발송", isOn: $marketHoursOnly)
+                    .onChange(of: marketHoursOnly) { _, v in AlertEvaluator.marketHoursOnly = v }
+                Spacer()
+            }
+            .padding(.bottom, 2)
+
             List {
                 ForEach(conditions, id: \.id) { condition in
                     HStack {

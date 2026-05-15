@@ -5,7 +5,28 @@ final class AlertEvaluator {
     static let shared = AlertEvaluator()
     private init() {}
 
+    // MARK: - 장 시간 제어
+
+    private static let marketHoursOnlyKey = "Alert.marketHoursOnly"
+
+    static var marketHoursOnly: Bool {
+        get { UserDefaults.standard.object(forKey: marketHoursOnlyKey) as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: marketHoursOnlyKey) }
+    }
+
+    static func isWithinMarketHours() -> Bool {
+        let cal = Calendar.current
+        let now = Date()
+        let weekday = cal.component(.weekday, from: now)
+        guard weekday >= 2 && weekday <= 6 else { return false }
+        let minutes = cal.component(.hour, from: now) * 60 + cal.component(.minute, from: now)
+        return minutes >= 9 * 60 && minutes <= 15 * 60 + 30
+    }
+
+    // MARK: - Evaluation
+
     func evaluate(quotes: [String: StockQuote]) {
+        if AlertEvaluator.marketHoursOnly && !AlertEvaluator.isWithinMarketHours() { return }
         guard let conditions = try? DatabaseManager.shared.fetchAlertConditions() else { return }
         let now = Date()
 
