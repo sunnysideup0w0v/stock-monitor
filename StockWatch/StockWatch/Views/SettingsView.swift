@@ -82,6 +82,7 @@ struct SettingsFormSection<Content: View>: View {
 
 struct WatchlistSettingsView: View {
     @State private var items: [WatchlistItem] = []
+    @State private var isLoggedIn: Bool = true
     @State private var symbol = ""
     @State private var name = ""
     @State private var alias = ""
@@ -89,60 +90,80 @@ struct WatchlistSettingsView: View {
 
     var body: some View {
         SettingsTabContainer(title: "관심종목") {
-            List {
-                ForEach(items, id: \.id) { item in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(item.alias ?? item.name).font(.body)
-                            Text(item.symbol).font(.caption).foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Text(item.group.displayName)
-                            .font(.caption)
-                            .padding(.horizontal, 6).padding(.vertical, 2)
-                            .background(.quaternary, in: Capsule())
-                        Button {
-                            deleteItem(item)
-                        } label: {
-                            Image(systemName: "trash").foregroundStyle(.red)
-                        }
-                        .buttonStyle(.borderless)
-                    }
-                }
-            }
-            .listStyle(.bordered)
-
-            SettingsFormSection(title: "종목 추가") {
-                Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 8) {
-                    GridRow {
-                        Text("종목코드").gridColumnAlignment(.trailing)
-                        TextField("예: 005930", text: $symbol).frame(width: 120)
-                        Text("종목명").gridColumnAlignment(.trailing)
-                        TextField("예: 삼성전자", text: $name).frame(width: 120)
-                    }
-                    GridRow {
-                        Text("별칭").gridColumnAlignment(.trailing)
-                        TextField("선택사항", text: $alias).frame(width: 120)
-                        Text("그룹").gridColumnAlignment(.trailing)
-                        Picker("", selection: $group) {
-                            ForEach([WatchlistGroup.watchlist, .longTerm, .shortTerm], id: \.self) {
-                                Text($0.displayName).tag($0)
+            if !isLoggedIn {
+                accountRequiredView
+            } else {
+                List {
+                    ForEach(items, id: \.id) { item in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(item.alias ?? item.name).font(.body)
+                                Text(item.symbol).font(.caption).foregroundStyle(.secondary)
                             }
+                            Spacer()
+                            Text(item.group.displayName)
+                                .font(.caption)
+                                .padding(.horizontal, 6).padding(.vertical, 2)
+                                .background(.quaternary, in: Capsule())
+                            Button {
+                                deleteItem(item)
+                            } label: {
+                                Image(systemName: "trash").foregroundStyle(.red)
+                            }
+                            .buttonStyle(.borderless)
                         }
-                        .labelsHidden()
-                        .frame(width: 120)
                     }
                 }
+                .listStyle(.bordered)
 
-                Button("추가") { addItem() }
-                    .disabled(symbol.trimmingCharacters(in: .whitespaces).isEmpty ||
-                              name.trimmingCharacters(in: .whitespaces).isEmpty)
+                SettingsFormSection(title: "종목 추가") {
+                    Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 8) {
+                        GridRow {
+                            Text("종목코드").gridColumnAlignment(.trailing)
+                            TextField("예: 005930", text: $symbol).frame(width: 120)
+                            Text("종목명").gridColumnAlignment(.trailing)
+                            TextField("예: 삼성전자", text: $name).frame(width: 120)
+                        }
+                        GridRow {
+                            Text("별칭").gridColumnAlignment(.trailing)
+                            TextField("선택사항", text: $alias).frame(width: 120)
+                            Text("그룹").gridColumnAlignment(.trailing)
+                            Picker("", selection: $group) {
+                                ForEach([WatchlistGroup.watchlist, .longTerm, .shortTerm], id: \.self) {
+                                    Text($0.displayName).tag($0)
+                                }
+                            }
+                            .labelsHidden()
+                            .frame(width: 120)
+                        }
+                    }
+
+                    Button("추가") { addItem() }
+                        .disabled(symbol.trimmingCharacters(in: .whitespaces).isEmpty ||
+                                  name.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
             }
         }
         .onAppear { loadItems() }
     }
 
+    private var accountRequiredView: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "person.crop.circle.badge.exclamationmark")
+                .font(.system(size: 40))
+                .foregroundStyle(.secondary)
+            Text("계좌 연결이 필요합니다")
+                .font(.headline)
+            Text("계좌 연결 탭에서 API 키를 입력하면\n관심종목을 관리할 수 있습니다.")
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
     private func loadItems() {
+        isLoggedIn = !AccountManager.currentAccountId.isEmpty
         items = (try? DatabaseManager.shared.fetchWatchlist()) ?? []
     }
 
@@ -173,6 +194,7 @@ enum ImportSyncMode { case replaceAll, addNew }
 
 struct PortfolioSettingsView: View {
     @State private var items: [PortfolioItem] = []
+    @State private var isLoggedIn: Bool = true
     @State private var symbol = ""
     @State private var name = ""
     @State private var averagePriceText = ""
@@ -183,18 +205,44 @@ struct PortfolioSettingsView: View {
     @State private var showImportSheet = false
     @State private var importError: String? = nil
 
-    private var isKISConnected: Bool {
-        let key = KeychainHelper.load(account: "kis.appKey") ?? ""
-        return !key.isEmpty
-    }
-
     var body: some View {
         SettingsTabContainer(title: "포트폴리오") {
+            if !isLoggedIn {
+                accountRequiredView
+            } else {
+                portfolioContentView
+            }
+        }
+        .onAppear { loadItems() }
+        .sheet(isPresented: $showImportSheet) {
+            PortfolioImportSheetView(items: importedItems) { mode in
+                applyImport(mode: mode)
+            }
+        }
+    }
+
+    private var accountRequiredView: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "person.crop.circle.badge.exclamationmark")
+                .font(.system(size: 40))
+                .foregroundStyle(.secondary)
+            Text("계좌 연결이 필요합니다")
+                .font(.headline)
+            Text("계좌 연결 탭에서 API 키를 입력하면\n포트폴리오를 관리할 수 있습니다.")
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var portfolioContentView: some View {
+        Group {
             // 계좌 가져오기 행
             HStack(spacing: 8) {
                 if let error = importError {
                     Text(error).font(.caption).foregroundStyle(.red)
-                } else if !isKISConnected {
+                } else {
                     Text("KIS 계좌 연결 시 보유 종목을 자동으로 가져올 수 있습니다")
                         .font(.caption).foregroundStyle(.secondary)
                 }
@@ -213,7 +261,7 @@ struct PortfolioSettingsView: View {
                     }
                 }
                 .buttonStyle(.borderless)
-                .disabled(!isKISConnected || isImporting)
+                .disabled(isImporting)
             }
 
             List {
@@ -278,12 +326,6 @@ struct PortfolioSettingsView: View {
 
             SnapshotSettingsSection()
         }
-        .onAppear { loadItems() }
-        .sheet(isPresented: $showImportSheet) {
-            PortfolioImportSheetView(items: importedItems) { mode in
-                applyImport(mode: mode)
-            }
-        }
     }
 
     private var isFormValid: Bool {
@@ -294,6 +336,7 @@ struct PortfolioSettingsView: View {
     }
 
     private func loadItems() {
+        isLoggedIn = !AccountManager.currentAccountId.isEmpty
         items = (try? DatabaseManager.shared.fetchPortfolio()) ?? []
     }
 
