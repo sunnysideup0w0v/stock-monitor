@@ -44,12 +44,12 @@ final class AlertEvaluator {
         evaluatePortfolio(conditions: conditions, quotes: quotes, now: now)
     }
 
-    private func canFire(condition: AlertCondition, now: Date) -> Bool {
+    func canFire(condition: AlertCondition, now: Date) -> Bool {
         guard let last = condition.lastTriggeredAt else { return true }
         return now.timeIntervalSince(last) >= Double(condition.cooldownMinutes * 60)
     }
 
-    private func isTriggered(quote: StockQuote, condition: AlertCondition) -> Bool {
+    func isTriggered(quote: StockQuote, condition: AlertCondition) -> Bool {
         switch condition.triggerType {
         case .targetPrice: return Double(quote.price) >= condition.threshold
         case .stopLoss:    return Double(quote.price) <= condition.threshold

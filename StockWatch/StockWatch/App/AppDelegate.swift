@@ -21,6 +21,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         setupAdapter()
         startPollingFromDB()
 
+        if CommandLine.arguments.contains("--uitesting") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { self.openSettings() }
+        }
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleOpenSettings),

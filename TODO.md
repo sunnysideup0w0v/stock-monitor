@@ -1,6 +1,6 @@
 # StockWatch — 개발 진행 체크리스트
 
-> PRD v0.2 기반 | 업데이트: 2026-05-15 (Phase 2.10 완료 — KIS 잔고조회 연동)  
+> PRD v0.2 기반 | 업데이트: 2026-05-15 (테스트 인프라 구축 — XCTest 27개 통과)  
 > Claude Code로 단계별 개발 진행. 각 Phase 완료 시 검증 항목 확인 후 다음 단계로 이동.
 
 ---
@@ -261,6 +261,19 @@
 - [x] 자산 변화 그래프 일/주/월/연 단위 정상 표시 (테스트 데이터 생성 버튼으로 확인)
 - [x] 기준선 대비 수익 요약 수치 정확성 확인
 - [x] KIS 잔고조회로 보유 종목 가져오기 정상 동작 확인 (2.10)
+
+### 2.11 테스트 인프라 구축
+
+- [x] `project.yml`에 `StockWatchTests` (unit) / `StockWatchUITests` (UI) 타겟 추가
+- [x] `AlertEvaluatorTests.swift` — canFire / isTriggered / isWithinMarketHours 17개 케이스
+- [x] `PortfolioItemTests.swift` — totalCost / evaluatedGain / gainRate 8개 케이스
+- [x] `StockQuoteTests.swift` — formattedPrice / formattedChange / isUp 8개 케이스
+- [x] `SnapshotManagerTests.swift` — isActiveTime 장 시간·커스텀 범위 9개 케이스
+- [x] `SettingsWindowUITests.swift` — 설정 창 열기 / 포트폴리오 추가 흐름
+- [x] `SnapshotManager.isActiveTime(weekday:current:)` 테스트용 내부 오버로드 추가
+- [x] `AppDelegate`: `--uitesting` 실행 인자로 설정 창 자동 오픈
+- [x] 유닛 테스트 27개 전체 통과 (`xcodebuild test -only-testing:StockWatchTests`)
+- [ ] UI 테스트: Xcode에서 직접 실행 필요 (macOS XCUITest는 ad-hoc 서명으로 CLI 실행 불가)
 
 ---
 

@@ -240,19 +240,24 @@ struct PortfolioSettingsView: View {
                     GridRow {
                         Text("종목코드").gridColumnAlignment(.trailing)
                         TextField("예: 005930", text: $symbol).frame(width: 120)
+                            .accessibilityIdentifier("portfolio.field.symbol")
                         Text("종목명").gridColumnAlignment(.trailing)
                         TextField("예: 삼성전자", text: $name).frame(width: 120)
+                            .accessibilityIdentifier("portfolio.field.name")
                     }
                     GridRow {
                         Text("평균매입가").gridColumnAlignment(.trailing)
                         TextField("원", text: $averagePriceText).frame(width: 120)
+                            .accessibilityIdentifier("portfolio.field.averagePrice")
                         Text("수량").gridColumnAlignment(.trailing)
                         TextField("주", text: $quantityText).frame(width: 120)
+                            .accessibilityIdentifier("portfolio.field.quantity")
                     }
                 }
 
                 Button("추가") { addItem() }
                     .disabled(!isFormValid)
+                    .accessibilityIdentifier("portfolio.button.add")
             }
 
             SnapshotSettingsSection()

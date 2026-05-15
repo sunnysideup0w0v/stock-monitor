@@ -111,15 +111,17 @@ final class SnapshotManager {
 
     // MARK: - Time Check
 
-    private func isActiveTime() -> Bool {
-        let cal     = Calendar.current
-        let now     = Date()
-        let weekday = cal.component(.weekday, from: now) // 1=일, 7=토
+    func isActiveTime() -> Bool {
+        let cal = Calendar.current
+        let now = Date()
+        let weekday = cal.component(.weekday, from: now)
         let hour    = cal.component(.hour,   from: now)
         let minute  = cal.component(.minute, from: now)
-        let current = hour * 60 + minute
+        return isActiveTime(weekday: weekday, current: hour * 60 + minute)
+    }
 
-        // 장 시간 체크 (평일 09:00~15:30)
+    func isActiveTime(weekday: Int, current: Int) -> Bool {
+        // 장 시간 체크 (평일 09:00~15:30, weekday: 1=일, 7=토)
         if marketHoursOnly && weekday != 1 && weekday != 7 {
             if current >= 9 * 60 && current <= 15 * 60 + 30 { return true }
         }
