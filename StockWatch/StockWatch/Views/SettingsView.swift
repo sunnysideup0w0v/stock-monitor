@@ -818,11 +818,9 @@ struct AccountSettingsView: View {
 
             Divider()
 
-            HStack(spacing: 12) {
+            HStack {
                 Button("로그아웃", role: .destructive) { logout() }
                 Spacer()
-                Button("다른 계정으로 변경") { switchAccount() }
-                    .foregroundStyle(.secondary)
             }
         }
         .padding()
@@ -920,10 +918,6 @@ struct AccountSettingsView: View {
         BrokerRegistry.shared.unregister(brokerName: "한국투자증권")
         QuoteManager.shared.setAdapter(MockBrokerAdapter())
         withAnimation { isLoggedIn = false; loginDate = nil; testStatus = .idle }
-    }
-
-    private func switchAccount() {
-        withAnimation { isLoggedIn = false; testStatus = .idle }
     }
 
     private func testConnection() {
