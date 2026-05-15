@@ -614,6 +614,9 @@ struct AlertSettingsView: View {
 // MARK: - Account
 
 struct AccountSettingsView: View {
+    @State private var selectedBroker: BrokerSelection = .kis
+
+    // KIS 상태
     @State private var appKey = ""
     @State private var appSecret = ""
     @State private var accountNumber = ""
@@ -626,6 +629,11 @@ struct AccountSettingsView: View {
 
     @State private var testStatus: TestStatus = .idle
     @State private var launchAtLogin: Bool = (SMAppService.mainApp.status == .enabled)
+
+    enum BrokerSelection: String, CaseIterable {
+        case kis    = "한국투자증권"
+        case kiwoom = "키움증권"
+    }
 
     enum TestStatus: Equatable {
         case idle, testing, success, failure(String)
@@ -649,16 +657,55 @@ struct AccountSettingsView: View {
 
     var body: some View {
         SettingsTabContainer(title: "계좌 연결") {
-            if isLoggedIn {
-                loggedInView
-            } else {
-                loginFormView
+            brokerPickerSection
+            Divider()
+            switch selectedBroker {
+            case .kis:
+                if isLoggedIn { loggedInView } else { loginFormView }
+            case .kiwoom:
+                kiwoomPlaceholderView
             }
             launchAtLoginSection
             DARTSettingsView()
             Spacer()
         }
         .onAppear { loadState() }
+    }
+
+    // MARK: - 브로커 선택
+
+    private var brokerPickerSection: some View {
+        HStack(spacing: 12) {
+            Text("브로커")
+                .foregroundStyle(.secondary)
+            Picker("", selection: $selectedBroker) {
+                ForEach(BrokerSelection.allCases, id: \.self) { broker in
+                    Text(broker.rawValue).tag(broker)
+                }
+            }
+            .pickerStyle(.segmented)
+            .frame(maxWidth: 280)
+            Spacer()
+        }
+    }
+
+    // MARK: - 키움증권 준비 중 안내
+
+    private var kiwoomPlaceholderView: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "clock.badge")
+                    .foregroundStyle(.secondary)
+                Text("준비 중")
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+            }
+            Text("키움증권 Open API REST 연동은 다음 업데이트에서 추가될 예정입니다.")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+        }
+        .padding()
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: 10))
     }
 
     private var launchAtLoginSection: some View {
@@ -801,7 +848,10 @@ struct AccountSettingsView: View {
         )
         let adapter = KISAdapter(isMock: isMock)
         QuoteManager.shared.setAdapter(adapter)
-        Task { try? await adapter.connect(credentials: creds) }
+        Task {
+            try? await adapter.connect(credentials: creds)
+            await MainActor.run { BrokerRegistry.shared.register(adapter) }
+        }
 
         withAnimation {
             savedAccountNumber = accountNumber
@@ -817,6 +867,7 @@ struct AccountSettingsView: View {
         KeychainHelper.delete(account: "kis.appSecret")
         KeychainHelper.delete(account: "kis.accountNumber")
         UserDefaults.standard.removeObject(forKey: "KIS.loginDate")
+        BrokerRegistry.shared.unregister(brokerName: "한국투자증권")
         QuoteManager.shared.setAdapter(MockBrokerAdapter())
         withAnimation { isLoggedIn = false; loginDate = nil; testStatus = .idle }
     }

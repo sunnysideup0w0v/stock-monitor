@@ -57,7 +57,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let creds = BrokerCredentials(appKey: appKey, appSecret: appSecret, accountNumber: accountNumber)
             let adapter = KISAdapter(isMock: isMock)
             QuoteManager.shared.setAdapter(adapter)
-            Task { try? await adapter.connect(credentials: creds) }
+            Task {
+                try? await adapter.connect(credentials: creds)
+                await MainActor.run { BrokerRegistry.shared.register(adapter) }
+            }
             QuoteManager.shared.startRealtime(credentials: creds, isMock: isMock)
         } else {
             QuoteManager.shared.setAdapter(MockBrokerAdapter())
