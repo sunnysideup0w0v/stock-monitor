@@ -33,7 +33,7 @@ struct SettingsView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 8)
         }
-        .frame(width: 720, height: 600)
+        .frame(width: 720, height: 680)
         .padding()
     }
 }
@@ -701,17 +701,22 @@ struct AccountSettingsView: View {
 
     var body: some View {
         SettingsTabContainer(title: "계좌 연결") {
-            brokerPickerSection
-            Divider()
-            switch selectedBroker {
-            case .kis:
-                if isLoggedIn { loggedInView } else { loginFormView }
-            case .kiwoom, .miraeAsset:
-                kiwoomPlaceholderView
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    brokerPickerSection
+                    Divider()
+                    switch selectedBroker {
+                    case .kis:
+                        if isLoggedIn { loggedInView } else { loginFormView }
+                    case .kiwoom, .miraeAsset:
+                        kiwoomPlaceholderView
+                    }
+                    launchAtLoginSection
+                    DARTSettingsView()
+                }
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+                .padding(.bottom, 8)
             }
-            launchAtLoginSection
-            DARTSettingsView()
-            Spacer()
         }
         .onAppear { loadState() }
     }

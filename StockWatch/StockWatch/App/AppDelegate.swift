@@ -165,7 +165,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let window = NSWindow(contentViewController: controller)
             window.title = "StockWatch 설정"
             window.styleMask = [.titled, .closable, .resizable, .miniaturizable]
-            window.setContentSize(NSSize(width: 720, height: 600))
+            window.setContentSize(NSSize(width: 720, height: 680))
             window.isReleasedWhenClosed = false
             window.center()
             settingsWindow = window

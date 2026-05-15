@@ -49,7 +49,8 @@ struct MenuBarPopoverView: View {
     private var stockList: some View {
         Group {
             if watchlist.isEmpty {
-                Text("설정에서 관심종목을 추가해주세요")
+                let isLoggedIn = !AccountManager.currentAccountId.isEmpty
+                Text(isLoggedIn ? "설정에서 관심종목을 추가해주세요" : "계좌 연결 탭에서 API 키를 입력해주세요")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity)
