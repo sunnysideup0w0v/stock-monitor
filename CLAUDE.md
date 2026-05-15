@@ -39,15 +39,37 @@ open "$APP_PATH/StockWatch.app"
 pkill -x StockWatch
 ```
 
+## 테스트 실행
+
+```bash
+# 유닛 테스트 (CLI에서 실행 가능)
+xcodebuild test -scheme StockWatch -destination 'platform=macOS' \
+  -only-testing:StockWatchTests CODE_SIGNING_ALLOWED=NO
+
+# UI 테스트 — macOS XCUITest는 유효한 코드 서명이 필요하므로 Xcode에서 Cmd+U로 실행
+# CLI 실행 시 StockWatchUITests 타겟은 SIGKILL로 종료됨 (ad-hoc 서명 한계)
+```
+
+**테스트 파일 위치**
+
+| 파일 | 대상 | 케이스 수 |
+|------|------|-----------|
+| `StockWatchTests/AlertEvaluatorTests.swift` | 쿨다운, isTriggered, 장 시간 경계 | 17 |
+| `StockWatchTests/PortfolioItemTests.swift` | totalCost, evaluatedGain, gainRate | 8 |
+| `StockWatchTests/StockQuoteTests.swift` | formattedPrice, formattedChange, isUp | 8 |
+| `StockWatchTests/SnapshotManagerTests.swift` | isActiveTime 장 시간·커스텀 범위 | 9 |
+| `StockWatchUITests/SettingsWindowUITests.swift` | 설정 창 오픈, 포트폴리오 추가 흐름 | 2 |
+
 > **중요**: Swift 파일을 추가·삭제할 때마다 `xcodegen generate`를 실행해야 Xcode 프로젝트에 반영된다. `project.yml`의 `sources.path: StockWatch`가 디렉토리 전체를 자동 포함하므로 파일 경로만 올바르면 된다.
 
 ## 아키텍처
 
 ```
 AppDelegate (NSApplicationDelegate, @MainActor)
-│  메뉴바 아이콘·팝오버·설정 윈도우(660×500) 생성
+│  메뉴바 아이콘·팝오버·설정 윈도우(720×600) 생성
 │  QuoteManager.$connectionState 구독 → 아이콘 상태 반영
-│  앱 시작 시 DB 관심종목으로 폴링·DART·스냅샷 자동 시작
+│  앱 시작 시 DB 관심종목 + showInPopover 보유 종목으로 폴링·DART·스냅샷 자동 시작
+│  --uitesting 실행 인자: 설정 창 자동 오픈 (XCUITest 전용)
 │
 ├── QuoteManager (@MainActor, ObservableObject)  ← 시세 폴링 허브
 │    3초 간격 폴링 | 연속 2회 실패 → connectionState = .error
@@ -77,7 +99,7 @@ AppDelegate (NSApplicationDelegate, @MainActor)
 │    keepDays: 보존 기간 (UserDefaults 0 저장 = 365일 적용, UI -1 태그 = 무제한 = 0 저장)
 │
 ├── DatabaseManager (@unchecked Sendable, singleton)
-│    GRDB DatabaseQueue, Migration v1~v6 (현재)
+│    GRDB DatabaseQueue, Migration v1~v7 (현재)
 │    테이블: watchlist / portfolio / alert_conditions / alert_history / portfolio_snapshots
 │
 ├── NotificationManager (UNUserNotificationCenterDelegate)
@@ -160,14 +182,14 @@ pkill -x StockWatch 2>/dev/null; sleep 0.5 && open "$(find ~/Library/Developer/X
 **DB 스키마 변경 시**
 - `DatabaseManager.swift`에 새 `migrator.registerMigration("vN_...")` 추가
 - 기존 Migration은 절대 수정하지 않는다
-- 현재 최신: v6 (portfolio_snapshots). 다음 마이그레이션은 v7부터
+- 현재 최신: v7 (`portfolio.showInPopover` 컬럼). 다음 마이그레이션은 v8부터
 
 **AlertCondition.TriggerType 추가 시**
 `TriggerType`은 여러 곳에서 exhaustive switch로 사용된다. 새 케이스 추가 시 아래 모두 업데이트 필요:
 - `AlertEvaluator`: `isTriggered()`, `makeMessage()`, `evaluatePortfolio()` 내 switch
 - `SettingsView`: `formatThreshold()`, 알림 추가 폼의 트리거 타입 선택
 - `AlertHistoryView`: 필터 Picker의 타입 목록
-현재 케이스: `priceAbove`, `priceBelow`, `changeRateUp`, `changeRateDown`, `volumeSpike`, `portfolioGain`, `portfolioLoss`, `portfolioGainRate`, `portfolioLossRate`, `dartDisclosure`
+현재 케이스: `targetPrice`, `stopLoss`, `rateUp`, `rateDown`, `volumeSpike`, `portfolioGain`, `portfolioLoss`, `portfolioGainRate`, `portfolioLossRate`, `dartDisclosure`
 - `.dartDisclosure`와 portfolio 계열은 종목별 `isTriggered()`에서 `false` 반환 (별도 경로로 평가)
 
 **NSNotification 기반 컴포넌트 간 통신**
