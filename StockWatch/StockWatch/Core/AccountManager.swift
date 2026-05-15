@@ -6,14 +6,22 @@ enum AccountManager {
     nonisolated(unsafe) static var testAccountId: String? = nil
     #endif
 
-    /// 현재 로그인된 계정 ID. KIS appKey 앞 8자리를 prefix로 사용.
-    /// 미로그인 시 "" 반환.
+    /// 현재 활성 브로커(UserDefaults "activeBroker")의 계정 ID.
+    /// KIS → "KIS-" + appKey.prefix(8), 키움 → "KIWOOM-" + appKey.prefix(8), 미로그인 → ""
     static var currentAccountId: String {
         #if DEBUG
         if let override = testAccountId { return override }
         #endif
-        guard let appKey = KeychainHelper.load(account: "kis.appKey"),
-              !appKey.isEmpty else { return "" }
-        return "KIS-" + String(appKey.prefix(8))
+        let activeBroker = UserDefaults.standard.string(forKey: "activeBroker") ?? "kis"
+        switch activeBroker {
+        case "kiwoom":
+            guard let appKey = KeychainHelper.load(account: "kiwoom.appKey"),
+                  !appKey.isEmpty else { return "" }
+            return "KIWOOM-" + String(appKey.prefix(8))
+        default:
+            guard let appKey = KeychainHelper.load(account: "kis.appKey"),
+                  !appKey.isEmpty else { return "" }
+            return "KIS-" + String(appKey.prefix(8))
+        }
     }
 }

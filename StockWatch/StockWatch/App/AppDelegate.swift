@@ -49,9 +49,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func setupAdapter() {
-        if let appKey = KeychainHelper.load(account: "kis.appKey"),
-           let appSecret = KeychainHelper.load(account: "kis.appSecret"),
+        let activeBroker = UserDefaults.standard.string(forKey: "activeBroker") ?? "kis"
+
+        if activeBroker == "kiwoom",
+           let appKey = KeychainHelper.load(account: "kiwoom.appKey"),
+           let appSecret = KeychainHelper.load(account: "kiwoom.appSecret"),
            !appKey.isEmpty, !appSecret.isEmpty {
+            let accountNumber = KeychainHelper.load(account: "kiwoom.accountNumber")
+            let creds = BrokerCredentials(appKey: appKey, appSecret: appSecret, accountNumber: accountNumber)
+            let adapter = KiwoomAdapter()
+            QuoteManager.shared.setAdapter(adapter)
+            try? DatabaseManager.shared.assignAccountIdToOrphanedItems(accountId: AccountManager.currentAccountId)
+            Task {
+                try? await adapter.connect(credentials: creds)
+                await MainActor.run { BrokerRegistry.shared.register(adapter) }
+            }
+            // Kiwoom은 WebSocket 미지원 — REST 폴링만 사용
+        } else if let appKey = KeychainHelper.load(account: "kis.appKey"),
+                  let appSecret = KeychainHelper.load(account: "kis.appSecret"),
+                  !appKey.isEmpty, !appSecret.isEmpty {
             let isMock = UserDefaults.standard.bool(forKey: "KIS.isMock")
             let accountNumber = KeychainHelper.load(account: "kis.accountNumber")
             let creds = BrokerCredentials(appKey: appKey, appSecret: appSecret, accountNumber: accountNumber)

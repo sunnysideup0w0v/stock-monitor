@@ -1,6 +1,6 @@
 # StockWatch — 개발 진행 체크리스트
 
-> PRD v0.2 기반 | 업데이트: 2026-05-15 (Phase 4 진행 중 — 키움증권 API 연동)  
+> PRD v0.2 기반 | 업데이트: 2026-05-15 (Phase 4.4 진행 중 — 키움증권 REST API 실구현)  
 > Claude Code로 단계별 개발 진행. 각 Phase 완료 시 검증 항목 확인 후 다음 단계로 이동.
 
 ---
@@ -379,30 +379,30 @@
 > 복수 동시 연결은 Phase 4.7에서 설계 검토 후 진행.
 
 #### 4.4.1 OAuth2 토큰 발급
-- [ ] `KiwoomAdapter.connect()` 실구현 — `POST /oauth2/token` (grant_type=client_credentials)
-- [ ] 액세스 토큰 인메모리 캐싱 및 만료 감지 (토큰 유효기간 확인 필요)
-- [ ] 만료 임박 시 자동 갱신 (KIS 패턴 동일하게 적용)
+- [x] `KiwoomAdapter.connect()` 실구현 — `POST /oauth2/token` (grant_type=client_credentials)
+- [x] 액세스 토큰 인메모리 캐싱, `expires_dt`(YYYYMMDDHHMMSS) 파싱, 5분 전 자동 갱신
+- [x] 401 수신 시 재발급 후 1회 자동 재시도
 
 #### 4.4.2 현재가 조회
-- [ ] `KiwoomAdapter.fetchQuote()` 실구현 — 키움 주식 현재가 엔드포인트 확인 후 구현
-- [ ] API 응답 → `StockQuote` 모델 매핑 (등락 부호 필드 파싱)
-- [ ] 401(토큰 만료) 시 재발급 후 1회 자동 재시도
+- [x] `KiwoomAdapter.fetchQuote()` 실구현 — `POST /api/dostk/info` (api-id: ka10001)
+- [x] 응답 필드 매핑: `cur_prc`, `pred_pre`, `flu_rt`, `flu_smbol`(등락기호) → `StockQuote`
+- [ ] 실제 API 호출로 응답 필드명 검증 (첫 연결 시 로그 확인)
 
 #### 4.4.3 잔고조회
-- [ ] `KiwoomAdapter.fetchPortfolio()` 실구현 — 키움 잔고조회 엔드포인트 확인 후 구현
-- [ ] 응답 → `PortfolioItem` 배열 매핑
+- [x] `KiwoomAdapter.fetchPortfolio()` Stub 실구현 — `POST /api/dostk/account` (api-id: kt00018)
+- [ ] 실제 API 호출로 응답 필드명 검증 및 보정 (stk_cd, stk_nm, hold_qty, avg_prc)
 
 #### 4.4.4 자격증명 저장 및 앱 초기화
-- [ ] Keychain 키 추가: `kiwoom.appKey`, `kiwoom.appSecret`
-- [ ] `AccountManager`: 키움 계정 ID 스키마 — `"KIWOOM-" + appKey.prefix(8)`
-- [ ] `AppDelegate.setupAdapter()`: 키움 자격증명 감지 시 `KiwoomAdapter` 초기화 및 등록
-  - KIS 자격증명이 함께 존재할 경우 우선순위 정책 결정 (UI 선택 or 마지막 로그인 기준)
+- [x] Keychain 키 추가: `kiwoom.appKey`, `kiwoom.appSecret`, `kiwoom.accountNumber`
+- [x] `AccountManager`: 키움 계정 ID — `"KIWOOM-" + appKey.prefix(8)`, `activeBroker` UserDefaults로 브로커 구분
+- [x] `AppDelegate.setupAdapter()`: `activeBroker="kiwoom"` 시 `KiwoomAdapter` 초기화
+  - KIS 자격증명과 공존 가능 — `activeBroker` 값으로 우선순위 결정
 
 #### 4.4.5 설정 UI 업데이트
-- [ ] 계좌 연결 탭 키움 섹션: "준비 중" 안내 제거, App Key / App Secret 입력 폼 활성화
-- [ ] "연결 테스트" 버튼 — `KiwoomAdapter.connect()` 호출 후 성공/실패 메시지 표시
-- [ ] 로그인/로그아웃 시 `BrokerRegistry` 등록/해제 + `QuoteManager.setAdapter()` 전환
-- [ ] 포트폴리오 탭 "계좌에서 가져오기" — 키움 연결 시에도 동작 (KiwoomAdapter.fetchPortfolio 활용)
+- [x] 계좌 연결 탭 키움 섹션: "준비 중" 제거, App Key / App Secret 입력 폼 활성화
+- [x] "연결 테스트" 버튼 — `KiwoomAdapter.connect()` + `fetchQuote("005930")` 호출
+- [x] 로그인/로그아웃 시 `BrokerRegistry` 등록/해제 + `QuoteManager.setAdapter()` 전환
+- [ ] 포트폴리오 탭 "계좌에서 가져오기" — 키움 연결 시 동작 확인 (kt00018 필드명 검증 후)
 
 ### 4.5 계정 종속 관심종목·포트폴리오
 
