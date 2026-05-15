@@ -107,8 +107,73 @@ actor KISAdapter: BrokerAdapter {
     }
 
     func fetchPortfolio() async throws -> [PortfolioItem] {
-        // Phase 4에서 KIS 잔고조회 API 연동 예정
-        return []
+        let token = try await validToken()
+        guard let creds = credentials else { throw BrokerError.notConnected }
+        guard let acctNo = creds.accountNumber, !acctNo.isEmpty else {
+            throw BrokerError.apiError("계좌번호를 설정해 주세요")
+        }
+
+        // "50123456-01" → CANO="50123456", ACNT_PRDT_CD="01"
+        let cleaned = acctNo.replacingOccurrences(of: "-", with: "")
+        let cano: String
+        let acntPrdtCd: String
+        if cleaned.count >= 10 {
+            cano = String(cleaned.prefix(8))
+            acntPrdtCd = String(cleaned.dropFirst(8).prefix(2))
+        } else {
+            cano = cleaned
+            acntPrdtCd = "01"
+        }
+
+        let trID = isMock ? "VTTC8434R" : "TTTC8434R"
+
+        var components = URLComponents(
+            string: "\(baseURL)/uapi/domestic-stock/v1/trading/inquire-balance"
+        )!
+        components.queryItems = [
+            URLQueryItem(name: "CANO",                    value: cano),
+            URLQueryItem(name: "ACNT_PRDT_CD",            value: acntPrdtCd),
+            URLQueryItem(name: "AFHR_FLPR_YN",            value: "N"),
+            URLQueryItem(name: "OFL_YN",                  value: ""),
+            URLQueryItem(name: "INQR_DVSN",               value: "02"),
+            URLQueryItem(name: "UNPR_DVSN",               value: "01"),
+            URLQueryItem(name: "FUND_STTL_ICLD_YN",       value: "N"),
+            URLQueryItem(name: "FNCG_AMT_AUTO_RDPT_YN",   value: "N"),
+            URLQueryItem(name: "PRCS_DVSN",               value: "01"),
+            URLQueryItem(name: "CTX_AREA_FK100",          value: ""),
+            URLQueryItem(name: "CTX_AREA_NK100",          value: "")
+        ]
+
+        var request = URLRequest(url: components.url!)
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "authorization")
+        request.setValue(creds.appKey,    forHTTPHeaderField: "appkey")
+        request.setValue(creds.appSecret, forHTTPHeaderField: "appsecret")
+        request.setValue(trID,            forHTTPHeaderField: "tr_id")
+        request.setValue("P",             forHTTPHeaderField: "custtype")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            throw BrokerError.apiError("잔고 조회 실패")
+        }
+
+        if let raw = String(data: data, encoding: .utf8) {
+            print("[KISAdapter] fetchBalance: \(raw.prefix(500))")
+        }
+
+        let decoded = try JSONDecoder().decode(KISBalanceResponse.self, from: data)
+        guard decoded.rtCd == "0" else {
+            throw BrokerError.apiError(decoded.msg1 ?? "잔고 조회 오류")
+        }
+
+        return (decoded.output1 ?? []).compactMap { item -> PortfolioItem? in
+            guard let qty = Int(item.hldgQty ?? "0"), qty > 0 else { return nil }
+            let symbol = item.pdno ?? ""
+            guard !symbol.isEmpty else { return nil }
+            // pchs_avg_pric은 소수점 포함 문자열 ("85200.00")
+            let avgPrice = Int(Double(item.pchsAvgPric ?? "0") ?? 0)
+            return PortfolioItem(id: nil, symbol: symbol, name: item.prdtName ?? symbol,
+                                 averagePrice: avgPrice, quantity: qty)
+        }
     }
 
     func fetchNews(symbol: String) async throws -> [NewsItem] {
@@ -233,6 +298,32 @@ private struct KISQuoteResponse: Decodable {
         case rtCd = "rt_cd"
         case msg1
         case output
+    }
+}
+
+private struct KISBalanceResponse: Decodable {
+    let rtCd: String
+    let msg1: String?
+    let output1: [KISBalanceItem]?
+
+    enum CodingKeys: String, CodingKey {
+        case rtCd = "rt_cd"
+        case msg1
+        case output1
+    }
+}
+
+private struct KISBalanceItem: Decodable {
+    let pdno: String?
+    let prdtName: String?
+    let pchsAvgPric: String?
+    let hldgQty: String?
+
+    enum CodingKeys: String, CodingKey {
+        case pdno        = "pdno"
+        case prdtName    = "prdt_name"
+        case pchsAvgPric = "pchs_avg_pric"
+        case hldgQty     = "hldg_qty"
     }
 }
 

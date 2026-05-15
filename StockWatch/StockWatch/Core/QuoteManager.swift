@@ -73,6 +73,11 @@ final class QuoteManager: ObservableObject {
         AlertEvaluator.shared.evaluate(quotes: quotes)
     }
 
+    func fetchBalance() async throws -> [PortfolioItem] {
+        guard let adapter else { throw BrokerError.notConnected }
+        return try await adapter.fetchPortfolio()
+    }
+
     func stopPolling() {
         pollingTask?.cancel()
         pollingTask = nil

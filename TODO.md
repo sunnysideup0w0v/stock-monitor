@@ -1,6 +1,6 @@
 # StockWatch — 개발 진행 체크리스트
 
-> PRD v0.2 기반 | 업데이트: 2026-05-15 (Phase 2.9 장 시간 외 알림 제어 완료)  
+> PRD v0.2 기반 | 업데이트: 2026-05-15 (Phase 2.10 완료 — KIS 잔고조회 연동)  
 > Claude Code로 단계별 개발 진행. 각 Phase 완료 시 검증 항목 확인 후 다음 단계로 이동.
 
 ---
@@ -240,6 +240,17 @@
 - [x] "장 시간 중에만 알림" / "24시간 알림" 전환 설정 (알림설정 탭 상단 토글)
 - [x] 장 마감 후 알림 일시 중지 로직 (AlertEvaluator.evaluate + DARTManager 동시 적용)
 
+### 2.10 KIS 잔고조회 연동 (보유 종목 자동 가져오기)
+
+- [x] `KISAdapter.fetchPortfolio()` 실구현 — `GET /uapi/domestic-stock/v1/trading/inquire-balance`
+      tr_id: 실전 `TTTC8434R` / 모의 `VTTC8434R`
+      계좌번호 자동 파싱 (CANO 8자리 + ACNT_PRDT_CD 2자리)
+- [x] `QuoteManager.fetchBalance()` 위임 메서드 추가
+- [x] 포트폴리오 탭에 "계좌에서 가져오기" 버튼 추가 (KIS 미연결 시 비활성화 + 안내 메시지)
+- [x] 가져온 보유 종목 미리보기 시트 (`PortfolioImportSheetView`)
+- [x] 동기화 옵션: 신규 추가만 / 전체 교체 선택 (`ImportSyncMode`)
+- [x] 계좌번호 미설정 시 에러 메시지 표시
+
 ### ✅ Phase 2 검증
 - [x] WebSocket 연결 후 실시간 시세 갱신 확인 (빌드 성공, 앱 실행 확인)
 - [ ] 거래량 급증 시 알림 수신
@@ -249,6 +260,7 @@
 - [ ] 스냅샷 1분 간격으로 DB에 저장되는지 확인
 - [x] 자산 변화 그래프 일/주/월/연 단위 정상 표시 (테스트 데이터 생성 버튼으로 확인)
 - [x] 기준선 대비 수익 요약 수치 정확성 확인
+- [x] KIS 잔고조회로 보유 종목 가져오기 정상 동작 확인 (2.10)
 
 ---
 
@@ -320,7 +332,7 @@
 - [x] `KISAdapter.swift` — BrokerAdapter 구현 (Phase 1.5에서 구현 완료)
 - [x] 토큰 발급, 현재가 조회 구현
 - [x] Keychain에 KIS API 키 저장
-- [ ] 포트폴리오 조회 구현 (`/uapi/domestic-stock/v1/trading/inquire-balance`)
+- [x] 잔고조회 구현 (Phase 2.10에서 완료)
 
 ### 4.3 계좌 연결 UI 개선
 

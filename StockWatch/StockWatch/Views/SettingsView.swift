@@ -153,6 +153,8 @@ struct WatchlistSettingsView: View {
 
 // MARK: - Portfolio
 
+enum ImportSyncMode { case replaceAll, addNew }
+
 struct PortfolioSettingsView: View {
     @State private var items: [PortfolioItem] = []
     @State private var symbol = ""
@@ -160,8 +162,44 @@ struct PortfolioSettingsView: View {
     @State private var averagePriceText = ""
     @State private var quantityText = ""
 
+    @State private var isImporting = false
+    @State private var importedItems: [PortfolioItem] = []
+    @State private var showImportSheet = false
+    @State private var importError: String? = nil
+
+    private var isKISConnected: Bool {
+        let key = KeychainHelper.load(account: "kis.appKey") ?? ""
+        return !key.isEmpty
+    }
+
     var body: some View {
         SettingsTabContainer(title: "포트폴리오") {
+            // 계좌 가져오기 행
+            HStack(spacing: 8) {
+                if let error = importError {
+                    Text(error).font(.caption).foregroundStyle(.red)
+                } else if !isKISConnected {
+                    Text("KIS 계좌 연결 시 보유 종목을 자동으로 가져올 수 있습니다")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer()
+                Button {
+                    startImport()
+                } label: {
+                    if isImporting {
+                        HStack(spacing: 4) {
+                            ProgressView().scaleEffect(0.7).frame(width: 14, height: 14)
+                            Text("불러오는 중…").font(.caption)
+                        }
+                    } else {
+                        Label("계좌에서 가져오기", systemImage: "arrow.down.circle")
+                            .font(.caption)
+                    }
+                }
+                .buttonStyle(.borderless)
+                .disabled(!isKISConnected || isImporting)
+            }
+
             List {
                 ForEach(items, id: \.id) { item in
                     HStack {
@@ -210,6 +248,11 @@ struct PortfolioSettingsView: View {
             SnapshotSettingsSection()
         }
         .onAppear { loadItems() }
+        .sheet(isPresented: $showImportSheet) {
+            PortfolioImportSheetView(items: importedItems) { mode in
+                applyImport(mode: mode)
+            }
+        }
     }
 
     private var isFormValid: Bool {
@@ -240,6 +283,104 @@ struct PortfolioSettingsView: View {
     private func deleteItem(_ item: PortfolioItem) {
         try? DatabaseManager.shared.delete(item)
         loadItems()
+    }
+
+    private func startImport() {
+        isImporting = true
+        importError = nil
+        Task {
+            do {
+                let fetched = try await QuoteManager.shared.fetchBalance()
+                if fetched.isEmpty {
+                    importError = "계좌에 보유 종목이 없습니다"
+                } else {
+                    importedItems = fetched
+                    showImportSheet = true
+                }
+            } catch {
+                importError = error.localizedDescription
+            }
+            isImporting = false
+        }
+    }
+
+    private func applyImport(mode: ImportSyncMode) {
+        switch mode {
+        case .replaceAll:
+            let existing = (try? DatabaseManager.shared.fetchPortfolio()) ?? []
+            for item in existing { try? DatabaseManager.shared.delete(item) }
+            for var item in importedItems { try? DatabaseManager.shared.insert(&item) }
+        case .addNew:
+            let existing = (try? DatabaseManager.shared.fetchPortfolio()) ?? []
+            let existingSymbols = Set(existing.map { $0.symbol })
+            for var item in importedItems where !existingSymbols.contains(item.symbol) {
+                try? DatabaseManager.shared.insert(&item)
+            }
+        }
+        loadItems()
+    }
+}
+
+struct PortfolioImportSheetView: View {
+    let items: [PortfolioItem]
+    let onApply: (ImportSyncMode) -> Void
+
+    @State private var mode: ImportSyncMode = .addNew
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("보유 종목 가져오기").font(.title2).bold()
+            Text("계좌에서 \(items.count)개 종목을 불러왔습니다.")
+                .font(.subheadline).foregroundStyle(.secondary)
+
+            List {
+                ForEach(items, id: \.symbol) { item in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(item.name).font(.body)
+                            Text(item.symbol).font(.caption).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text("평균 \(NumberFormatter.decimal.string(from: NSNumber(value: item.averagePrice)) ?? "")원")
+                                .font(.caption)
+                            Text("\(item.quantity)주")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.vertical, 2)
+                }
+            }
+            .listStyle(.bordered)
+            .frame(maxHeight: 180)
+
+            Divider()
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("동기화 방식").font(.headline)
+                Picker("", selection: $mode) {
+                    Text("신규 추가만 — 이미 있는 종목 유지").tag(ImportSyncMode.addNew)
+                    Text("전체 교체 — 기존 항목 삭제 후 덮어쓰기").tag(ImportSyncMode.replaceAll)
+                }
+                .pickerStyle(.radioGroup)
+                .labelsHidden()
+            }
+
+            HStack {
+                Spacer()
+                Button("취소") { dismiss() }
+                    .keyboardShortcut(.escape)
+                Button("가져오기") {
+                    onApply(mode)
+                    dismiss()
+                }
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.return)
+            }
+        }
+        .padding(24)
+        .frame(width: 420)
     }
 }
 
