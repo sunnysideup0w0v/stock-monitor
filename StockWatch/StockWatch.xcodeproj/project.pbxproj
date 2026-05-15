@@ -326,6 +326,7 @@
 				2B0B302DF29A3666B4432A36 /* Sources */,
 				59A8067BE4C86673417D83A9 /* Resources */,
 				28A0E57446C069E43061E3A8 /* Frameworks */,
+				C2DC9C0606E7C692B4DA79BD /* Install to ~/Applications */,
 			);
 			buildRules = (
 			);
@@ -397,6 +398,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		C2DC9C0606E7C692B4DA79BD /* Install to ~/Applications */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Install to ~/Applications";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\nDEST=\"$HOME/Applications/StockWatch.app\"\nrm -rf \"$DEST\"\nditto \"$BUILT_PRODUCTS_DIR/StockWatch.app\" \"$DEST\"\nLINK=\"$HOME/Desktop/StockWatch.app\"\nif [ ! -e \"$LINK\" ]; then\n  ln -s \"$DEST\" \"$LINK\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		18F087D05B7077D1B77BEC0D /* Sources */ = {

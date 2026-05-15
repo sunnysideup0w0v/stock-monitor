@@ -21,6 +21,18 @@ targets:
       - path: StockWatch/Resources
     dependencies:
       - package: GRDB
+    postBuildScripts:
+      - name: "Install to ~/Applications"
+        script: |
+          set -e
+          DEST="$HOME/Applications/StockWatch.app"
+          rm -rf "$DEST"
+          ditto "$BUILT_PRODUCTS_DIR/StockWatch.app" "$DEST"
+          LINK="$HOME/Desktop/StockWatch.app"
+          if [ ! -e "$LINK" ]; then
+            ln -s "$DEST" "$LINK"
+          fi
+        basedOnDependencyAnalysis: false
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.personal.StockWatch

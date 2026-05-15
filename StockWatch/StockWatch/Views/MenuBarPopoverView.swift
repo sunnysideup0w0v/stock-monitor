@@ -211,8 +211,14 @@ struct PortfolioHoldingRowView: View {
             }
             Spacer()
             if let quote {
-                Text(formatAmount(quote.price * item.quantity))
-                    .font(.system(size: 12, design: .monospaced))
+                let gain = item.evaluatedGain(currentPrice: quote.price)
+                VStack(alignment: .trailing, spacing: 1) {
+                    Text(formatAmount(quote.price * item.quantity))
+                        .font(.system(size: 12, design: .monospaced))
+                    Text((gain >= 0 ? "+" : "") + formatAmount(gain))
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundStyle(gain >= 0 ? .green : .red)
+                }
             } else {
                 Text("---")
                     .font(.system(size: 12, design: .monospaced))
@@ -265,7 +271,7 @@ struct StockRowView: View {
                 .foregroundStyle(isUp ? .green : .red)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 6)
+        .padding(.vertical, 3)
     }
 }
 
