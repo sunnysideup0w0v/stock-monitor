@@ -295,8 +295,8 @@
 
 ### 3.3 macOS 로그인 시 자동 시작
 
-- [ ] `SMLoginItemSetEnabled` 또는 `LaunchAgent` plist 방식 구현
-- [ ] 설정 화면에 "로그인 시 자동 시작" 토글 추가
+- [x] `SMAppService.mainApp` 방식 구현 (macOS 13+ 권장 API)
+- [x] 설정 화면 계좌 연결 탭에 "로그인 시 자동 시작" 토글 추가
 
 ### 3.4 설정 백업/복원
 

@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import ServiceManagement
 
 struct SettingsView: View {
     var body: some View {
@@ -594,6 +595,7 @@ struct AccountSettingsView: View {
     @State private var savedIsMock = false
 
     @State private var testStatus: TestStatus = .idle
+    @State private var launchAtLogin: Bool = (SMAppService.mainApp.status == .enabled)
 
     enum TestStatus: Equatable {
         case idle, testing, success, failure(String)
@@ -622,10 +624,31 @@ struct AccountSettingsView: View {
             } else {
                 loginFormView
             }
+            launchAtLoginSection
             DARTSettingsView()
             Spacer()
         }
         .onAppear { loadState() }
+    }
+
+    private var launchAtLoginSection: some View {
+        SettingsFormSection(title: "앱 설정") {
+            HStack {
+                Toggle("로그인 시 자동 시작", isOn: $launchAtLogin)
+                    .onChange(of: launchAtLogin) { _, enabled in
+                        do {
+                            if enabled {
+                                try SMAppService.mainApp.register()
+                            } else {
+                                try SMAppService.mainApp.unregister()
+                            }
+                        } catch {
+                            launchAtLogin = !enabled
+                        }
+                    }
+                Spacer()
+            }
+        }
     }
 
     // MARK: - 로그인 상태 뷰
