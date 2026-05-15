@@ -17,7 +17,7 @@ struct SettingsView: View {
             AssetChartView()
                 .tabItem { Label("자산 차트", systemImage: "chart.xyaxis.line") }
         }
-        .frame(width: 660, height: 500)
+        .frame(width: 720, height: 600)
         .padding()
     }
 }
@@ -202,7 +202,17 @@ struct PortfolioSettingsView: View {
 
             List {
                 ForEach(items, id: \.id) { item in
-                    HStack {
+                    HStack(spacing: 10) {
+                        Button {
+                            togglePopoverVisibility(item)
+                        } label: {
+                            Image(systemName: item.showInPopover ? "eye.fill" : "eye.slash")
+                                .foregroundStyle(item.showInPopover ? .blue : .secondary)
+                                .frame(width: 16)
+                        }
+                        .buttonStyle(.borderless)
+                        .help(item.showInPopover ? "메뉴바 팝오버에서 숨기기" : "메뉴바 팝오버에 표시")
+
                         VStack(alignment: .leading, spacing: 2) {
                             Text(item.name).font(.body)
                             Text(item.symbol).font(.caption).foregroundStyle(.secondary)
@@ -285,6 +295,13 @@ struct PortfolioSettingsView: View {
         loadItems()
     }
 
+    private func togglePopoverVisibility(_ item: PortfolioItem) {
+        var updated = item
+        updated.showInPopover = !item.showInPopover
+        try? DatabaseManager.shared.update(updated)
+        loadItems()
+    }
+
     private func startImport() {
         isImporting = true
         importError = nil
@@ -331,31 +348,49 @@ struct PortfolioImportSheetView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("보유 종목 가져오기").font(.title2).bold()
-            Text("계좌에서 \(items.count)개 종목을 불러왔습니다.")
-                .font(.subheadline).foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("계좌에서 \(items.count)개 종목을 불러왔습니다.")
+                    .font(.subheadline).foregroundStyle(.secondary)
+                Text(items.map { $0.name }.joined(separator: " · "))
+                    .font(.caption).foregroundStyle(.tertiary)
+            }
 
-            List {
-                ForEach(items, id: \.symbol) { item in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(item.name).font(.body)
-                            Text(item.symbol).font(.caption).foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text("평균 \(NumberFormatter.decimal.string(from: NSNumber(value: item.averagePrice)) ?? "")원")
-                                .font(.caption)
-                            Text("\(item.quantity)주")
-                                .font(.caption).foregroundStyle(.secondary)
+            VStack(spacing: 0) {
+                Divider()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        ForEach(Array(items.enumerated()), id: \.element.symbol) { idx, item in
+                            HStack(alignment: .center, spacing: 12) {
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(item.name).font(.body).fontWeight(.medium)
+                                    Text(item.symbol)
+                                        .font(.caption).fontDesign(.monospaced)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                VStack(alignment: .trailing, spacing: 3) {
+                                    Text("평균 \(NumberFormatter.decimal.string(from: NSNumber(value: item.averagePrice)) ?? "")원")
+                                        .font(.caption)
+                                    HStack(spacing: 6) {
+                                        Text("\(item.quantity)주")
+                                            .font(.caption).foregroundStyle(.secondary)
+                                        Text("·").font(.caption).foregroundStyle(.tertiary)
+                                        Text("총 \(NumberFormatter.decimal.string(from: NSNumber(value: item.totalCost)) ?? "")원")
+                                            .font(.caption).foregroundStyle(.secondary)
+                                    }
+                                }
+                            }
+                            .padding(.vertical, 8)
+                            if idx < items.count - 1 {
+                                Divider()
+                            }
                         }
                     }
-                    .padding(.vertical, 2)
+                    .padding(.horizontal, 2)
                 }
+                .frame(maxHeight: 280)
+                Divider()
             }
-            .listStyle(.bordered)
-            .frame(maxHeight: 180)
-
-            Divider()
 
             VStack(alignment: .leading, spacing: 8) {
                 Text("동기화 방식").font(.headline)
@@ -380,7 +415,7 @@ struct PortfolioImportSheetView: View {
             }
         }
         .padding(24)
-        .frame(width: 420)
+        .frame(width: 500)
     }
 }
 

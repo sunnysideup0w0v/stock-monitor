@@ -3,6 +3,7 @@ import SwiftUI
 struct MenuBarPopoverView: View {
     @ObservedObject private var quoteManager = QuoteManager.shared
     @State private var watchlist: [WatchlistItem] = []
+    @State private var portfolioHoldings: [PortfolioItem] = []
     @State private var totalGain: Int = 0
     @State private var hasPortfolio = false
 
@@ -12,7 +13,7 @@ struct MenuBarPopoverView: View {
             Divider()
             stockList
             Divider()
-            portfolioSummary
+            portfolioSection
             Divider()
             bottomBar
         }
@@ -62,24 +63,35 @@ struct MenuBarPopoverView: View {
         }
     }
 
-    private var portfolioSummary: some View {
-        HStack {
-            Text("포트폴리오")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Spacer()
-            if hasPortfolio {
-                Text((totalGain >= 0 ? "+" : "") + (NumberFormatter.decimal.string(from: NSNumber(value: totalGain)) ?? "") + "원")
-                    .font(.caption)
-                    .foregroundStyle(totalGain >= 0 ? .green : .red)
-            } else {
-                Text("--")
+    private var portfolioSection: some View {
+        VStack(spacing: 0) {
+            // 포트폴리오 요약
+            HStack {
+                Text("포트폴리오")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                Spacer()
+                if hasPortfolio {
+                    Text((totalGain >= 0 ? "+" : "") + (NumberFormatter.decimal.string(from: NSNumber(value: totalGain)) ?? "") + "원")
+                        .font(.caption)
+                        .foregroundStyle(totalGain >= 0 ? .green : .red)
+                } else {
+                    Text("--")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+
+            // 선택된 보유 종목 현재가
+            ForEach(portfolioHoldings, id: \.id) { item in
+                PortfolioHoldingRowView(
+                    item: item,
+                    quote: quoteManager.quotes[item.symbol]
+                )
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
     }
 
     private var bottomBar: some View {
@@ -103,9 +115,14 @@ struct MenuBarPopoverView: View {
 
     private func reload() {
         watchlist = (try? DatabaseManager.shared.fetchWatchlist()) ?? []
-        let symbols = watchlist.map { $0.symbol }
+        portfolioHoldings = (try? DatabaseManager.shared.fetchPortfolio())?.filter { $0.showInPopover } ?? []
+
+        var symbols = watchlist.map { $0.symbol }
+        for symbol in portfolioHoldings.map({ $0.symbol }) where !symbols.contains(symbol) {
+            symbols.append(symbol)
+        }
         QuoteManager.shared.startPolling(symbols: symbols)
-        DARTManager.shared.start(symbols: symbols)
+        DARTManager.shared.start(symbols: watchlist.map { $0.symbol })
         calculatePortfolio()
     }
 
@@ -120,6 +137,36 @@ struct MenuBarPopoverView: View {
             guard let quote = quoteManager.quotes[item.symbol] else { return sum }
             return sum + item.evaluatedGain(currentPrice: quote.price)
         }
+    }
+}
+
+struct PortfolioHoldingRowView: View {
+    let item: PortfolioItem
+    let quote: StockQuote?
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Text(item.name)
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+            Spacer()
+            if let quote {
+                let gainRate = item.gainRate(currentPrice: quote.price)
+                Text(quote.formattedPrice)
+                    .font(.system(size: 12, design: .monospaced))
+                Text(String(format: "%+.1f%%", gainRate))
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(gainRate >= 0 ? .green : .red)
+            } else {
+                Text("---")
+                    .font(.system(size: 12, design: .monospaced))
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .padding(.leading, 24)
+        .padding(.trailing, 16)
+        .padding(.vertical, 4)
     }
 }
 

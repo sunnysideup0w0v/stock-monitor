@@ -85,6 +85,12 @@ final class DatabaseManager: @unchecked Sendable {
             }
         }
 
+        migrator.registerMigration("v7_portfolio_show_in_popover") { db in
+            try db.alter(table: "portfolio") { t in
+                t.add(column: "showInPopover", .boolean).notNull().defaults(to: false)
+            }
+        }
+
         try migrator.migrate(dbQueue)
     }
 

@@ -7,6 +7,7 @@ struct PortfolioItem: Codable, FetchableRecord, MutablePersistableRecord {
     var name: String
     var averagePrice: Int
     var quantity: Int
+    var showInPopover: Bool = false
 
     static let databaseTableName = "portfolio"
 
