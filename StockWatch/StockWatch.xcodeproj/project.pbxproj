@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0C649CA67BBEF3201E143D91 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96036A94BC463B8118C8EB3D /* KeychainHelper.swift */; };
 		0EF0D8B07242A577BA15B2DE /* RealtimeQuoteManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F5A6472AE55E5203993C25F /* RealtimeQuoteManager.swift */; };
+		1BA2239BCF2C3CC0B54F8CC0 /* BrokerRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01B9FA9D774BFCA082ECB772 /* BrokerRegistry.swift */; };
 		1D1A8F945D66A67A6CFA06A9 /* MockBrokerAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7DAC0DBAF002A53BAA7238E /* MockBrokerAdapter.swift */; };
 		1E4A8C3EB5C2AAD27B10C9B5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B18D1CB241596D88278D7F25 /* Assets.xcassets */; };
 		2396F009A6EE2EE7BE433153 /* SettingsWindowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB99440BD1A277CA6004621F /* SettingsWindowUITests.swift */; };
@@ -20,6 +21,7 @@
 		5C32C172B9F267DD888430FB /* AlertEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 485F5E3B2F81922FF587857A /* AlertEvaluator.swift */; };
 		5C81696A3CE12ACB72023A9C /* QuoteManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9ABB45D8245B3D050084B16D /* QuoteManagerTests.swift */; };
 		5D44B67048A2A676F4295779 /* DARTDisclosure.swift in Sources */ = {isa = PBXBuildFile; fileRef = B73C72C6F1D88F72B97D7362 /* DARTDisclosure.swift */; };
+		5D85B405631F1A6E2AD57A22 /* KiwoomAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA63B73896450B025105068F /* KiwoomAdapter.swift */; };
 		61396F92FB6DF6646F9B79C2 /* QuoteManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E5AB112AF506EF87D40BA14 /* QuoteManager.swift */; };
 		647CB488BA748CF9E75DC473 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 7799957FF90B2FF48DC7C87F /* GRDB */; };
 		687F91821C4C630BA708C4A0 /* MenuBarPopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14A3725923C78C18CCFFECD6 /* MenuBarPopoverView.swift */; };
@@ -65,6 +67,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		01B9FA9D774BFCA082ECB772 /* BrokerRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrokerRegistry.swift; sourceTree = "<group>"; };
 		05217C2DAD3316E28FE58E77 /* SnapshotManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotManagerTests.swift; sourceTree = "<group>"; };
 		120E543584AD0CEC78ACF6F1 /* BrokerAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrokerAdapter.swift; sourceTree = "<group>"; };
 		14A3725923C78C18CCFFECD6 /* MenuBarPopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarPopoverView.swift; sourceTree = "<group>"; };
@@ -97,6 +100,7 @@
 		BD0FBD6F5A164FABC04C9358 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		C52BEC3CD0ED2BB582E51873 /* CrashLoggerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashLoggerTests.swift; sourceTree = "<group>"; };
 		C98C3F9477E7B17A8E9D72F0 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		CA63B73896450B025105068F /* KiwoomAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KiwoomAdapter.swift; sourceTree = "<group>"; };
 		CBCBCB15EE3D06F83CF8F3BB /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		CCBB017D66E4027E867F5D48 /* ToastWindowManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastWindowManager.swift; sourceTree = "<group>"; };
 		D55D467063C92591D5F3AF32 /* AlertEvaluatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertEvaluatorTests.swift; sourceTree = "<group>"; };
@@ -190,7 +194,9 @@
 			isa = PBXGroup;
 			children = (
 				120E543584AD0CEC78ACF6F1 /* BrokerAdapter.swift */,
+				01B9FA9D774BFCA082ECB772 /* BrokerRegistry.swift */,
 				454863BF153C297039535D2A /* KISAdapter.swift */,
+				CA63B73896450B025105068F /* KiwoomAdapter.swift */,
 				E7DAC0DBAF002A53BAA7238E /* MockBrokerAdapter.swift */,
 			);
 			path = Adapters;
@@ -403,12 +409,14 @@
 				EBBA37C13D78A1B9BF4040A8 /* AssetChartView.swift in Sources */,
 				E27457020673252EEBC0D7AC /* BackupManager.swift in Sources */,
 				9895C317774C9E7C480E7D6A /* BrokerAdapter.swift in Sources */,
+				1BA2239BCF2C3CC0B54F8CC0 /* BrokerRegistry.swift in Sources */,
 				AB8B3DEC935F08EB6EF096A1 /* CrashLogger.swift in Sources */,
 				5D44B67048A2A676F4295779 /* DARTDisclosure.swift in Sources */,
 				6DFAF541B90C1083B5B2C888 /* DARTManager.swift in Sources */,
 				DD5602121F5D40899A8BD823 /* DatabaseManager.swift in Sources */,
 				379BEF80E8AA0999738268D2 /* KISAdapter.swift in Sources */,
 				0C649CA67BBEF3201E143D91 /* KeychainHelper.swift in Sources */,
+				5D85B405631F1A6E2AD57A22 /* KiwoomAdapter.swift in Sources */,
 				687F91821C4C630BA708C4A0 /* MenuBarPopoverView.swift in Sources */,
 				1D1A8F945D66A67A6CFA06A9 /* MockBrokerAdapter.swift in Sources */,
 				68A053190EE46F1D1EBCAA6F /* NotificationManager.swift in Sources */,

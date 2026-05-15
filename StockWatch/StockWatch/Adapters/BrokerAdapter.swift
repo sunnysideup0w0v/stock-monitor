@@ -38,6 +38,7 @@ extension BrokerError: LocalizedError {
 protocol BrokerAdapter: Sendable {
     var brokerName: String { get }
     func connect(credentials: BrokerCredentials) async throws
+    func disconnect() async
     func fetchQuote(symbol: String) async throws -> StockQuote
     func fetchPortfolio() async throws -> [PortfolioItem]
     func fetchNews(symbol: String) async throws -> [NewsItem]

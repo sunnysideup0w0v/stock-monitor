@@ -29,6 +29,12 @@ actor KISAdapter: BrokerAdapter {
         try await issueToken()
     }
 
+    func disconnect() async {
+        credentials = nil
+        cachedToken = nil
+        tokenExpiry = nil
+    }
+
     func fetchQuote(symbol: String) async throws -> StockQuote {
         try await fetchQuote(symbol: symbol, retryOnUnauthorized: true, retryCount: 1)
     }

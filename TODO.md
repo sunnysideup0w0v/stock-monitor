@@ -352,9 +352,11 @@
 
 ### 4.1 BrokerAdapter 프로토콜 정비
 
-- [ ] `BrokerAdapter` 프로토콜 최종 확정 및 문서화
-- [ ] `BrokerRegistry.swift` — 등록된 어댑터 관리
-- [ ] KiwoomAdapter 리팩토링 (프로토콜 완전 준수)
+- [x] `BrokerAdapter` 프로토콜에 `disconnect()` 메서드 추가 및 확정
+- [x] `KISAdapter.disconnect()` — 자격증명·토큰 초기화
+- [x] `MockBrokerAdapter.disconnect()` — no-op 구현
+- [x] `BrokerRegistry.swift` — 이름 기반 어댑터 등록/조회/해제 레지스트리
+- [x] `KiwoomAdapter.swift` — Stub 구현 (actor, 실 API는 Phase 4.4에서 연결)
 
 ### 4.2 한국투자증권(KIS) 어댑터
 

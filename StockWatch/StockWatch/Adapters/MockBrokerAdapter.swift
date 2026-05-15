@@ -17,6 +17,9 @@ final class MockBrokerAdapter: BrokerAdapter {
         try await Task.sleep(for: .milliseconds(200))
     }
 
+    func disconnect() async {}
+
+
     func fetchQuote(symbol: String) async throws -> StockQuote {
         try await Task.sleep(for: .milliseconds(50))
         guard let data = mockData[symbol] else {
