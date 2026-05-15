@@ -300,9 +300,9 @@
 
 ### 3.4 설정 백업/복원
 
-- [ ] 설정 JSON 내보내기 (관심 종목, 포트폴리오, 알림 조건)
-- [ ] JSON 파일로 설정 가져오기
-- [ ] 백업 파일 형식 문서화
+- [x] 설정 JSON 내보내기 (관심 종목, 포트폴리오, 알림 조건) — `BackupManager.export()`
+- [x] JSON 파일로 설정 가져오기 — `BackupManager.importBackup()` (중복 심볼 스킵)
+- [x] 백업 파일 형식 문서화 (`version`, `exportedAt`, `watchlist`, `portfolio`, `alertConditions`)
 
 ### 3.5 다크 모드 / 라이트 모드 대응
 

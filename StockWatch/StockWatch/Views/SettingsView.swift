@@ -648,6 +648,11 @@ struct AccountSettingsView: View {
                     }
                 Spacer()
             }
+            HStack(spacing: 12) {
+                Button("설정 백업…") { BackupManager.export() }
+                Button("설정 복원…") { BackupManager.importBackup() }
+                Spacer()
+            }
         }
     }
 
