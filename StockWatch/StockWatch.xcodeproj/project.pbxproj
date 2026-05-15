@@ -18,6 +18,7 @@
 		4F05F2C0A6A0FC238A10F859 /* PortfolioItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 687A817AB4EE034AB2D0D112 /* PortfolioItem.swift */; };
 		50B4EEE64EEDAEEDC40EB2DE /* NotificationManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EB723879B41A5C7856EBCD4 /* NotificationManagerTests.swift */; };
 		518D2F18473C4F22C4EB371F /* SnapshotManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05217C2DAD3316E28FE58E77 /* SnapshotManagerTests.swift */; };
+		57D99242DAA246F7A6594F57 /* MiraeAssetAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77B36BF411BAB00875C41D77 /* MiraeAssetAdapter.swift */; };
 		5C32C172B9F267DD888430FB /* AlertEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 485F5E3B2F81922FF587857A /* AlertEvaluator.swift */; };
 		5C81696A3CE12ACB72023A9C /* QuoteManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9ABB45D8245B3D050084B16D /* QuoteManagerTests.swift */; };
 		5D44B67048A2A676F4295779 /* DARTDisclosure.swift in Sources */ = {isa = PBXBuildFile; fileRef = B73C72C6F1D88F72B97D7362 /* DARTDisclosure.swift */; };
@@ -86,6 +87,7 @@
 		693BBA6F9D04AC0BDD39110D /* StockWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StockWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6F629436FD4ED83B8E8A6E26 /* StockWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockWatchApp.swift; sourceTree = "<group>"; };
 		713FCE641DED6E48FFF016F5 /* StockQuoteTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockQuoteTests.swift; sourceTree = "<group>"; };
+		77B36BF411BAB00875C41D77 /* MiraeAssetAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiraeAssetAdapter.swift; sourceTree = "<group>"; };
 		831B19FB962ED8687DF4CBFD /* PortfolioItemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioItemTests.swift; sourceTree = "<group>"; };
 		96036A94BC463B8118C8EB3D /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		9ABB45D8245B3D050084B16D /* QuoteManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteManagerTests.swift; sourceTree = "<group>"; };
@@ -197,6 +199,7 @@
 				01B9FA9D774BFCA082ECB772 /* BrokerRegistry.swift */,
 				454863BF153C297039535D2A /* KISAdapter.swift */,
 				CA63B73896450B025105068F /* KiwoomAdapter.swift */,
+				77B36BF411BAB00875C41D77 /* MiraeAssetAdapter.swift */,
 				E7DAC0DBAF002A53BAA7238E /* MockBrokerAdapter.swift */,
 			);
 			path = Adapters;
@@ -418,6 +421,7 @@
 				0C649CA67BBEF3201E143D91 /* KeychainHelper.swift in Sources */,
 				5D85B405631F1A6E2AD57A22 /* KiwoomAdapter.swift in Sources */,
 				687F91821C4C630BA708C4A0 /* MenuBarPopoverView.swift in Sources */,
+				57D99242DAA246F7A6594F57 /* MiraeAssetAdapter.swift in Sources */,
 				1D1A8F945D66A67A6CFA06A9 /* MockBrokerAdapter.swift in Sources */,
 				68A053190EE46F1D1EBCAA6F /* NotificationManager.swift in Sources */,
 				D5197D156AD652C931C382A6 /* OnboardingView.swift in Sources */,

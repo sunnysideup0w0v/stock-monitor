@@ -631,8 +631,9 @@ struct AccountSettingsView: View {
     @State private var launchAtLogin: Bool = (SMAppService.mainApp.status == .enabled)
 
     enum BrokerSelection: String, CaseIterable {
-        case kis    = "한국투자증권"
-        case kiwoom = "키움증권"
+        case kis        = "한국투자증권"
+        case kiwoom     = "키움증권"
+        case miraeAsset = "미래에셋증권"
     }
 
     enum TestStatus: Equatable {
@@ -662,7 +663,7 @@ struct AccountSettingsView: View {
             switch selectedBroker {
             case .kis:
                 if isLoggedIn { loggedInView } else { loginFormView }
-            case .kiwoom:
+            case .kiwoom, .miraeAsset:
                 kiwoomPlaceholderView
             }
             launchAtLoginSection
@@ -700,7 +701,7 @@ struct AccountSettingsView: View {
                     .font(.headline)
                     .foregroundStyle(.secondary)
             }
-            Text("키움증권 Open API REST 연동은 다음 업데이트에서 추가될 예정입니다.")
+            Text("\(selectedBroker.rawValue) Open API 연동은 다음 업데이트에서 추가될 예정입니다.")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
         }
