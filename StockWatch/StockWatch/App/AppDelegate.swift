@@ -56,12 +56,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    // 앱 시작 시 DB의 관심종목으로 즉시 폴링 시작 (팝업을 열지 않아도 알림이 동작)
+    // 앱 시작 시 DB의 관심종목 + 팝오버 표시 보유 종목으로 폴링 시작 (팝업을 열지 않아도 알림이 동작)
     private func startPollingFromDB() {
-        let symbols = (try? DatabaseManager.shared.fetchWatchlist().map { $0.symbol }) ?? []
-        guard !symbols.isEmpty else { return }
-        QuoteManager.shared.startPolling(symbols: symbols)
-        DARTManager.shared.start(symbols: symbols)
+        let watchlistSymbols = (try? DatabaseManager.shared.fetchWatchlist().map { $0.symbol }) ?? []
+        let holdingSymbols   = ((try? DatabaseManager.shared.fetchPortfolio()) ?? [])
+            .filter { $0.showInPopover }
+            .map { $0.symbol }
+
+        var allSymbols = watchlistSymbols
+        for symbol in holdingSymbols where !allSymbols.contains(symbol) {
+            allSymbols.append(symbol)
+        }
+
+        if !allSymbols.isEmpty {
+            QuoteManager.shared.startPolling(symbols: allSymbols)
+        }
+        DARTManager.shared.start(symbols: watchlistSymbols)
         SnapshotManager.shared.start()
     }
 
@@ -122,7 +132,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let window = NSWindow(contentViewController: controller)
             window.title = "StockWatch 설정"
             window.styleMask = [.titled, .closable, .resizable, .miniaturizable]
-            window.setContentSize(NSSize(width: 660, height: 500))
+            window.setContentSize(NSSize(width: 720, height: 600))
             window.isReleasedWhenClosed = false
             window.center()
             settingsWindow = window
