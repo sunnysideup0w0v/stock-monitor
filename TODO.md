@@ -513,4 +513,62 @@
 
 ---
 
+## Phase 5 — 종목 추천 (조건 스크리너 + AI 분석)
+
+> 전략: KRX OpenAPI로 전종목 데이터를 일 1회 수집 → 로컬 조건 스크리닝 → KIS 실시간 시세 보강 → (선택) Claude API 분석
+
+### 5.1 KRX OpenAPI 연동
+
+- [ ] KRX OpenAPI (`openapi.krx.co.kr`) API 키 발급 및 Keychain 저장 (`krx.apiKey`)
+- [ ] `KRXManager.swift` 신규 작성 (`@MainActor`, singleton)
+  - [ ] 전종목 일별 시세 fetch (KOSPI + KOSDAQ, OHLCV + 시가총액 + PER/PBR + 거래량)
+  - [ ] 업종 코드 매핑 fetch 및 캐싱
+- [ ] DB Migration v9: `stock_universe` 테이블
+  - [ ] `symbol`, `name`, `market`(KOSPI/KOSDAQ), `sector`, `close`, `volume`, `marketCap`, `per`, `pbr`, `high52w`, `low52w`, `date`
+- [ ] 장 마감 후 자동 갱신 (평일 16:00, `SnapshotManager`와 유사한 타이머 방식)
+- [ ] 계좌 연결 탭에 KRX API 키 입력 UI 추가
+
+### 5.2 조건 스크리너 엔진
+
+- [ ] `ScreenerCondition.swift` — 조건 모델 정의
+  - [ ] 조건 타입: `priceRange`, `volumeSpike`, `movingAvgCross`, `nearHighLow52w`, `perRange`, `pbrRange`, `marketCapRange`, `sectorFilter`, `recentDart`
+  - [ ] 조건 조합: AND (전체 충족)
+- [ ] `ScreenerEngine.swift` — 로컬 SQLite 조건 스크리닝
+  - [ ] `stock_universe` 테이블 대상 GRDB 쿼리 생성
+  - [ ] 이동평균 계산 (MA5 / MA20 / MA60) — 일별 데이터 기반
+  - [ ] 결과에 KIS 실시간 시세 보강 (`QuoteManager.startPolling`)
+
+### 5.3 스크리너 UI
+
+- [ ] 설정 창에 "종목 추천" 탭 추가 (7번째 탭)
+- [ ] `ScreenerView.swift` 작성
+  - [ ] 조건 목록 (추가/삭제, AND 조합)
+  - [ ] 각 조건 타입별 입력 UI (범위 슬라이더 or TextField)
+  - [ ] "스크리닝 실행" 버튼 → 결과 리스트 표시
+  - [ ] 결과 종목 → 관심종목 추가 버튼
+- [ ] 마지막 스크리닝 조건 저장 (UserDefaults JSON)
+- [ ] 데이터 마지막 갱신 시각 표시 ("전일 기준 YYYY-MM-DD")
+
+### 5.4 Claude API 연동 (AI 분석, 선택 기능)
+
+- [ ] Anthropic API 키 Keychain 저장 (`anthropic.apiKey`)
+- [ ] 계좌 연결 탭에 Anthropic API 키 입력 UI 추가
+- [ ] `ClaudeAnalyzer.swift` 작성
+  - [ ] 스크리닝 결과 종목 + 실시간 시세 + 최근 DART 공시를 컨텍스트로 구성
+  - [ ] `POST https://api.anthropic.com/v1/messages` 호출
+  - [ ] 응답 스트리밍 파싱 (SSE)
+- [ ] `ScreenerView`에 "AI 분석" 버튼 추가 (API 키 설정 시에만 활성화)
+  - [ ] 분석 결과를 마크다운 형태로 표시 (`Text` + 기본 파싱)
+  - [ ] 분석 결과 클립보드 복사 버튼
+
+### ✅ Phase 5 검증
+- [ ] KRX OpenAPI 연동 → 전종목 데이터 정상 수신 및 DB 저장 확인
+- [ ] 조건 스크리닝 → 거래량 급증 조건으로 필터링 결과 확인
+- [ ] KIS 실시간 시세 보강 → 결과 종목 현재가 정상 표시 확인
+- [ ] 이동평균 계산 정확성 → 외부 데이터와 대조 확인
+- [ ] Claude API 분석 → 응답 정상 수신 및 표시 확인
+- [ ] 장 마감 후 자동 갱신 동작 확인 (16:00)
+
+---
+
 *각 Phase 검증 항목을 모두 체크한 후 다음 단계로 진행할 것.*

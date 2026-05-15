@@ -198,7 +198,6 @@ struct PortfolioHoldingRowView: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(item.name)
                     .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
                     .lineLimit(1)
                 if showDetail, let quote {
                     let avg = NumberFormatter.decimal.string(from: NSNumber(value: item.averagePrice)) ?? ""
