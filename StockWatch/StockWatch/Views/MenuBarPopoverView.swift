@@ -69,10 +69,17 @@ struct MenuBarPopoverView: View {
                             name: item.alias ?? item.name,
                             price: quote.formattedPrice,
                             change: quote.formattedChange,
-                            isUp: quote.isUp
+                            isUp: quote.isUp,
+                            symbol: item.symbol,
+                            group: item.group.displayName
                         )
                     } else {
-                        StockRowView(name: item.alias ?? item.name, price: "---", change: "---", isUp: true)
+                        StockRowView(
+                            name: item.alias ?? item.name,
+                            price: "---", change: "---", isUp: true,
+                            symbol: item.symbol,
+                            group: item.group.displayName
+                        )
                     }
                 }
             }
@@ -184,21 +191,28 @@ struct MenuBarPopoverView: View {
 struct PortfolioHoldingRowView: View {
     let item: PortfolioItem
     let quote: StockQuote?
+    @State private var isHovering = false
 
     var body: some View {
         HStack(spacing: 6) {
-            Text(item.name)
-                .font(.system(size: 12))
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(item.name)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                if isHovering, let quote {
+                    let avg = NumberFormatter.decimal.string(from: NSNumber(value: item.averagePrice)) ?? ""
+                    let cur = NumberFormatter.decimal.string(from: NSNumber(value: quote.price)) ?? ""
+                    Text("매입 \(avg) · 현재 \(cur) · \(item.quantity)주")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
+                }
+            }
             Spacer()
             if let quote {
-                let gainRate = item.gainRate(currentPrice: quote.price)
-                Text(quote.formattedPrice)
+                Text(formatAmount(quote.price * item.quantity))
                     .font(.system(size: 12, design: .monospaced))
-                Text(String(format: "%+.1f%%", gainRate))
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(gainRate >= 0 ? .green : .red)
             } else {
                 Text("---")
                     .font(.system(size: 12, design: .monospaced))
@@ -208,6 +222,17 @@ struct PortfolioHoldingRowView: View {
         .padding(.leading, 24)
         .padding(.trailing, 16)
         .padding(.vertical, 4)
+        .contentShape(Rectangle())
+        .onHover { isHovering = $0 }
+    }
+
+    private func formatAmount(_ value: Int) -> String {
+        if value >= 100_000_000 {
+            return String(format: "%.1f억원", Double(value) / 100_000_000)
+        } else if value >= 10_000_000 {
+            return String(format: "%.0f만원", Double(value) / 10_000)
+        }
+        return (NumberFormatter.decimal.string(from: NSNumber(value: value)) ?? "") + "원"
     }
 }
 
@@ -216,11 +241,21 @@ struct StockRowView: View {
     let price: String
     let change: String
     let isUp: Bool
+    var symbol: String = ""
+    var group: String = ""
+    @State private var isHovering = false
 
     var body: some View {
         HStack {
-            Text(name)
-                .font(.system(size: 13))
+            VStack(alignment: .leading, spacing: 1) {
+                Text(name)
+                    .font(.system(size: 13))
+                if isHovering, !symbol.isEmpty || !group.isEmpty {
+                    Text([symbol, group].filter { !$0.isEmpty }.joined(separator: " · "))
+                        .font(.system(size: 10))
+                        .foregroundStyle(.tertiary)
+                }
+            }
             Spacer()
             Text(price)
                 .font(.system(size: 13, design: .monospaced))
@@ -233,6 +268,8 @@ struct StockRowView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 6)
+        .contentShape(Rectangle())
+        .onHover { isHovering = $0 }
     }
 }
 
