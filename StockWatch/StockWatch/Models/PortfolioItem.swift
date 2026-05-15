@@ -27,6 +27,13 @@ struct PortfolioItem: Codable, FetchableRecord, MutablePersistableRecord {
         id = inserted.rowID
     }
 
+    /// accountId 접두사 기반 표시용 브로커 이름 ("KIS" / "키움" / …)
+    var brokerName: String {
+        if accountId.hasPrefix("KIS-") { return "KIS" }
+        if accountId.hasPrefix("KIWOOM-") { return "키움" }
+        return accountId
+    }
+
     var totalCost: Int { averagePrice * quantity }
 
     func evaluatedGain(currentPrice: Int) -> Int {

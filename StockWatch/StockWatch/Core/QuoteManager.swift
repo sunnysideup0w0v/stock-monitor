@@ -13,7 +13,8 @@ final class QuoteManager: ObservableObject {
         case connected, disconnected, error
     }
 
-    private var adapter: (any BrokerAdapter)?
+    // key = accountId ("KIS-XXXX", "KIWOOM-XXXX") 또는 "__primary"(Mock 폴백)
+    private var adapters: [String: any BrokerAdapter] = [:]
     private var pollingTask: Task<Void, Never>?
     private var consecutiveFailures = 0
     private(set) var currentSymbols: [String] = []
@@ -26,8 +27,23 @@ final class QuoteManager: ObservableObject {
 
     private init() {}
 
+    /// 실제 브로커 어댑터 추가. Mock 폴백이 있으면 제거하고 실 어댑터로 교체.
+    func addAdapter(id: String, adapter: any BrokerAdapter) {
+        adapters.removeValue(forKey: "__primary")
+        adapters[id] = adapter
+        consecutiveFailures = 0
+        disconnectNotified = false
+    }
+
+    /// 특정 브로커 어댑터 제거. 남은 어댑터가 없으면 Mock으로 폴백.
+    func removeAdapter(id: String) {
+        adapters.removeValue(forKey: id)
+        if adapters.isEmpty { setAdapter(MockBrokerAdapter()) }
+    }
+
+    /// Mock 전용 단일 어댑터 설정 (로그아웃 폴백 / 앱 초기화).
     func setAdapter(_ adapter: any BrokerAdapter) {
-        self.adapter = adapter
+        adapters = ["__primary": adapter]
         consecutiveFailures = 0
         disconnectNotified = false
         connectionState = .disconnected
@@ -52,6 +68,8 @@ final class QuoteManager: ObservableObject {
     }
 
     func refreshAverageVolumes(symbols: [String]) {
+        // 일별 거래량은 아무 실 어댑터에서나 동일한 결과 → 첫 번째 실 어댑터 사용
+        let adapter = adapters.first(where: { $0.key != "__primary" })?.value ?? adapters["__primary"]
         guard let adapter, !symbols.isEmpty else { return }
         Task {
             for symbol in symbols {
@@ -85,7 +103,13 @@ final class QuoteManager: ObservableObject {
         AlertEvaluator.shared.evaluate(quotes: quotes)
     }
 
-    func fetchBalance() async throws -> [PortfolioItem] {
+    /// 특정 브로커의 잔고 조회. accountId 미지정 시 첫 번째 실 어댑터 사용.
+    func fetchBalance(for accountId: String? = nil) async throws -> [PortfolioItem] {
+        if let accountId {
+            guard let adapter = adapters[accountId] else { throw BrokerError.notConnected }
+            return try await adapter.fetchPortfolio()
+        }
+        let adapter = adapters.first(where: { $0.key != "__primary" })?.value ?? adapters["__primary"]
         guard let adapter else { throw BrokerError.notConnected }
         return try await adapter.fetchPortfolio()
     }
@@ -96,15 +120,26 @@ final class QuoteManager: ObservableObject {
     }
 
     private func fetchAll(symbols: [String]) async {
-        guard let adapter else { return }
+        guard !adapters.isEmpty else { return }
+
+        // 실 어댑터 우선, 없으면 mock. 시세는 어떤 브로커든 동일한 한국 주식 시장 데이터.
+        // 각 종목마다 어댑터를 순서대로 시도 — 앞 어댑터 실패 시 다음으로 폴백.
+        let orderedAdapters = adapters
+            .sorted { $0.key == "__primary" ? false : $1.key == "__primary" ? true : $0.key < $1.key }
+            .map { $0.value }
+
         var updated = quotes
         var successCount = 0
 
         await withTaskGroup(of: (String, StockQuote?).self) { group in
             for symbol in symbols {
                 group.addTask {
-                    let quote = try? await adapter.fetchQuote(symbol: symbol)
-                    return (symbol, quote)
+                    for adapter in orderedAdapters {
+                        if let quote = try? await adapter.fetchQuote(symbol: symbol) {
+                            return (symbol, quote)
+                        }
+                    }
+                    return (symbol, nil)
                 }
             }
             for await (symbol, quote) in group {

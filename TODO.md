@@ -1,6 +1,6 @@
 # StockWatch — 개발 진행 체크리스트
 
-> PRD v0.2 기반 | 업데이트: 2026-05-15 (Phase 4.4 진행 중 — 키움증권 REST API 실구현)  
+> PRD v0.3 기반 | 업데이트: 2026-05-15 (Phase 4.4 완료 — Phase 4.7 멀티 브로커 동시 모니터링 설계 완료)  
 > Claude Code로 단계별 개발 진행. 각 Phase 완료 시 검증 항목 확인 후 다음 단계로 이동.
 
 ---
@@ -384,13 +384,14 @@
 - [x] 401 수신 시 재발급 후 1회 자동 재시도
 
 #### 4.4.2 현재가 조회
-- [x] `KiwoomAdapter.fetchQuote()` 실구현 — `POST /api/dostk/info` (api-id: ka10001)
-- [x] 응답 필드 매핑: `cur_prc`, `pred_pre`, `flu_rt`, `flu_smbol`(등락기호) → `StockQuote`
-- [ ] 실제 API 호출로 응답 필드명 검증 (첫 연결 시 로그 확인)
+- [x] `KiwoomAdapter.fetchQuote()` 실구현 — `POST /api/dostk/stkinfo` (api-id: ka10001)
+- [x] 응답 필드 매핑: `cur_prc`(부호 제거), `pred_pre`, `flu_rt` → `StockQuote` (flat 구조)
+- [x] 실제 API 호출로 응답 필드명 검증 완료 (로그 확인 — 삼성전자·NAVER·SK하이닉스 정상)
 
 #### 4.4.3 잔고조회
-- [x] `KiwoomAdapter.fetchPortfolio()` Stub 실구현 — `POST /api/dostk/account` (api-id: kt00018)
-- [ ] 실제 API 호출로 응답 필드명 검증 및 보정 (stk_cd, stk_nm, hold_qty, avg_prc)
+- [x] `KiwoomAdapter.fetchPortfolio()` 실구현 — `POST /api/dostk/acnt` (api-id: kt00018)
+- [x] 요청 body: `qry_tp=2`(개별), `dmst_stex_tp=KRX` (계좌번호는 토큰에 귀속)
+- [x] 응답 배열 키: `acnt_evlt_remn_indv_tot`, 항목 필드: `stk_cd`, `stk_nm`, `rmnd_qty`, `pur_pric`
 
 #### 4.4.4 자격증명 저장 및 앱 초기화
 - [x] Keychain 키 추가: `kiwoom.appKey`, `kiwoom.appSecret`, `kiwoom.accountNumber`
@@ -402,7 +403,7 @@
 - [x] 계좌 연결 탭 키움 섹션: "준비 중" 제거, App Key / App Secret 입력 폼 활성화
 - [x] "연결 테스트" 버튼 — `KiwoomAdapter.connect()` + `fetchQuote("005930")` 호출
 - [x] 로그인/로그아웃 시 `BrokerRegistry` 등록/해제 + `QuoteManager.setAdapter()` 전환
-- [ ] 포트폴리오 탭 "계좌에서 가져오기" — 키움 연결 시 동작 확인 (kt00018 필드명 검증 후)
+- [x] 포트폴리오 탭 "계좌에서 가져오기" — 키움 연결 시 정상 동작 확인
 
 ### 4.5 계정 종속 관심종목·포트폴리오
 
@@ -428,19 +429,55 @@
 - [ ] 포트폴리오는 브로커 단위 분리가 자연스러움 (잔고 출처가 다름)
 - [ ] `AccountManager`를 enum → class/actor로 전환하고 현재 활성 계정을 관리하는 방식 검토
 
-### 4.7 복수 브로커 동시 모니터링 (Phase 4.4 완료 후 진행)
+### 4.7 복수 브로커 동시 모니터링
 
-> Phase 4.4에서 단일 브로커 전환이 안정화된 이후 설계 착수.
+> KIS와 키움을 동시에 연결하여 두 계좌 데이터를 통합·선택 조회. PRD v0.3 참조.
 
-- [ ] `QuoteManager` 다중 어댑터 지원 (`[String: any BrokerAdapter]` 구조)
-- [ ] 종목별 어느 브로커 데이터를 사용할지 설정 (WatchlistItem에 brokerId 추가 검토)
-- [ ] 포트폴리오 통합 집계 (KIS + 키움 합산 손익)
-- [ ] 브로커 하나 실패 시 나머지 정상 동작 보장
+#### 4.7.1 QuoteManager 다중 어댑터 지원
+- [x] `adapter: (any BrokerAdapter)?` → `adapters: [String: any BrokerAdapter]` (key = accountId)
+- [x] `addAdapter(id:adapter:)` / `removeAdapter(id:)` 메서드 추가
+- [x] `setAdapter()` — Mock 전용 폴백으로 유지 (로그아웃 후 어댑터 없을 때 자동 호출)
+- [x] `fetchAll()`: 어댑터 순서대로 시도, 앞 어댑터 실패 시 다음으로 폴백 (시세는 어느 브로커든 동일)
+- [x] `fetchBalance(for accountId:)`: 특정 어댑터 잔고 조회 (accountId 미지정 시 첫 번째 실 어댑터)
+- [x] 어댑터 하나 제거 시 남은 어댑터 정상 동작 보장 (removeAdapter → mock 폴백은 전체 로그아웃 시만)
+
+#### 4.7.2 AccountManager 다중 계좌 지원
+- [x] `connectedAccountIds: [String]` — Keychain 자격증명 기반 모든 로그인 계좌 ID 목록
+- [x] `activeBroker` UserDefaults 의존성 제거 (Keychain 자격증명 존재 여부로 판단)
+- [x] `isAnyConnected: Bool` 헬퍼 추가
+- [x] `DatabaseManager.fetchWatchlist()`: `isAnyConnected` 기반으로 변경
+- [x] `DatabaseManager.fetchPortfolio()`: `connectedAccountIds` IN 쿼리로 전체 브로커 포트폴리오 반환
+- [x] `fetchPortfolio(for accountId:)` 오버로드 추가
+
+#### 4.7.3 계좌 연결 탭 — 내부 로직만 변경 (UI 유지)
+- [x] 세그먼트 탭 UI 유지 (탭은 폼 표시 선택, 로그인 상태와 무관)
+- [x] 탭 레이블에 로그인 상태 배지 추가 ("한국투자증권 ✓", "키움증권 ✓")
+- [x] `loadState()`: `activeBroker` UserDefaults 의존 제거, Keychain 기반으로 변경
+- [x] `login()` / `logout()`: `activeBroker` 쓰기 제거, `addAdapter()`/`removeAdapter()` 사용
+- [x] `kiwoomLogin()` / `kiwoomLogout()`: 동일하게 적용
+
+#### 4.7.4 팝오버 포트폴리오 영역 — 변경 없음
+- [x] 기존 `showInPopover` 토글로 팝오버 표시 종목 제어 (추가 필터 UI 없음)
+- [x] `fetchPortfolio()` → `connectedAccountIds` 전체 대상으로 쿼리 (두 브로커 합산 자동 표시)
+- [x] 팝오버 포트폴리오 손익 합산: 두 브로커 합계 표시 (기존 동작 유지)
+
+#### 4.7.5 포트폴리오 탭 — 브로커 체크 드롭다운
+- [x] 두 브로커 모두 로그인 시: "전체 브로커 ▾" Menu 드롭다운 표시 (멀티 셀렉트)
+- [x] 단일 브로커 연결 시: 드롭다운 미표시 (기존 동작 유지)
+- [x] "계좌에서 가져오기": 두 브로커 모두 로그인 시 → confirmationDialog로 브로커 선택
+- [x] 포트폴리오 목록 각 행에 "KIS" / "키움" 브로커 배지 표시 (멀티 브로커 시에만)
+
+#### 4.7.6 AppDelegate 초기화 로직 개선
+- [x] `setupAdapter()`: KIS·키움 자격증명 각각 확인 → 둘 다 있으면 두 어댑터 모두 `addAdapter()`
+- [x] 자격증명 없는 어댑터는 제외, 모두 없을 때만 MockBrokerAdapter 폴백
+
+#### 4.7.7 AlertEvaluator / SnapshotManager 통합 포트폴리오 평가
+- [x] `fetchPortfolio()` 변경으로 자동 합산 — 코드 변경 불필요
 
 ### ✅ Phase 4 검증
-- [ ] KIS API 연결 → 현재가 조회 성공
-- [ ] 키움 API 연결 → 토큰 발급 성공 + 현재가 조회 성공 (4.4 완료 후)
-- [ ] 키움 잔고조회 → 보유 종목 가져오기 성공 (4.4 완료 후)
+- [x] KIS API 연결 → 현재가 조회 성공
+- [x] 키움 API 연결 → 토큰 발급 성공 + 현재가 조회 성공
+- [x] 키움 잔고조회 → 보유 종목 가져오기 성공 (kt00018 /api/dostk/acnt)
 - [ ] 키움 + KIS 동시 연결 → 각각의 종목 시세 정상 수신 (4.7 완료 후)
 - [ ] 두 브로커의 포트폴리오 합산 손익 정확성 확인 (4.7 완료 후)
 - [ ] 브로커 하나 연결 실패 시 나머지 정상 동작 확인 (4.7 완료 후)

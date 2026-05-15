@@ -49,37 +49,44 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func setupAdapter() {
-        let activeBroker = UserDefaults.standard.string(forKey: "activeBroker") ?? "kis"
+        var hasRealAdapter = false
 
-        if activeBroker == "kiwoom",
-           let appKey = KeychainHelper.load(account: "kiwoom.appKey"),
-           let appSecret = KeychainHelper.load(account: "kiwoom.appSecret"),
+        if let appKey = KeychainHelper.load(account: "kis.appKey"),
+           let appSecret = KeychainHelper.load(account: "kis.appSecret"),
            !appKey.isEmpty, !appSecret.isEmpty {
-            let accountNumber = KeychainHelper.load(account: "kiwoom.accountNumber")
-            let creds = BrokerCredentials(appKey: appKey, appSecret: appSecret, accountNumber: accountNumber)
-            let adapter = KiwoomAdapter()
-            QuoteManager.shared.setAdapter(adapter)
-            try? DatabaseManager.shared.assignAccountIdToOrphanedItems(accountId: AccountManager.currentAccountId)
-            Task {
-                try? await adapter.connect(credentials: creds)
-                await MainActor.run { BrokerRegistry.shared.register(adapter) }
-            }
-            // Kiwoom은 WebSocket 미지원 — REST 폴링만 사용
-        } else if let appKey = KeychainHelper.load(account: "kis.appKey"),
-                  let appSecret = KeychainHelper.load(account: "kis.appSecret"),
-                  !appKey.isEmpty, !appSecret.isEmpty {
             let isMock = UserDefaults.standard.bool(forKey: "KIS.isMock")
             let accountNumber = KeychainHelper.load(account: "kis.accountNumber")
             let creds = BrokerCredentials(appKey: appKey, appSecret: appSecret, accountNumber: accountNumber)
             let adapter = KISAdapter(isMock: isMock)
-            QuoteManager.shared.setAdapter(adapter)
-            try? DatabaseManager.shared.assignAccountIdToOrphanedItems(accountId: AccountManager.currentAccountId)
+            let accountId = "KIS-" + String(appKey.prefix(8))
+            QuoteManager.shared.addAdapter(id: accountId, adapter: adapter)
+            try? DatabaseManager.shared.assignAccountIdToOrphanedItems(accountId: accountId)
             Task {
                 try? await adapter.connect(credentials: creds)
                 await MainActor.run { BrokerRegistry.shared.register(adapter) }
             }
             QuoteManager.shared.startRealtime(credentials: creds, isMock: isMock)
-        } else {
+            hasRealAdapter = true
+        }
+
+        if let appKey = KeychainHelper.load(account: "kiwoom.appKey"),
+           let appSecret = KeychainHelper.load(account: "kiwoom.appSecret"),
+           !appKey.isEmpty, !appSecret.isEmpty {
+            let accountNumber = KeychainHelper.load(account: "kiwoom.accountNumber")
+            let creds = BrokerCredentials(appKey: appKey, appSecret: appSecret, accountNumber: accountNumber)
+            let adapter = KiwoomAdapter()
+            let accountId = "KIWOOM-" + String(appKey.prefix(8))
+            QuoteManager.shared.addAdapter(id: accountId, adapter: adapter)
+            try? DatabaseManager.shared.assignAccountIdToOrphanedItems(accountId: accountId)
+            Task {
+                try? await adapter.connect(credentials: creds)
+                await MainActor.run { BrokerRegistry.shared.register(adapter) }
+            }
+            // Kiwoom은 WebSocket 미지원 — REST 폴링만 사용
+            hasRealAdapter = true
+        }
+
+        if !hasRealAdapter {
             QuoteManager.shared.setAdapter(MockBrokerAdapter())
         }
     }

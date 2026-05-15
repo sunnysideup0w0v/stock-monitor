@@ -163,7 +163,7 @@ struct WatchlistSettingsView: View {
     }
 
     private func loadItems() {
-        isLoggedIn = !AccountManager.currentAccountId.isEmpty
+        isLoggedIn = AccountManager.isAnyConnected
         items = (try? DatabaseManager.shared.fetchWatchlist()) ?? []
     }
 
@@ -205,6 +205,29 @@ struct PortfolioSettingsView: View {
     @State private var showImportSheet = false
     @State private var importError: String? = nil
 
+    @State private var selectedBrokerIds: Set<String> = []
+    @State private var showImportBrokerAlert = false
+
+    private var connectedBrokerIds: [String] { AccountManager.connectedAccountIds }
+    private var isMultiBroker: Bool { connectedBrokerIds.count > 1 }
+
+    private var filteredItems: [PortfolioItem] {
+        guard isMultiBroker, !selectedBrokerIds.isEmpty,
+              selectedBrokerIds.count < connectedBrokerIds.count else { return items }
+        return items.filter { selectedBrokerIds.contains($0.accountId) }
+    }
+
+    private var filterLabel: String {
+        if selectedBrokerIds.count == connectedBrokerIds.count || selectedBrokerIds.isEmpty { return "전체 브로커" }
+        return selectedBrokerIds.map { brokerDisplayName($0) }.joined(separator: ", ")
+    }
+
+    private func brokerDisplayName(_ accountId: String) -> String {
+        if accountId.hasPrefix("KIS-") { return "KIS" }
+        if accountId.hasPrefix("KIWOOM-") { return "키움" }
+        return accountId
+    }
+
     var body: some View {
         SettingsTabContainer(title: "포트폴리오") {
             if !isLoggedIn {
@@ -218,6 +241,12 @@ struct PortfolioSettingsView: View {
             PortfolioImportSheetView(items: importedItems) { mode in
                 applyImport(mode: mode)
             }
+        }
+        .confirmationDialog("어느 계좌에서 가져올까요?", isPresented: $showImportBrokerAlert, titleVisibility: .visible) {
+            ForEach(connectedBrokerIds, id: \.self) { id in
+                Button(brokerDisplayName(id)) { performImport(for: id) }
+            }
+            Button("취소", role: .cancel) {}
         }
     }
 
@@ -238,13 +267,31 @@ struct PortfolioSettingsView: View {
 
     private var portfolioContentView: some View {
         Group {
-            // 계좌 가져오기 행
+            // 계좌 가져오기 + 브로커 필터 행
             HStack(spacing: 8) {
+                if isMultiBroker {
+                    Menu {
+                        ForEach(connectedBrokerIds, id: \.self) { id in
+                            Button {
+                                if selectedBrokerIds.contains(id) { selectedBrokerIds.remove(id) }
+                                else { selectedBrokerIds.insert(id) }
+                            } label: {
+                                Label(brokerDisplayName(id),
+                                      systemImage: selectedBrokerIds.contains(id) ? "checkmark" : "")
+                            }
+                        }
+                    } label: {
+                        Label(filterLabel, systemImage: "line.3.horizontal.decrease.circle")
+                            .font(.caption)
+                    }
+                    .menuStyle(.borderlessButton)
+                    .frame(maxWidth: 130, alignment: .leading)
+                }
+
                 if let error = importError {
                     Text(error).font(.caption).foregroundStyle(.red)
-                } else {
-                    Text("KIS 계좌 연결 시 보유 종목을 자동으로 가져올 수 있습니다")
-                        .font(.caption).foregroundStyle(.secondary)
+                } else if !isMultiBroker {
+                    Text(importInfoText).font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
                 Button {
@@ -265,7 +312,7 @@ struct PortfolioSettingsView: View {
             }
 
             List {
-                ForEach(items, id: \.id) { item in
+                ForEach(filteredItems, id: \.id) { item in
                     HStack(spacing: 10) {
                         Button {
                             togglePopoverVisibility(item)
@@ -278,7 +325,16 @@ struct PortfolioSettingsView: View {
                         .help(item.showInPopover ? "메뉴바 팝오버에서 숨기기" : "메뉴바 팝오버에 표시")
 
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(item.name).font(.body)
+                            HStack(spacing: 4) {
+                                Text(item.name).font(.body)
+                                if isMultiBroker {
+                                    Text(item.brokerName)
+                                        .font(.caption2)
+                                        .padding(.horizontal, 5).padding(.vertical, 1)
+                                        .background(.blue.opacity(0.12), in: Capsule())
+                                        .foregroundStyle(.blue)
+                                }
+                            }
                             Text(item.symbol).font(.caption).foregroundStyle(.secondary)
                         }
                         Spacer()
@@ -335,9 +391,21 @@ struct PortfolioSettingsView: View {
         Int(quantityText) != nil
     }
 
+    private var importInfoText: String {
+        let ids = connectedBrokerIds
+        if ids.first?.hasPrefix("KIWOOM-") == true && ids.count == 1 {
+            return "키움증권 계좌에서 보유 종목을 가져올 수 있습니다"
+        }
+        return "KIS 계좌 연결 시 보유 종목을 자동으로 가져올 수 있습니다"
+    }
+
     private func loadItems() {
-        isLoggedIn = !AccountManager.currentAccountId.isEmpty
+        isLoggedIn = AccountManager.isAnyConnected
         items = (try? DatabaseManager.shared.fetchPortfolio()) ?? []
+        // 브로커 필터 초기화: 새로 연결된 브로커 추가 / 로그아웃된 브로커 제거
+        let connected = Set(connectedBrokerIds)
+        selectedBrokerIds = selectedBrokerIds.intersection(connected)
+        if selectedBrokerIds.isEmpty { selectedBrokerIds = connected }
     }
 
     private func addItem() {
@@ -367,11 +435,19 @@ struct PortfolioSettingsView: View {
     }
 
     private func startImport() {
+        if isMultiBroker {
+            showImportBrokerAlert = true
+        } else {
+            performImport(for: connectedBrokerIds.first)
+        }
+    }
+
+    private func performImport(for accountId: String?) {
         isImporting = true
         importError = nil
         Task {
             do {
-                let fetched = try await QuoteManager.shared.fetchBalance()
+                let fetched = try await QuoteManager.shared.fetchBalance(for: accountId)
                 if fetched.isEmpty {
                     importError = "계좌에 보유 종목이 없습니다"
                 } else {
@@ -738,11 +814,18 @@ struct AccountSettingsView: View {
                 .foregroundStyle(.secondary)
             Picker("", selection: $selectedBroker) {
                 ForEach(BrokerSelection.allCases, id: \.self) { broker in
-                    Text(broker.rawValue).tag(broker)
+                    let connected: Bool = {
+                        switch broker {
+                        case .kis:        return isLoggedIn
+                        case .kiwoom:     return isKiwoomLoggedIn
+                        case .miraeAsset: return false
+                        }
+                    }()
+                    Text(broker.rawValue + (connected ? " ✓" : "")).tag(broker)
                 }
             }
             .pickerStyle(.segmented)
-            .frame(maxWidth: 280)
+            .frame(maxWidth: 300)
             Spacer()
         }
     }
@@ -950,10 +1033,6 @@ struct AccountSettingsView: View {
     // MARK: - Actions
 
     private func loadState() {
-        // 활성 브로커 기준으로 초기 탭 설정
-        let activeBroker = UserDefaults.standard.string(forKey: "activeBroker") ?? "kis"
-        selectedBroker = activeBroker == "kiwoom" ? .kiwoom : .kis
-
         // KIS
         isLoggedIn = !(KeychainHelper.load(account: "kis.appKey") ?? "").isEmpty
         savedAccountNumber = KeychainHelper.load(account: "kis.accountNumber") ?? ""
@@ -964,17 +1043,21 @@ struct AccountSettingsView: View {
         isKiwoomLoggedIn = !(KeychainHelper.load(account: "kiwoom.appKey") ?? "").isEmpty
         savedKiwoomAccountNumber = KeychainHelper.load(account: "kiwoom.accountNumber") ?? ""
         kiwoomLoginDate = UserDefaults.standard.object(forKey: "Kiwoom.loginDate") as? Date
+
+        // 초기 탭: 키움만 로그인된 경우 키움 탭, 그 외엔 KIS
+        if !isLoggedIn && isKiwoomLoggedIn { selectedBroker = .kiwoom }
+        else { selectedBroker = .kis }
     }
 
     private func login() {
+        let accountId = "KIS-" + String(appKey.prefix(8))
         KeychainHelper.save(appKey, account: "kis.appKey")
         KeychainHelper.save(appSecret, account: "kis.appSecret")
         KeychainHelper.save(accountNumber, account: "kis.accountNumber")
         UserDefaults.standard.set(isMock, forKey: "KIS.isMock")
-        UserDefaults.standard.set("kis", forKey: "activeBroker")
         let now = Date()
         UserDefaults.standard.set(now, forKey: "KIS.loginDate")
-        try? DatabaseManager.shared.assignAccountIdToOrphanedItems(accountId: AccountManager.currentAccountId)
+        try? DatabaseManager.shared.assignAccountIdToOrphanedItems(accountId: accountId)
 
         let creds = BrokerCredentials(
             appKey: appKey,
@@ -982,11 +1065,12 @@ struct AccountSettingsView: View {
             accountNumber: accountNumber.isEmpty ? nil : accountNumber
         )
         let adapter = KISAdapter(isMock: isMock)
-        QuoteManager.shared.setAdapter(adapter)
+        QuoteManager.shared.addAdapter(id: accountId, adapter: adapter)
         Task {
             try? await adapter.connect(credentials: creds)
             await MainActor.run { BrokerRegistry.shared.register(adapter) }
         }
+        QuoteManager.shared.startRealtime(credentials: creds, isMock: isMock)
 
         withAnimation {
             savedAccountNumber = accountNumber
@@ -998,26 +1082,27 @@ struct AccountSettingsView: View {
     }
 
     private func logout() {
+        let accountId = "KIS-" + String((KeychainHelper.load(account: "kis.appKey") ?? "").prefix(8))
         KeychainHelper.delete(account: "kis.appKey")
         KeychainHelper.delete(account: "kis.appSecret")
         KeychainHelper.delete(account: "kis.accountNumber")
         UserDefaults.standard.removeObject(forKey: "KIS.loginDate")
-        UserDefaults.standard.removeObject(forKey: "activeBroker")
+        QuoteManager.shared.stopRealtime()
+        QuoteManager.shared.removeAdapter(id: accountId)
         BrokerRegistry.shared.unregister(brokerName: "한국투자증권")
-        QuoteManager.shared.setAdapter(MockBrokerAdapter())
         withAnimation { isLoggedIn = false; loginDate = nil; testStatus = .idle }
     }
 
     // MARK: - 키움 Actions
 
     private func kiwoomLogin() {
+        let accountId = "KIWOOM-" + String(kiwoomAppKey.prefix(8))
         KeychainHelper.save(kiwoomAppKey, account: "kiwoom.appKey")
         KeychainHelper.save(kiwoomAppSecret, account: "kiwoom.appSecret")
         KeychainHelper.save(kiwoomAccountNumber, account: "kiwoom.accountNumber")
-        UserDefaults.standard.set("kiwoom", forKey: "activeBroker")
         let now = Date()
         UserDefaults.standard.set(now, forKey: "Kiwoom.loginDate")
-        try? DatabaseManager.shared.assignAccountIdToOrphanedItems(accountId: AccountManager.currentAccountId)
+        try? DatabaseManager.shared.assignAccountIdToOrphanedItems(accountId: accountId)
 
         let creds = BrokerCredentials(
             appKey: kiwoomAppKey,
@@ -1025,7 +1110,7 @@ struct AccountSettingsView: View {
             accountNumber: kiwoomAccountNumber.isEmpty ? nil : kiwoomAccountNumber
         )
         let adapter = KiwoomAdapter()
-        QuoteManager.shared.setAdapter(adapter)
+        QuoteManager.shared.addAdapter(id: accountId, adapter: adapter)
         Task {
             try? await adapter.connect(credentials: creds)
             await MainActor.run { BrokerRegistry.shared.register(adapter) }
@@ -1041,13 +1126,13 @@ struct AccountSettingsView: View {
     }
 
     private func kiwoomLogout() {
+        let accountId = "KIWOOM-" + String((KeychainHelper.load(account: "kiwoom.appKey") ?? "").prefix(8))
         KeychainHelper.delete(account: "kiwoom.appKey")
         KeychainHelper.delete(account: "kiwoom.appSecret")
         KeychainHelper.delete(account: "kiwoom.accountNumber")
         UserDefaults.standard.removeObject(forKey: "Kiwoom.loginDate")
-        UserDefaults.standard.removeObject(forKey: "activeBroker")
+        QuoteManager.shared.removeAdapter(id: accountId)
         BrokerRegistry.shared.unregister(brokerName: "키움증권")
-        QuoteManager.shared.setAdapter(MockBrokerAdapter())
         withAnimation { isKiwoomLoggedIn = false; kiwoomLoginDate = nil; testStatus = .idle }
     }
 

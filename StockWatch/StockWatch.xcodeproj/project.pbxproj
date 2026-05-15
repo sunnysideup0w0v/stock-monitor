@@ -38,6 +38,7 @@
 		964B5A628DE1672AAB62983F /* BackupManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF41AE3482D24E4098CDAEF6 /* BackupManagerTests.swift */; };
 		9895C317774C9E7C480E7D6A /* BrokerAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 120E543584AD0CEC78ACF6F1 /* BrokerAdapter.swift */; };
 		9DEB07B30156A5FD72A26689 /* AlertHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CA6753273E034494E5C9BFE /* AlertHistory.swift */; };
+		A9433B253662D3B34C9DD9C9 /* APILogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96023ABC9674B6FD06210FF9 /* APILogger.swift */; };
 		AB8B3DEC935F08EB6EF096A1 /* CrashLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6082E6170C01C27465D4829F /* CrashLogger.swift */; };
 		D1B18537D3C8A84AEC78959E /* AlertEvaluatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D55D467063C92591D5F3AF32 /* AlertEvaluatorTests.swift */; };
 		D355B90BDD80617758C47DA9 /* WatchlistItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD0E3054289D0C4A03DA88CB /* WatchlistItem.swift */; };
@@ -90,6 +91,7 @@
 		713FCE641DED6E48FFF016F5 /* StockQuoteTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockQuoteTests.swift; sourceTree = "<group>"; };
 		77B36BF411BAB00875C41D77 /* MiraeAssetAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiraeAssetAdapter.swift; sourceTree = "<group>"; };
 		831B19FB962ED8687DF4CBFD /* PortfolioItemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioItemTests.swift; sourceTree = "<group>"; };
+		96023ABC9674B6FD06210FF9 /* APILogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APILogger.swift; sourceTree = "<group>"; };
 		96036A94BC463B8118C8EB3D /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		9ABB45D8245B3D050084B16D /* QuoteManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteManagerTests.swift; sourceTree = "<group>"; };
 		9BEA35216A296059CBB811EE /* AlertCondition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertCondition.swift; sourceTree = "<group>"; };
@@ -184,6 +186,7 @@
 			children = (
 				AAD47F453A0B461750CDA537 /* AccountManager.swift */,
 				485F5E3B2F81922FF587857A /* AlertEvaluator.swift */,
+				96023ABC9674B6FD06210FF9 /* APILogger.swift */,
 				A21A4E16C58943E49ACCFC79 /* BackupManager.swift */,
 				6082E6170C01C27465D4829F /* CrashLogger.swift */,
 				1DA4EE76E88F846A8FB9E2C8 /* DARTManager.swift */,
@@ -408,6 +411,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A9433B253662D3B34C9DD9C9 /* APILogger.swift in Sources */,
 				E41C15388D671784E4CB235E /* AccountManager.swift in Sources */,
 				41F67B1BF667E423262F4837 /* AlertCondition.swift in Sources */,
 				5C32C172B9F267DD888430FB /* AlertEvaluator.swift in Sources */,

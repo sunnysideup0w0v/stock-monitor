@@ -123,7 +123,7 @@ final class DatabaseManager: @unchecked Sendable {
 
     func fetchWatchlist() throws -> [WatchlistItem] {
         // 관심종목은 브로커 무관 — 어느 계좌든 연결 시 전체 표시, 로그아웃 시만 빈 배열
-        guard !AccountManager.currentAccountId.isEmpty else { return [] }
+        guard AccountManager.isAnyConnected else { return [] }
         return try dbQueue.read { db in
             try WatchlistItem.filter(Column("accountId") != "").fetchAll(db)
         }
@@ -144,9 +144,17 @@ final class DatabaseManager: @unchecked Sendable {
 
     // MARK: - Portfolio
 
+    /// 현재 연결된 모든 브로커의 포트폴리오 항목 반환.
     func fetchPortfolio() throws -> [PortfolioItem] {
-        let accountId = AccountManager.currentAccountId
-        guard !accountId.isEmpty else { return [] }
+        let ids = AccountManager.connectedAccountIds
+        guard !ids.isEmpty else { return [] }
+        return try dbQueue.read { db in
+            try PortfolioItem.filter(ids.contains(Column("accountId"))).fetchAll(db)
+        }
+    }
+
+    /// 특정 브로커의 포트폴리오 항목만 반환 (포트폴리오 탭 브로커 필터용).
+    func fetchPortfolio(for accountId: String) throws -> [PortfolioItem] {
         return try dbQueue.read { db in
             try PortfolioItem.filter(Column("accountId") == accountId).fetchAll(db)
         }

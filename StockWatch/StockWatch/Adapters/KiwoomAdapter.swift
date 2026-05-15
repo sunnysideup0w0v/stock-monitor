@@ -54,6 +54,8 @@ actor KiwoomAdapter: BrokerAdapter {
             return try await fetchQuote(symbol: symbol, retryOnUnauthorized: false)
         }
 
+        let rawString = String(data: data, encoding: .utf8) ?? ""
+        APILogger.logResponse(tag: "ka10001", status: http.statusCode, body: rawString)
         guard http.statusCode == 200 else { throw BrokerError.apiError("HTTP \(http.statusCode)") }
 
         // 응답이 output 래퍼 없이 flat 구조: { "stk_nm": "...", "cur_prc": "-270500", ..., "return_code": 0 }
@@ -62,7 +64,7 @@ actor KiwoomAdapter: BrokerAdapter {
             throw BrokerError.apiError(decoded.returnMsg ?? "시세 조회 실패")
         }
 
-        // cur_prc: "+270500" / "-270500" 형태 → 숫자만 추출해 절대값으로 사용
+        // cur_prc: "+270500" / "-270500" → 숫자만 추출해 절대값 사용
         let price = Int((decoded.curPrc ?? "0").filter { $0.isNumber }) ?? 0
         guard price > 0 else { throw BrokerError.symbolNotFound(symbol) }
 
@@ -83,28 +85,26 @@ actor KiwoomAdapter: BrokerAdapter {
 
     func fetchPortfolio() async throws -> [PortfolioItem] {
         let token = try await validToken()
-        guard let creds = credentials else { throw BrokerError.notConnected }
-        guard let acctNo = creds.accountNumber, !acctNo.isEmpty else {
-            throw BrokerError.apiError("계좌번호를 설정해 주세요")
-        }
 
-        let url = URL(string: "\(baseURL)/api/dostk/account")!
+        let url = URL(string: "\(baseURL)/api/dostk/acnt")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json;charset=UTF-8", forHTTPHeaderField: "content-type")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "authorization")
         request.setValue("kt00018", forHTTPHeaderField: "api-id")
 
-        // kt00018 계좌평가잔고내역요청 — 파라미터명은 공식 문서 확인 후 보정 필요
-        let body: [String: Any] = ["acnt_no": acctNo, "qry_tp": "0"]
+        // qry_tp: "2" = 개별, dmst_stex_tp: "KRX" — 계좌번호는 토큰에 귀속
+        let body: [String: Any] = ["qry_tp": "2", "dmst_stex_tp": "KRX"]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        APILogger.logRequest(tag: "kt00018", url: url.absoluteString, body: "qry_tp=2,dmst_stex_tp=KRX")
 
         let (data, response) = try await URLSession.shared.data(for: request)
-        if let raw = String(data: data, encoding: .utf8) {
-            print("[KiwoomAdapter] fetchPortfolio: \(raw.prefix(1000))")
-        }
-        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
-            throw BrokerError.apiError("잔고 조회 실패")
+        let rawString = String(data: data, encoding: .utf8) ?? ""
+        let status = (response as? HTTPURLResponse)?.statusCode ?? -1
+        APILogger.logResponse(tag: "kt00018", status: status, body: rawString)
+
+        guard status == 200 else {
+            throw BrokerError.apiError("잔고 조회 실패 (HTTP \(status)) — logs/api-*.log 확인")
         }
 
         let decoded = try JSONDecoder().decode(KiwoomBalanceResponse.self, from: data)
@@ -113,10 +113,10 @@ actor KiwoomAdapter: BrokerAdapter {
         }
 
         return (decoded.output ?? []).compactMap { item -> PortfolioItem? in
-            guard let qty = Int((item.holdQty ?? "0").filter { $0.isNumber }), qty > 0 else { return nil }
+            guard let qty = Int((item.rmndQty ?? "0").filter { $0.isNumber }), qty > 0 else { return nil }
             let symbol = item.stkCd ?? ""
             guard !symbol.isEmpty else { return nil }
-            let avgPrice = Int(Double((item.avgPrc ?? "0").filter { $0.isNumber || $0 == "." }) ?? 0)
+            let avgPrice = Int(Double((item.purPric ?? "0").filter { $0.isNumber || $0 == "." }) ?? 0)
             return PortfolioItem(id: nil, symbol: symbol, name: item.stkNm ?? symbol,
                                  averagePrice: avgPrice, quantity: qty)
         }
@@ -156,9 +156,9 @@ actor KiwoomAdapter: BrokerAdapter {
 
         let (data, response) = try await URLSession.shared.data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? -1
-        if let raw = String(data: data, encoding: .utf8) {
-            print("[KiwoomAdapter] token response (\(status)): \(raw.prefix(300))")
-        }
+        let rawString = String(data: data, encoding: .utf8) ?? ""
+        APILogger.logResponse(tag: "token", status: status, body: rawString)
+
         guard status == 200 else {
             throw BrokerError.apiError("토큰 발급 실패 (HTTP \(status)) — API 키를 확인해주세요")
         }
@@ -229,21 +229,20 @@ private struct KiwoomBalanceResponse: Decodable {
     enum CodingKeys: String, CodingKey {
         case returnCode = "return_code"
         case returnMsg  = "return_msg"
-        case output
+        case output     = "acnt_evlt_remn_indv_tot"
     }
 }
 
-// 잔고 필드명은 kt00018 공식 문서 확인 후 보정 필요
 private struct KiwoomBalanceItem: Decodable {
     let stkCd: String?   // 종목코드
     let stkNm: String?   // 종목명
-    let holdQty: String? // 보유수량
-    let avgPrc: String?  // 평균매입가
+    let rmndQty: String? // 보유수량
+    let purPric: String? // 매입가
 
     enum CodingKeys: String, CodingKey {
         case stkCd   = "stk_cd"
         case stkNm   = "stk_nm"
-        case holdQty = "hold_qty"
-        case avgPrc  = "avg_prc"
+        case rmndQty = "rmnd_qty"
+        case purPric = "pur_pric"
     }
 }
