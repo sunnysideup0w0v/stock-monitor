@@ -7,7 +7,7 @@ enum CrashLogger {
         }
     }
 
-    private static func write(exception: NSException) {
+    static func write(exception: NSException) {
         let logsDir = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Logs/StockWatch")
         try? FileManager.default.createDirectory(at: logsDir, withIntermediateDirectories: true)

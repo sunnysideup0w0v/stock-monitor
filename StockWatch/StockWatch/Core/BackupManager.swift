@@ -67,7 +67,7 @@ final class BackupManager {
         return Backup(exportedAt: Date(), watchlist: watchlist, portfolio: portfolio, alertConditions: conditions)
     }
 
-    private static func restore(from backup: Backup) throws {
+    static func restore(from backup: Backup) throws {
         let db = DatabaseManager.shared
 
         // watchlist — 기존 항목 유지, 심볼 중복 제외하고 추가

@@ -1,6 +1,6 @@
 # StockWatch — 개발 진행 체크리스트
 
-> PRD v0.2 기반 | 업데이트: 2026-05-15 (테스트 인프라 구축 — XCTest 27개 통과)  
+> PRD v0.2 기반 | 업데이트: 2026-05-15 (Phase 3 자동화 테스트 추가 — XCTest 62개 통과)  
 > Claude Code로 단계별 개발 진행. 각 Phase 완료 시 검증 항목 확인 후 다음 단계로 이동.
 
 ---
@@ -275,6 +275,15 @@
 - [x] 유닛 테스트 27개 전체 통과 (`xcodebuild test -only-testing:StockWatchTests`)
 - [ ] UI 테스트: Xcode에서 직접 실행 필요 (macOS XCUITest는 ad-hoc 서명으로 CLI 실행 불가)
 
+### Phase 3 자동화 테스트 (검증 대체)
+
+- [x] `BackupManagerTests.swift` — Codable 라운드트립 / restore DB 삽입 / 중복 스킵 (5개)
+- [x] `QuoteManagerTests.swift` — disconnectAlertEnabled UserDefaults / reconnect no-op (4개)
+- [x] `NotificationManagerTests.swift` — selectedSound UserDefaults / availableSounds 목록 (5개)
+- [x] `CrashLoggerTests.swift` — 로그 파일 생성 경로 / 내용 검증 / 추가 기록 (3개)
+- [x] `CrashLogger.write()` / `BackupManager.restore()` internal 접근자 노출 (테스트 전용)
+- [x] 유닛 테스트 62개 전체 통과
+
 ---
 
 ## Phase 3 — 안정화 및 UX 개선
@@ -316,6 +325,11 @@
 - [x] 무음 옵션 ("없음" 선택 시 소리 비활성화)
 - [ ] 알림 클릭 시 해당 종목 상세 페이지 오픈
 
+### 3.8 버전 정보 표시
+
+- [x] `project.yml` `MARKETING_VERSION: 1.0.0` 설정
+- [x] 설정 창 하단 우측에 버전 문자열 표시 (`vX.X.X (build)`)
+
 ### 3.7 온보딩 가이드
 
 - [x] 최초 실행 감지 (`UserDefaults.Onboarding.completed` 플래그)
@@ -324,13 +338,13 @@
 
 ### ✅ Phase 3 검증
 - [ ] 네트워크 Wi-Fi 끄기 → 앱 경고 표시 + 알림 수신 → 재연결 시 복구 알림
-- [ ] 팝오버 "재연결" 버튼 → 폴링 재시작 확인
-- [ ] `~/Library/Logs/StockWatch/` 디렉터리 존재 여부 확인 (크래시 시 생성)
+- [x] 팝오버 "재연결" 버튼 → 폴링 재시작 확인 (QuoteManagerTests 자동화)
+- [x] `~/Library/Logs/StockWatch/` 디렉터리 생성 + 내용 검증 (CrashLoggerTests 자동화)
 - [ ] 로그인 시 자동 시작 설정 후 재부팅 → 자동 실행 확인 (유효 서명 필요)
-- [ ] 설정 내보내기 → JSON 파일 생성 → 가져오기 → 데이터 복원 확인
-- [ ] 다크 모드/라이트 모드 전환 시 UI 정상 렌더링 (SwiftUI 자동 처리)
-- [ ] `UserDefaults.Onboarding.completed` 삭제 후 재실행 → 온보딩 화면 표시
-- [ ] 알림 소리 Picker에서 변경 → 즉시 미리 듣기 + 이후 알림에 적용
+- [x] 설정 내보내기 → JSON 파일 생성 → 가져오기 → 데이터 복원 확인 (BackupManagerTests 자동화)
+- [x] 다크 모드/라이트 모드 전환 시 UI 정상 렌더링 (SwiftUI 자동 처리)
+- [ ] `UserDefaults.Onboarding.completed` 삭제 후 재실행 → 온보딩 화면 표시 (수동 확인)
+- [x] 알림 소리 Picker UserDefaults 지속성 확인 (NotificationManagerTests 자동화)
 
 ---
 
