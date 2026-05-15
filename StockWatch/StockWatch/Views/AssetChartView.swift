@@ -72,29 +72,70 @@ struct AssetChartView: View {
         showValue ? Double(s.totalValue) : s.gainPct
     }
 
-    private var baseline: Double {
-        showValue ? Double(snapshots.first?.totalValue ?? 0) : 0.0
+    // 일 뷰: raw intraday 데이터 그대로
+    // 주/월 뷰: 날짜별 마지막 스냅샷(일별 종가)으로 집계
+    // 연 뷰: 월별 마지막 스냅샷으로 집계
+    private var displaySnapshots: [PortfolioSnapshot] {
+        switch period {
+        case .day:   return snapshots
+        case .week, .month: return dailyAggregated(snapshots)
+        case .year:  return monthlyAggregated(snapshots)
+        }
     }
 
-    // 연속점 간격이 threshold 초과 시 다른 segment로 분리
+    private func dailyAggregated(_ snaps: [PortfolioSnapshot]) -> [PortfolioSnapshot] {
+        let cal = Calendar.current
+        var byDay: [Date: PortfolioSnapshot] = [:]
+        for snap in snaps {
+            let key = cal.startOfDay(for: snap.timestamp)
+            if let existing = byDay[key] {
+                if snap.timestamp > existing.timestamp { byDay[key] = snap }
+            } else {
+                byDay[key] = snap
+            }
+        }
+        return byDay.values.sorted { $0.timestamp < $1.timestamp }
+    }
+
+    private func monthlyAggregated(_ snaps: [PortfolioSnapshot]) -> [PortfolioSnapshot] {
+        let cal = Calendar.current
+        var byMonth: [Date: PortfolioSnapshot] = [:]
+        for snap in snaps {
+            let key = cal.date(from: cal.dateComponents([.year, .month], from: snap.timestamp)) ?? snap.timestamp
+            if let existing = byMonth[key] {
+                if snap.timestamp > existing.timestamp { byMonth[key] = snap }
+            } else {
+                byMonth[key] = snap
+            }
+        }
+        return byMonth.values.sorted { $0.timestamp < $1.timestamp }
+    }
+
+    private var baseline: Double {
+        showValue ? Double(displaySnapshots.first?.totalValue ?? 0) : 0.0
+    }
+
+    // 일 뷰: 10분 (intraday gap)
+    // 주/월 뷰: 4일 (주말 2일 + 여유 — 평일 연속 일별 데이터를 끊지 않음)
+    // 연 뷰: 45일 (월별 데이터, 한 달 간격 브릿지)
     private var gapThreshold: TimeInterval {
         switch period {
-        case .day:   return 10 * 60      // 10분
-        case .week:  return 6 * 3600     // 6시간
-        case .month: return 2 * 86400    // 2일
-        case .year:  return 10 * 86400   // 10일
+        case .day:          return 10 * 60
+        case .week, .month: return 4 * 86400
+        case .year:         return 45 * 86400
         }
     }
 
     private var segments: [[PortfolioSnapshot]] {
-        guard !snapshots.isEmpty else { return [] }
-        var result: [[PortfolioSnapshot]] = [[snapshots[0]]]
-        for i in 1..<snapshots.count {
-            let gap = snapshots[i].timestamp.timeIntervalSince(snapshots[i - 1].timestamp)
+        let data = displaySnapshots
+        guard !data.isEmpty else { return [] }
+        var result: [[PortfolioSnapshot]] = [[data[0]]]
+        for i in 1..<data.count {
+            let gap = data[i].timestamp.timeIntervalSince(data[i - 1].timestamp)
             if gap > gapThreshold {
-                result.append([snapshots[i]])
+                result.append([data[i]])
             } else {
-                result[result.count - 1].append(snapshots[i])
+                result[result.count - 1].append(data[i])
             }
         }
         return result
@@ -103,7 +144,7 @@ struct AssetChartView: View {
     // MARK: - Summary
 
     private var summary: (diff: Double, changePct: Double)? {
-        guard let first = snapshots.first, let last = snapshots.last,
+        guard let first = displaySnapshots.first, let last = displaySnapshots.last,
               first.id != last.id else { return nil }
         let a = chartValue(first), b = chartValue(last)
         let diff = b - a
@@ -164,7 +205,7 @@ struct AssetChartView: View {
 
                     Spacer()
 
-                    if let last = snapshots.last {
+                    if let last = displaySnapshots.last {
                         VStack(alignment: .trailing, spacing: 1) {
                             Text(showValue
                                  ? fmt(last.totalValue) + "원"
@@ -225,7 +266,7 @@ struct AssetChartView: View {
     // MARK: - Chart Body
 
     private var overallColor: Color {
-        guard let last = snapshots.last else { return .blue }
+        guard let last = displaySnapshots.last else { return .blue }
         return chartValue(last) >= baseline ? .green : .red
     }
 
