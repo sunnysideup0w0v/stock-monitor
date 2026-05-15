@@ -122,10 +122,10 @@ final class DatabaseManager: @unchecked Sendable {
     // MARK: - Watchlist
 
     func fetchWatchlist() throws -> [WatchlistItem] {
-        let accountId = AccountManager.currentAccountId
-        guard !accountId.isEmpty else { return [] }
+        // 관심종목은 브로커 무관 — 어느 계좌든 연결 시 전체 표시, 로그아웃 시만 빈 배열
+        guard !AccountManager.currentAccountId.isEmpty else { return [] }
         return try dbQueue.read { db in
-            try WatchlistItem.filter(Column("accountId") == accountId).fetchAll(db)
+            try WatchlistItem.filter(Column("accountId") != "").fetchAll(db)
         }
     }
 

@@ -36,7 +36,7 @@ actor KiwoomAdapter: BrokerAdapter {
     private func fetchQuote(symbol: String, retryOnUnauthorized: Bool) async throws -> StockQuote {
         let token = try await validToken()
 
-        let url = URL(string: "\(baseURL)/api/dostk/info")!
+        let url = URL(string: "\(baseURL)/api/dostk/stkinfo")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json;charset=UTF-8", forHTTPHeaderField: "content-type")
@@ -54,33 +54,29 @@ actor KiwoomAdapter: BrokerAdapter {
             return try await fetchQuote(symbol: symbol, retryOnUnauthorized: false)
         }
 
-        if let raw = String(data: data, encoding: .utf8) {
-            print("[KiwoomAdapter] fetchQuote(\(symbol)): \(raw.prefix(500))")
-        }
         guard http.statusCode == 200 else { throw BrokerError.apiError("HTTP \(http.statusCode)") }
 
+        // 응답이 output 래퍼 없이 flat 구조: { "stk_nm": "...", "cur_prc": "-270500", ..., "return_code": 0 }
         let decoded = try JSONDecoder().decode(KiwoomQuoteResponse.self, from: data)
-        guard decoded.returnCode == 0, let output = decoded.output else {
+        guard decoded.returnCode == 0 else {
             throw BrokerError.apiError(decoded.returnMsg ?? "시세 조회 실패")
         }
 
-        let price = Int((output.curPrc ?? "0").filter { $0.isNumber }) ?? 0
+        // cur_prc: "+270500" / "-270500" 형태 → 숫자만 추출해 절대값으로 사용
+        let price = Int((decoded.curPrc ?? "0").filter { $0.isNumber }) ?? 0
         guard price > 0 else { throw BrokerError.symbolNotFound(symbol) }
 
-        // flu_smbol: 1=상한 2=상승 3=보합 4=하락 5=하한
-        let isNegative = output.fluSmbol == "4" || output.fluSmbol == "5"
-        let absChange = Int((output.predPre ?? "0").filter { $0.isNumber }) ?? 0
-        let changeAmount = isNegative ? -absChange : absChange
-        let absRate = Double((output.fluRt ?? "0").filter { $0.isNumber || $0 == "." }) ?? 0.0
-        let changeRate = isNegative ? -absRate : absRate
+        // pred_pre / flu_rt: 이미 부호 포함 → 직접 파싱
+        let changeAmount = Int(decoded.predPre ?? "0") ?? 0
+        let changeRate   = Double(decoded.fluRt ?? "0") ?? 0.0
 
         return StockQuote(
             symbol: symbol,
-            name: output.stkNm ?? symbol,
+            name: decoded.stkNm ?? symbol,
             price: price,
             changeAmount: changeAmount,
             changeRate: changeRate,
-            volume: Int((output.accTrdvol ?? "0").filter { $0.isNumber }) ?? 0,
+            volume: Int((decoded.trdeQty ?? "0").filter { $0.isNumber }) ?? 0,
             timestamp: Date()
         )
     }
@@ -204,33 +200,24 @@ private struct KiwoomTokenResponse: Decodable {
     }
 }
 
+// ka10001 응답은 output 래퍼 없이 모든 필드가 최상위에 flat하게 위치
 private struct KiwoomQuoteResponse: Decodable {
     let returnCode: Int
     let returnMsg: String?
-    let output: KiwoomQuoteOutput?
+    let stkNm: String?    // 종목명
+    let curPrc: String?   // 현재가 (부호 포함: "+270500" / "-270500")
+    let predPre: String?  // 전일대비 (부호 포함: "-25500")
+    let fluRt: String?    // 등락률 (부호 포함: "-8.61")
+    let trdeQty: String?  // 거래량
 
     enum CodingKeys: String, CodingKey {
         case returnCode = "return_code"
         case returnMsg  = "return_msg"
-        case output
-    }
-}
-
-private struct KiwoomQuoteOutput: Decodable {
-    let stkNm: String?     // 종목명
-    let curPrc: String?    // 현재가
-    let fluSmbol: String?  // 등락기호: 1=상한 2=상승 3=보합 4=하락 5=하한
-    let predPre: String?   // 전일대비 (절댓값)
-    let fluRt: String?     // 등락률 (절댓값)
-    let accTrdvol: String? // 누적거래량
-
-    enum CodingKeys: String, CodingKey {
-        case stkNm     = "stk_nm"
-        case curPrc    = "cur_prc"
-        case fluSmbol  = "flu_smbol"
-        case predPre   = "pred_pre"
-        case fluRt     = "flu_rt"
-        case accTrdvol = "acc_trdvol"
+        case stkNm      = "stk_nm"
+        case curPrc     = "cur_prc"
+        case predPre    = "pred_pre"
+        case fluRt      = "flu_rt"
+        case trdeQty    = "trde_qty"
     }
 }
 
