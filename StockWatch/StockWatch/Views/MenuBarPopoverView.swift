@@ -125,14 +125,16 @@ struct MenuBarPopoverView: View {
 
     private func reload() {
         watchlist = (try? DatabaseManager.shared.fetchWatchlist()) ?? []
-        portfolioHoldings = (try? DatabaseManager.shared.fetchPortfolio())?.filter { $0.showInPopover } ?? []
+        let allPortfolio = (try? DatabaseManager.shared.fetchPortfolio()) ?? []
+        portfolioHoldings = allPortfolio.filter { $0.showInPopover }
 
+        // 시세 폴링·DART: 관심종목 + 포트폴리오 합산 (중복 제거)
         var symbols = watchlist.map { $0.symbol }
-        for symbol in portfolioHoldings.map({ $0.symbol }) where !symbols.contains(symbol) {
+        for symbol in allPortfolio.map({ $0.symbol }) where !symbols.contains(symbol) {
             symbols.append(symbol)
         }
         QuoteManager.shared.startPolling(symbols: symbols)
-        DARTManager.shared.start(symbols: watchlist.map { $0.symbol })
+        DARTManager.shared.start(symbols: symbols)
         calculatePortfolio()
     }
 

@@ -64,22 +64,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    // 앱 시작 시 DB의 관심종목 + 팝오버 표시 보유 종목으로 폴링 시작 (팝업을 열지 않아도 알림이 동작)
+    // 앱 시작 시 DB의 관심종목 + 포트폴리오 종목으로 폴링·DART 시작 (팝업을 열지 않아도 알림이 동작)
     private func startPollingFromDB() {
         let watchlistSymbols = (try? DatabaseManager.shared.fetchWatchlist().map { $0.symbol }) ?? []
-        let holdingSymbols   = ((try? DatabaseManager.shared.fetchPortfolio()) ?? [])
-            .filter { $0.showInPopover }
-            .map { $0.symbol }
+        let portfolioSymbols = ((try? DatabaseManager.shared.fetchPortfolio()) ?? []).map { $0.symbol }
 
+        // 시세 폴링: 관심종목 + 포트폴리오 전체 (팝오버 표시 여부 무관)
         var allSymbols = watchlistSymbols
-        for symbol in holdingSymbols where !allSymbols.contains(symbol) {
+        for symbol in portfolioSymbols where !allSymbols.contains(symbol) {
             allSymbols.append(symbol)
         }
 
         if !allSymbols.isEmpty {
             QuoteManager.shared.startPolling(symbols: allSymbols)
         }
-        DARTManager.shared.start(symbols: watchlistSymbols)
+        // DART: 관심종목 + 포트폴리오 합산 (중복 제거됨)
+        DARTManager.shared.start(symbols: allSymbols)
         SnapshotManager.shared.start()
     }
 
