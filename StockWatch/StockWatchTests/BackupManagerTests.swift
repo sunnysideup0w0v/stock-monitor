@@ -6,6 +6,11 @@ final class BackupManagerTests: XCTestCase {
     private let testWatchSymbol = "TEST_BACKUP_W"
     private let testPortSymbol  = "TEST_BACKUP_P"
 
+    override func setUp() async throws {
+        try await super.setUp()
+        AccountManager.testAccountId = "TEST-BACKUP-ACCOUNT"
+    }
+
     override func tearDown() async throws {
         let watchSym = testWatchSymbol
         let portSym  = testPortSymbol
@@ -18,6 +23,7 @@ final class BackupManagerTests: XCTestCase {
                 try? db.delete(item)
             }
         }
+        AccountManager.testAccountId = nil
         try await super.tearDown()
     }
 

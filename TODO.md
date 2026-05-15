@@ -1,6 +1,6 @@
 # StockWatch — 개발 진행 체크리스트
 
-> PRD v0.2 기반 | 업데이트: 2026-05-15 (Phase 3 자동화 테스트 추가 — XCTest 62개 통과)  
+> PRD v0.2 기반 | 업데이트: 2026-05-15 (Phase 4 진행 중 — 멀티 브로커 + 계정 종속 데이터)  
 > Claude Code로 단계별 개발 진행. 각 Phase 완료 시 검증 항목 확인 후 다음 단계로 이동.
 
 ---
@@ -379,6 +379,16 @@
 - [ ] 복수 BrokerAdapter 인스턴스 관리
 - [ ] 종목별로 어느 브로커 데이터를 사용할지 설정
 - [ ] 포트폴리오 통합 집계 (복수 브로커 합산)
+
+### 4.5 계정 종속 관심종목·포트폴리오
+
+- [x] `AccountManager.swift` — `currentAccountId` (`"KIS-" + appKey.prefix(8)`), 미로그인 시 `""`
+- [x] Migration v8: `watchlist.accountId` / `portfolio.accountId` 컬럼 추가 (DEFAULT `''`)
+- [x] `fetchWatchlist()` / `fetchPortfolio()` — `accountId == ""` 이면 빈 배열 반환
+- [x] `insert()` — 저장 전 `accountId = currentAccountId` 자동 설정
+- [x] 기존 행 일회성 마이그레이션: `AppDelegate.setupAdapter()` + `SettingsView.login()` 에서 `assignAccountIdToOrphanedItems()` 호출 (`DB.v8AccountIdMigrated` 플래그)
+- [x] 로그아웃 시 관심종목·포트폴리오 빈 상태로 전환 (currentAccountId == "" → 빈 배열)
+- [x] 백업/복원 시 현재 계정에 귀속 (`insert()` 자동 설정)
 
 ### ✅ Phase 4 검증
 - [ ] KIS API 연결 → 현재가 조회 성공

@@ -841,6 +841,7 @@ struct AccountSettingsView: View {
         UserDefaults.standard.set(isMock, forKey: "KIS.isMock")
         let now = Date()
         UserDefaults.standard.set(now, forKey: "KIS.loginDate")
+        try? DatabaseManager.shared.assignAccountIdToOrphanedItems(accountId: AccountManager.currentAccountId)
 
         let creds = BrokerCredentials(
             appKey: appKey,

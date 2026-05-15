@@ -91,16 +91,46 @@ final class DatabaseManager: @unchecked Sendable {
             }
         }
 
+        migrator.registerMigration("v8_account_id") { db in
+            try db.alter(table: "watchlist") { t in
+                t.add(column: "accountId", .text).notNull().defaults(to: "")
+            }
+            try db.alter(table: "portfolio") { t in
+                t.add(column: "accountId", .text).notNull().defaults(to: "")
+            }
+        }
+
         try migrator.migrate(dbQueue)
+    }
+
+    // MARK: - Account Migration
+
+    /// 기존 accountId == "" 행을 현재 계정으로 일회성 마이그레이션.
+    /// UserDefaults "DB.v8AccountIdMigrated" 플래그로 중복 실행 방지.
+    func assignAccountIdToOrphanedItems(accountId: String) throws {
+        guard !accountId.isEmpty,
+              !UserDefaults.standard.bool(forKey: "DB.v8AccountIdMigrated") else { return }
+        try dbQueue.write { db in
+            try db.execute(sql: "UPDATE watchlist SET accountId = ? WHERE accountId = ''",
+                           arguments: [accountId])
+            try db.execute(sql: "UPDATE portfolio SET accountId = ? WHERE accountId = ''",
+                           arguments: [accountId])
+        }
+        UserDefaults.standard.set(true, forKey: "DB.v8AccountIdMigrated")
     }
 
     // MARK: - Watchlist
 
     func fetchWatchlist() throws -> [WatchlistItem] {
-        try dbQueue.read { db in try WatchlistItem.fetchAll(db) }
+        let accountId = AccountManager.currentAccountId
+        guard !accountId.isEmpty else { return [] }
+        return try dbQueue.read { db in
+            try WatchlistItem.filter(Column("accountId") == accountId).fetchAll(db)
+        }
     }
 
     func insert(_ item: inout WatchlistItem) throws {
+        item.accountId = AccountManager.currentAccountId
         try dbQueue.write { db in try item.insert(db) }
     }
 
@@ -115,10 +145,15 @@ final class DatabaseManager: @unchecked Sendable {
     // MARK: - Portfolio
 
     func fetchPortfolio() throws -> [PortfolioItem] {
-        try dbQueue.read { db in try PortfolioItem.fetchAll(db) }
+        let accountId = AccountManager.currentAccountId
+        guard !accountId.isEmpty else { return [] }
+        return try dbQueue.read { db in
+            try PortfolioItem.filter(Column("accountId") == accountId).fetchAll(db)
+        }
     }
 
     func insert(_ item: inout PortfolioItem) throws {
+        item.accountId = AccountManager.currentAccountId
         try dbQueue.write { db in try item.insert(db) }
     }
 

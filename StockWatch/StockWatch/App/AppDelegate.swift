@@ -57,6 +57,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let creds = BrokerCredentials(appKey: appKey, appSecret: appSecret, accountNumber: accountNumber)
             let adapter = KISAdapter(isMock: isMock)
             QuoteManager.shared.setAdapter(adapter)
+            try? DatabaseManager.shared.assignAccountIdToOrphanedItems(accountId: AccountManager.currentAccountId)
             Task {
                 try? await adapter.connect(credentials: creds)
                 await MainActor.run { BrokerRegistry.shared.register(adapter) }

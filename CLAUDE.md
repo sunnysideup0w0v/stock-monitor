@@ -182,7 +182,7 @@ pkill -x StockWatch 2>/dev/null; sleep 0.5 && open "$(find ~/Library/Developer/X
 **DB 스키마 변경 시**
 - `DatabaseManager.swift`에 새 `migrator.registerMigration("vN_...")` 추가
 - 기존 Migration은 절대 수정하지 않는다
-- 현재 최신: v7 (`portfolio.showInPopover` 컬럼). 다음 마이그레이션은 v8부터
+- 현재 최신: v8 (`watchlist.accountId`, `portfolio.accountId` 컬럼). 다음 마이그레이션은 v9부터
 
 **AlertCondition.TriggerType 추가 시**
 `TriggerType`은 여러 곳에서 exhaustive switch로 사용된다. 새 케이스 추가 시 아래 모두 업데이트 필요:
@@ -191,6 +191,14 @@ pkill -x StockWatch 2>/dev/null; sleep 0.5 && open "$(find ~/Library/Developer/X
 - `AlertHistoryView`: 필터 Picker의 타입 목록
 현재 케이스: `targetPrice`, `stopLoss`, `rateUp`, `rateDown`, `volumeSpike`, `portfolioGain`, `portfolioLoss`, `portfolioGainRate`, `portfolioLossRate`, `dartDisclosure`
 - `.dartDisclosure`와 portfolio 계열은 종목별 `isTriggered()`에서 `false` 반환 (별도 경로로 평가)
+
+**계정 종속 데이터 (관심종목 · 포트폴리오)**
+- `AccountManager.currentAccountId` — `"KIS-" + appKey.prefix(8)`, 미로그인 시 `""`
+- `fetchWatchlist()` / `fetchPortfolio()` — `currentAccountId == ""` 이면 빈 배열 반환 (로그아웃 상태에서 항목 미노출)
+- `insert(WatchlistItem/PortfolioItem)` — 저장 전 `accountId = AccountManager.currentAccountId` 자동 설정
+- Migration v8: `watchlist.accountId`, `portfolio.accountId` 컬럼 추가 (DEFAULT `''`)
+- 기존 행 일회성 마이그레이션: `AppDelegate.setupAdapter()` + `SettingsView.login()` 에서 `DatabaseManager.assignAccountIdToOrphanedItems()` 동기 호출. UserDefaults `"DB.v8AccountIdMigrated"` 플래그로 중복 방지
+- 백업/복원 시 `insert()` 경로를 타므로 현재 계정에 자동 귀속됨
 
 **NSNotification 기반 컴포넌트 간 통신**
 - `AppDelegate.swift`의 `NSNotification.Name` extension에 이름 정의
