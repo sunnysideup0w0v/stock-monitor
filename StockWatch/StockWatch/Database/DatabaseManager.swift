@@ -100,6 +100,25 @@ final class DatabaseManager: @unchecked Sendable {
             }
         }
 
+        migrator.registerMigration("v9_stock_universe") { db in
+            try db.create(table: "stock_universe") { t in
+                t.autoIncrementedPrimaryKey("id")
+                t.column("symbol",    .text).notNull().indexed()
+                t.column("name",      .text).notNull()
+                t.column("market",    .text).notNull()
+                t.column("sector",    .text)
+                t.column("close",     .integer).notNull().defaults(to: 0)
+                t.column("open",      .integer).notNull().defaults(to: 0)
+                t.column("high",      .integer).notNull().defaults(to: 0)
+                t.column("low",       .integer).notNull().defaults(to: 0)
+                t.column("volume",    .integer).notNull().defaults(to: 0)
+                t.column("marketCap", .integer).notNull().defaults(to: 0)
+                t.column("per",       .double)
+                t.column("pbr",       .double)
+                t.column("updatedAt", .datetime).notNull()
+            }
+        }
+
         try migrator.migrate(dbQueue)
     }
 
@@ -251,5 +270,28 @@ final class DatabaseManager: @unchecked Sendable {
 
     func deleteAllSnapshots() throws {
         try dbQueue.write { db in try PortfolioSnapshot.deleteAll(db) }
+    }
+
+    // MARK: - Stock Universe
+
+    func replaceStockUniverse(_ items: [StockUniverseItem]) throws {
+        try dbQueue.write { db in
+            try StockUniverseItem.deleteAll(db)
+            for var item in items { try item.insert(db) }
+        }
+    }
+
+    func fetchStockUniverse() throws -> [StockUniverseItem] {
+        try dbQueue.read { db in try StockUniverseItem.fetchAll(db) }
+    }
+
+    func stockUniverseCount() throws -> Int {
+        try dbQueue.read { db in try StockUniverseItem.fetchCount(db) }
+    }
+
+    func stockUniverseLastUpdated() throws -> Date? {
+        try dbQueue.read { db in
+            try Date.fetchOne(db, sql: "SELECT MAX(updatedAt) FROM stock_universe")
+        }
     }
 }

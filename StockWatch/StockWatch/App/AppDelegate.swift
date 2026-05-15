@@ -6,6 +6,7 @@ extension NSNotification.Name {
     static let openSettings    = NSNotification.Name("com.personal.StockWatch.openSettings")
     static let popoverWillShow = NSNotification.Name("com.personal.StockWatch.popoverWillShow")
     static let openPopover     = NSNotification.Name("com.personal.StockWatch.openPopover")
+    static let krxDataUpdated  = NSNotification.Name("com.personal.StockWatch.krxDataUpdated")
 }
 
 @MainActor
@@ -23,6 +24,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NotificationManager.shared.requestAuthorization()
         setupAdapter()
         startPollingFromDB()
+        KRXManager.shared.start()
 
         if CommandLine.arguments.contains("--uitesting") {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { self.openSettings() }

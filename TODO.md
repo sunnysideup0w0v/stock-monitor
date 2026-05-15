@@ -517,16 +517,27 @@
 
 > 전략: KRX OpenAPI로 전종목 데이터를 일 1회 수집 → 로컬 조건 스크리닝 → KIS 실시간 시세 보강 → (선택) Claude API 분석
 
-### 5.1 KRX OpenAPI 연동
+### 5.0 AI 분석 사용 여부 선택 (Claude API)
 
-- [ ] KRX OpenAPI (`openapi.krx.co.kr`) API 키 발급 및 Keychain 저장 (`krx.apiKey`)
-- [ ] `KRXManager.swift` 신규 작성 (`@MainActor`, singleton)
-  - [ ] 전종목 일별 시세 fetch (KOSPI + KOSDAQ, OHLCV + 시가총액 + PER/PBR + 거래량)
-  - [ ] 업종 코드 매핑 fetch 및 캐싱
-- [ ] DB Migration v9: `stock_universe` 테이블
-  - [ ] `symbol`, `name`, `market`(KOSPI/KOSDAQ), `sector`, `close`, `volume`, `marketCap`, `per`, `pbr`, `high52w`, `low52w`, `date`
-- [ ] 장 마감 후 자동 갱신 (평일 16:00, `SnapshotManager`와 유사한 타이머 방식)
-- [ ] 계좌 연결 탭에 KRX API 키 입력 UI 추가
+- [ ] 계좌 연결 탭에 "AI 종목 분석" 섹션 추가
+  - [ ] 활성화 토글 (`UserDefaults "Screener.claudeEnabled"`)
+  - [ ] 활성화 시 Anthropic API 키 입력 (Keychain `anthropic.apiKey`)
+  - [ ] 비활성화 시 스크리너 UI에서 "AI 분석" 버튼 숨김
+
+### 5.1 KRX 시장 데이터 연동
+
+> KRX 공공 데이터 포털(`data.krx.co.kr`) 사용 — 별도 API 키 불필요
+
+- [x] `StockUniverseItem.swift` 모델 정의 (`symbol`, `name`, `market`, `sector`, `close`, `open`, `high`, `low`, `volume`, `marketCap`(백만원), `per`, `pbr`, `updatedAt`)
+- [x] DB Migration v9: `stock_universe` 테이블
+- [x] `KRXManager.swift` 신규 작성 (`@MainActor`, singleton)
+  - [x] KOSPI + KOSDAQ 전종목 일별 OHLCV + 시가총액 fetch (`MDCSTAT01501`)
+  - [x] 전종목 PER/PBR fetch (`MDCSTAT03901`) 및 merge
+  - [x] 마지막 거래일 계산 (`lastTradingDate()`) — 주말·16시 이전 처리
+  - [x] `fetchIfNeeded()` — 이미 최신 데이터면 스킵
+  - [x] 1시간 간격 자동 갱신 타이머
+- [x] 계좌 연결 탭에 KRX 데이터 상태 UI (종목 수, 마지막 갱신일, 즉시 업데이트 버튼)
+- [x] 앱 시작 시 `KRXManager.shared.start()` 호출
 
 ### 5.2 조건 스크리너 엔진
 

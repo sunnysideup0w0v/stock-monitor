@@ -818,6 +818,8 @@ struct AccountSettingsView: View {
                     }
                     launchAtLoginSection
                     DARTSettingsView()
+                    KRXSettingsView()
+                    ClaudeSettingsView()
                 }
                 .frame(maxWidth: .infinity, alignment: .topLeading)
                 .padding(.bottom, 8)
@@ -1614,6 +1616,127 @@ struct DARTSettingsView: View {
             UserDefaults.standard.removeObject(forKey: "DART.filterTypes")
         } else {
             UserDefaults.standard.set(Array(enabledTypes), forKey: "DART.filterTypes")
+        }
+    }
+}
+
+// MARK: - KRX Data
+
+struct KRXSettingsView: View {
+    @State private var stockCount: Int = 0
+    @State private var lastUpdated: Date? = nil
+    @State private var isFetching = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Divider()
+            Text("KRX 시장 데이터").font(.headline)
+
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(stockCount > 0 ? Color.green : Color.gray)
+                    .frame(width: 8, height: 8)
+                if stockCount > 0 {
+                    Text("\(stockCount)개 종목")
+                        .font(.caption).foregroundStyle(.secondary)
+                    if let date = lastUpdated {
+                        Text("(\(KRXManager.shared.lastTradingDate()) 기준)")
+                            .font(.caption2).foregroundStyle(.tertiary)
+                    }
+                } else {
+                    Text("데이터 없음").font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer()
+                Button {
+                    isFetching = true
+                    Task { await KRXManager.shared.fetchAndStore() }
+                } label: {
+                    if isFetching {
+                        HStack(spacing: 4) {
+                            ProgressView().scaleEffect(0.7).frame(width: 14, height: 14)
+                            Text("업데이트 중…").font(.caption)
+                        }
+                    } else {
+                        Label("지금 업데이트", systemImage: "arrow.clockwise").font(.caption)
+                    }
+                }
+                .buttonStyle(.borderless)
+                .disabled(isFetching)
+            }
+            .padding(10)
+            .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
+
+            Text("전종목 OHLCV·PER/PBR. 평일 16:00 이후 자동 갱신, API 키 불필요.")
+                .font(.caption2).foregroundStyle(.tertiary)
+        }
+        .onAppear { loadStats() }
+        .onReceive(NotificationCenter.default.publisher(for: .krxDataUpdated)) { _ in
+            loadStats()
+            isFetching = false
+        }
+    }
+
+    private func loadStats() {
+        stockCount = (try? DatabaseManager.shared.stockUniverseCount()) ?? 0
+        lastUpdated = try? DatabaseManager.shared.stockUniverseLastUpdated()
+        isFetching = KRXManager.shared.isFetching
+    }
+}
+
+// MARK: - Claude AI
+
+struct ClaudeSettingsView: View {
+    @AppStorage("Screener.claudeEnabled") private var claudeEnabled = false
+    @State private var apiKeyInput = ""
+    @State private var isConfigured = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Divider()
+            HStack {
+                Text("AI 종목 분석").font(.headline)
+                Spacer()
+                Toggle("", isOn: $claudeEnabled).labelsHidden()
+            }
+
+            if claudeEnabled {
+                if isConfigured {
+                    HStack(spacing: 8) {
+                        Circle().fill(.green).frame(width: 8, height: 8)
+                        Text("Anthropic API 키 저장됨")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                        Spacer()
+                        Button("삭제", role: .destructive) {
+                            KeychainHelper.delete(account: "anthropic.apiKey")
+                            isConfigured = false
+                        }
+                        .buttonStyle(.borderless).foregroundStyle(.red).font(.caption)
+                    }
+                    .padding(10)
+                    .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
+                } else {
+                    HStack(spacing: 8) {
+                        SecureField("Anthropic API 키", text: $apiKeyInput)
+                        Button("저장") {
+                            let key = apiKeyInput.trimmingCharacters(in: .whitespaces)
+                            guard !key.isEmpty else { return }
+                            KeychainHelper.save(key, account: "anthropic.apiKey")
+                            isConfigured = true
+                            apiKeyInput = ""
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(apiKeyInput.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
+                }
+                Text("스크리닝 결과를 Claude AI로 분석합니다. claude.ai/settings에서 API 키를 발급하세요.")
+                    .font(.caption2).foregroundStyle(.tertiary)
+            } else {
+                Text("활성화하면 종목 스크리닝 결과를 Claude AI로 분석할 수 있습니다.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .onAppear {
+            isConfigured = !(KeychainHelper.load(account: "anthropic.apiKey") ?? "").isEmpty
         }
     }
 }
