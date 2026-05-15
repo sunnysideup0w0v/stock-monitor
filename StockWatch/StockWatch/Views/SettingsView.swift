@@ -835,7 +835,7 @@ struct SnapshotSettingsSection: View {
                 }
                 .labelsHidden()
                 .frame(width: 90)
-                .onChange(of: keepDays) { _, v in SnapshotManager.shared.keepDays = v == -1 ? 0 : v }
+                .onChange(of: keepDays) { _, v in SnapshotManager.shared.keepDays = v }
             }
 
             HStack(spacing: 8) {

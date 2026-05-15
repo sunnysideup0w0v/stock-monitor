@@ -46,11 +46,11 @@ final class SnapshotManager {
         }
     }
 
-    // 0 = 무제한 (자동 정리 안 함)
+    // -1 = 무제한, 0 = 미설정(기본값 365일 적용), 양수 = 보존 일수
     var keepDays: Int {
         get {
             let v = UserDefaults.standard.integer(forKey: "Snapshot.keepDays")
-            return v == 0 ? 365 : v
+            return v == 0 ? 365 : v  // 미설정(0) → 기본 365일
         }
         set { UserDefaults.standard.set(newValue, forKey: "Snapshot.keepDays") }
     }
@@ -103,8 +103,9 @@ final class SnapshotManager {
         )
         try? DatabaseManager.shared.insert(&snapshot)
 
-        if keepDays > 0 {
-            try? DatabaseManager.shared.cleanupSnapshots(keepDays: keepDays)
+        let kd = keepDays
+        if kd > 0 {  // -1(무제한) 또는 0(미설정) 시 정리 안 함
+            try? DatabaseManager.shared.cleanupSnapshots(keepDays: kd)
         }
     }
 

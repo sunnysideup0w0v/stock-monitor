@@ -60,26 +60,35 @@ final class DARTManager {
             let filterTypes = UserDefaults.standard.stringArray(forKey: "DART.filterTypes") ?? []
 
             for disclosure in newDisclosures {
-                let shouldNotify = (filterTypes.isEmpty || filterTypes.contains(disclosure.disclosureType))
-                    && (!AlertEvaluator.marketHoursOnly || AlertEvaluator.isWithinMarketHours())
-                if shouldNotify {
-                    let dartURL = "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=\(disclosure.rceptNo)"
-                    NotificationManager.shared.send(
-                        title: "[\(disclosure.corpName)] 공시",
-                        body: disclosure.reportName,
-                        symbol: symbol,
-                        urlString: dartURL
-                    )
-                    var history = AlertHistory(
-                        id: nil,
-                        symbol: disclosure.stockCode.isEmpty ? symbol : disclosure.stockCode,
-                        triggerType: .dartDisclosure,
-                        message: disclosure.reportName,
-                        triggeredAt: Date(),
-                        metadata: disclosure.rceptNo
-                    )
-                    try? DatabaseManager.shared.insert(&history)
+                let typeOK = filterTypes.isEmpty || filterTypes.contains(disclosure.disclosureType)
+                let timeOK = !AlertEvaluator.marketHoursOnly || AlertEvaluator.isWithinMarketHours()
+
+                if !typeOK {
+                    // 사용자가 원하지 않는 공시 종류 → 즉시 seen 처리 (다시 알릴 필요 없음)
+                    seenIds.insert(disclosure.rceptNo)
+                    continue
                 }
+                if !timeOK {
+                    // 장 시간 외 → seen 미처리, 다음 폴링에서 재시도 (장 열리면 알림 발송)
+                    continue
+                }
+
+                let dartURL = "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=\(disclosure.rceptNo)"
+                NotificationManager.shared.send(
+                    title: "[\(disclosure.corpName)] 공시",
+                    body: disclosure.reportName,
+                    symbol: symbol,
+                    urlString: dartURL
+                )
+                var history = AlertHistory(
+                    id: nil,
+                    symbol: disclosure.stockCode.isEmpty ? symbol : disclosure.stockCode,
+                    triggerType: .dartDisclosure,
+                    message: disclosure.reportName,
+                    triggeredAt: Date(),
+                    metadata: disclosure.rceptNo
+                )
+                try? DatabaseManager.shared.insert(&history)
                 seenIds.insert(disclosure.rceptNo)
             }
 
