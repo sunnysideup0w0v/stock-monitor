@@ -191,7 +191,7 @@ struct MenuBarPopoverView: View {
 struct PortfolioHoldingRowView: View {
     let item: PortfolioItem
     let quote: StockQuote?
-    @State private var isHovering = false
+    @AppStorage("Popover.showPortfolioDetail") private var showDetail = false
 
     var body: some View {
         HStack(spacing: 6) {
@@ -200,7 +200,7 @@ struct PortfolioHoldingRowView: View {
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
-                if isHovering, let quote {
+                if showDetail, let quote {
                     let avg = NumberFormatter.decimal.string(from: NSNumber(value: item.averagePrice)) ?? ""
                     let cur = NumberFormatter.decimal.string(from: NSNumber(value: quote.price)) ?? ""
                     Text("매입 \(avg) · 현재 \(cur) · \(item.quantity)주")
@@ -222,8 +222,6 @@ struct PortfolioHoldingRowView: View {
         .padding(.leading, 24)
         .padding(.trailing, 16)
         .padding(.vertical, 4)
-        .contentShape(Rectangle())
-        .onHover { isHovering = $0 }
     }
 
     private func formatAmount(_ value: Int) -> String {
@@ -243,14 +241,14 @@ struct StockRowView: View {
     let isUp: Bool
     var symbol: String = ""
     var group: String = ""
-    @State private var isHovering = false
+    @AppStorage("Popover.showWatchlistDetail") private var showDetail = false
 
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 1) {
                 Text(name)
                     .font(.system(size: 13))
-                if isHovering, !symbol.isEmpty || !group.isEmpty {
+                if showDetail, !symbol.isEmpty || !group.isEmpty {
                     Text([symbol, group].filter { !$0.isEmpty }.joined(separator: " · "))
                         .font(.system(size: 10))
                         .foregroundStyle(.tertiary)
@@ -268,8 +266,6 @@ struct StockRowView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 6)
-        .contentShape(Rectangle())
-        .onHover { isHovering = $0 }
     }
 }
 

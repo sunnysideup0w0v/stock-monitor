@@ -87,6 +87,7 @@ struct WatchlistSettingsView: View {
     @State private var name = ""
     @State private var alias = ""
     @State private var group: WatchlistGroup = .watchlist
+    @AppStorage("Popover.showWatchlistDetail") private var showPopoverDetail = false
 
     var body: some View {
         SettingsTabContainer(title: "관심종목") {
@@ -141,6 +142,10 @@ struct WatchlistSettingsView: View {
                     Button("추가") { addItem() }
                         .disabled(symbol.trimmingCharacters(in: .whitespaces).isEmpty ||
                                   name.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+
+                SettingsFormSection(title: "팝오버 표시") {
+                    Toggle("종목코드·그룹 표시", isOn: $showPopoverDetail)
                 }
             }
         }
@@ -207,6 +212,7 @@ struct PortfolioSettingsView: View {
 
     @State private var selectedBrokerIds: Set<String> = []
     @State private var showImportBrokerAlert = false
+    @AppStorage("Popover.showPortfolioDetail") private var showPopoverDetail = false
 
     private var connectedBrokerIds: [String] { AccountManager.connectedAccountIds }
     private var isMultiBroker: Bool { connectedBrokerIds.count > 1 }
@@ -355,6 +361,10 @@ struct PortfolioSettingsView: View {
                 Button("추가") { addItem() }
                     .disabled(!isFormValid)
                     .accessibilityIdentifier("portfolio.button.add")
+            }
+
+            SettingsFormSection(title: "팝오버 표시") {
+                Toggle("매입단가·현재단가·수량 표시", isOn: $showPopoverDetail)
             }
 
             SnapshotSettingsSection()
