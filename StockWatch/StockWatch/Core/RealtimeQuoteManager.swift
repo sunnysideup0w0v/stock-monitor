@@ -75,7 +75,7 @@ actor RealtimeQuoteManager {
                 startPinging()
                 await listen()       // 연결이 끊기면 여기서 반환
             } catch {
-                print("[Realtime] 연결 실패: \(error.localizedDescription)")
+                APILogger.logError("[Realtime] 연결 실패: \(error.localizedDescription)", tag: "Realtime")
             }
 
             isConnected = false
@@ -83,7 +83,6 @@ actor RealtimeQuoteManager {
             webSocketTask = nil
 
             guard isActive else { break }
-            print("[Realtime] \(Int(reconnectDelay))초 후 재연결")
             try? await Task.sleep(for: .seconds(reconnectDelay))
             reconnectDelay = min(reconnectDelay * 2, 60)
         }

@@ -1,7 +1,7 @@
 import Foundation
 
-/// 개발용 API 요청/응답 파일 로거.
-/// ~/Documents/study/stock-monitor/logs/api-YYYY-MM-DD.log 에 기록.
+/// HTTP 에러(4xx/5xx) 전용 파일 로거.
+/// ~/Documents/study/stock-monitor/logs/error-YYYY-MM-DD.log 에 기록.
 enum APILogger {
 
     private static let logsDir: URL = {
@@ -11,7 +11,7 @@ enum APILogger {
         return url
     }()
 
-    static func log(_ message: String, tag: String = "API") {
+    static func logError(_ message: String, tag: String = "API") {
         let now = Date()
 
         let dateFmt = DateFormatter()
@@ -23,7 +23,7 @@ enum APILogger {
         timeFmt.locale = Locale(identifier: "en_US_POSIX")
 
         let line = "[\(timeFmt.string(from: now))] [\(tag)] \(message)\n"
-        let fileURL = logsDir.appendingPathComponent("api-\(dateFmt.string(from: now)).log")
+        let fileURL = logsDir.appendingPathComponent("error-\(dateFmt.string(from: now)).log")
 
         guard let data = line.data(using: .utf8) else { return }
 
@@ -37,16 +37,9 @@ enum APILogger {
         }
     }
 
-    static func logRequest(tag: String, url: String, headers: [String: String] = [:], body: String = "") {
-        var lines = ["→ \(url)"]
-        if !headers.isEmpty {
-            lines.append("  headers: \(headers.filter { $0.key != "authorization" })")
-        }
-        if !body.isEmpty { lines.append("  body: \(body)") }
-        log(lines.joined(separator: "\n"), tag: tag)
-    }
-
+    /// status >= 400 일 때만 파일에 기록한다.
     static func logResponse(tag: String, status: Int, body: String) {
-        log("← HTTP \(status)\n  \(body.prefix(800))", tag: tag)
+        guard status >= 400 else { return }
+        logError("← HTTP \(status)\n  \(body.prefix(800))", tag: tag)
     }
 }

@@ -96,15 +96,13 @@ actor KiwoomAdapter: BrokerAdapter {
         // qry_tp: "2" = 개별, dmst_stex_tp: "KRX" — 계좌번호는 토큰에 귀속
         let body: [String: Any] = ["qry_tp": "2", "dmst_stex_tp": "KRX"]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        APILogger.logRequest(tag: "kt00018", url: url.absoluteString, body: "qry_tp=2,dmst_stex_tp=KRX")
-
         let (data, response) = try await URLSession.shared.data(for: request)
         let rawString = String(data: data, encoding: .utf8) ?? ""
         let status = (response as? HTTPURLResponse)?.statusCode ?? -1
         APILogger.logResponse(tag: "kt00018", status: status, body: rawString)
 
         guard status == 200 else {
-            throw BrokerError.apiError("잔고 조회 실패 (HTTP \(status)) — logs/api-*.log 확인")
+            throw BrokerError.apiError("잔고 조회 실패 (HTTP \(status))")
         }
 
         let decoded = try JSONDecoder().decode(KiwoomBalanceResponse.self, from: data)

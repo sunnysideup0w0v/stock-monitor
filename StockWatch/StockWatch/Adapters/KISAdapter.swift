@@ -84,20 +84,14 @@ actor KISAdapter: BrokerAdapter {
             throw BrokerError.apiError("HTTP \(http.statusCode)")
         }
 
-        if let rawString = String(data: data, encoding: .utf8) {
-            print("[KISAdapter] fetchQuote response: \(rawString.prefix(500))")
-        }
-
         let decoded = try JSONDecoder().decode(KISQuoteResponse.self, from: data)
 
         guard decoded.rtCd == "0", let output = decoded.output else {
             let msg = decoded.msg1 ?? "알 수 없는 오류"
-            print("[KISAdapter] rt_cd=\(decoded.rtCd), msg=\(msg)")
             throw BrokerError.apiError(msg)
         }
 
         let priceStr = output.stckPrpr ?? "0"
-        print("[KISAdapter] stck_prpr=\(priceStr), name=\(output.htsKorIsnm ?? "(nil)")")
         let price = Int(priceStr) ?? 0
         guard price > 0 else { throw BrokerError.symbolNotFound(symbol) }
 
@@ -167,10 +161,6 @@ actor KISAdapter: BrokerAdapter {
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
             throw BrokerError.apiError("잔고 조회 실패")
-        }
-
-        if let raw = String(data: data, encoding: .utf8) {
-            print("[KISAdapter] fetchBalance: \(raw.prefix(500))")
         }
 
         let decoded = try JSONDecoder().decode(KISBalanceResponse.self, from: data)
@@ -260,10 +250,6 @@ actor KISAdapter: BrokerAdapter {
         let (data, response) = try await URLSession.shared.data(for: request)
 
         let tokenStatus = (response as? HTTPURLResponse)?.statusCode ?? -1
-        if let raw = String(data: data, encoding: .utf8) {
-            print("[KISAdapter] token response (\(tokenStatus)): \(raw.prefix(300))")
-        }
-
         guard tokenStatus == 200 else {
             throw BrokerError.apiError("토큰 발급 실패 (HTTP \(tokenStatus)) — API 키를 확인해주세요")
         }
