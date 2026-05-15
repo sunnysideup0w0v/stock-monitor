@@ -1,4 +1,8 @@
+# Claude Code (local machine settings)
+.claude/
+
 # Xcode
+**/xcuserdata/
 *.xcworkspace/xcuserdata/
 *.xcodeproj/xcuserdata/
 *.xcodeproj/project.xcworkspace/xcuserdata/
