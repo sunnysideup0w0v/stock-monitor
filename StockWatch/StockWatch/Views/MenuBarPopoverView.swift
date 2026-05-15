@@ -30,6 +30,14 @@ struct MenuBarPopoverView: View {
             Text("StockWatch")
                 .font(.headline)
             Spacer()
+            if quoteManager.connectionState == .error {
+                Button("재연결") {
+                    QuoteManager.shared.reconnect()
+                }
+                .buttonStyle(.borderless)
+                .font(.caption)
+                .foregroundStyle(.orange)
+            }
             Circle()
                 .fill(quoteManager.connectionState == .connected ? Color.green : quoteManager.connectionState == .error ? Color.red : Color.gray)
                 .frame(width: 8, height: 8)

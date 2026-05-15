@@ -30,10 +30,10 @@ actor KISAdapter: BrokerAdapter {
     }
 
     func fetchQuote(symbol: String) async throws -> StockQuote {
-        try await fetchQuote(symbol: symbol, retryOnUnauthorized: true)
+        try await fetchQuote(symbol: symbol, retryOnUnauthorized: true, retryCount: 1)
     }
 
-    private func fetchQuote(symbol: String, retryOnUnauthorized: Bool) async throws -> StockQuote {
+    private func fetchQuote(symbol: String, retryOnUnauthorized: Bool, retryCount: Int) async throws -> StockQuote {
         let token = try await validToken()
         guard let creds = credentials else { throw BrokerError.notConnected }
 
@@ -64,7 +64,14 @@ actor KISAdapter: BrokerAdapter {
             cachedToken = nil
             tokenExpiry = nil
             try await issueToken()
-            return try await fetchQuote(symbol: symbol, retryOnUnauthorized: false)
+            return try await fetchQuote(symbol: symbol, retryOnUnauthorized: false, retryCount: retryCount)
+        }
+
+        // 403/503: 일시적 서버 오류 — retryCount 남아 있으면 1초 후 재시도
+        if http.statusCode == 403 || http.statusCode == 503 {
+            guard retryCount > 0 else { throw BrokerError.apiError("HTTP \(http.statusCode)") }
+            try? await Task.sleep(for: .seconds(1))
+            return try await fetchQuote(symbol: symbol, retryOnUnauthorized: retryOnUnauthorized, retryCount: retryCount - 1)
         }
 
         guard http.statusCode == 200 else {

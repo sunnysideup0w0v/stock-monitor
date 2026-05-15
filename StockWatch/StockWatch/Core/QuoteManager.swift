@@ -17,13 +17,25 @@ final class QuoteManager: ObservableObject {
     private var pollingTask: Task<Void, Never>?
     private var consecutiveFailures = 0
     private(set) var currentSymbols: [String] = []
+    private var disconnectNotified = false
+
+    static var disconnectAlertEnabled: Bool {
+        get { UserDefaults.standard.object(forKey: "QuoteManager.disconnectAlert") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "QuoteManager.disconnectAlert") }
+    }
 
     private init() {}
 
     func setAdapter(_ adapter: any BrokerAdapter) {
         self.adapter = adapter
         consecutiveFailures = 0
+        disconnectNotified = false
         connectionState = .disconnected
+    }
+
+    func reconnect() {
+        guard !currentSymbols.isEmpty else { return }
+        startPolling(symbols: currentSymbols)
     }
 
     func startPolling(symbols: [String]) {
@@ -106,14 +118,29 @@ final class QuoteManager: ObservableObject {
         quotes = updated
 
         if successCount > 0 {
+            if disconnectNotified && QuoteManager.disconnectAlertEnabled {
+                NotificationManager.shared.send(
+                    title: "StockWatch 재연결됨",
+                    body: "시세 수신이 정상화됐습니다.",
+                    symbol: "_system"
+                )
+            }
             consecutiveFailures = 0
+            disconnectNotified = false
             connectionState = .connected
             AlertEvaluator.shared.evaluate(quotes: quotes)
         } else {
             consecutiveFailures += 1
-            // 2회 연속 실패 시 오류 상태로 전환
             if consecutiveFailures >= 2 {
                 connectionState = .error
+                if !disconnectNotified && QuoteManager.disconnectAlertEnabled {
+                    disconnectNotified = true
+                    NotificationManager.shared.send(
+                        title: "StockWatch 연결 끊김",
+                        body: "시세 수신이 중단됐습니다. 네트워크를 확인해주세요.",
+                        symbol: "_system"
+                    )
+                }
             }
         }
     }

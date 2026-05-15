@@ -434,12 +434,18 @@ struct AlertSettingsView: View {
     @State private var disableAfterTrigger = false
     @State private var cooldownMinutes = 60
     @State private var marketHoursOnly: Bool = AlertEvaluator.marketHoursOnly
+    @State private var disconnectAlert: Bool = QuoteManager.disconnectAlertEnabled
 
     var body: some View {
         SettingsTabContainer(title: "알림설정") {
             HStack {
                 Toggle("장 시간(09:00~15:30)에만 알림 발송", isOn: $marketHoursOnly)
                     .onChange(of: marketHoursOnly) { _, v in AlertEvaluator.marketHoursOnly = v }
+                Spacer()
+            }
+            HStack {
+                Toggle("네트워크 단절·복구 시 알림 발송", isOn: $disconnectAlert)
+                    .onChange(of: disconnectAlert) { _, v in QuoteManager.disconnectAlertEnabled = v }
                 Spacer()
             }
             .padding(.bottom, 2)

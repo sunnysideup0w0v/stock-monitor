@@ -16,6 +16,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        CrashLogger.install()
         setupStatusBar()
         NotificationManager.shared.requestAuthorization()
         setupAdapter()
