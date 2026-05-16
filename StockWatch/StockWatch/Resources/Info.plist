@@ -33,6 +33,12 @@
 				<key>NSExceptionAllowsInsecureHTTPLoads</key>
 				<true/>
 			</dict>
+			<!-- KRX OpenAPI는 HTTP 전용 엔드포인트 사용 -->
+			<key>data-dbg.krx.co.kr</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
 		</dict>
 	</dict>
 	<key>NSUserNotificationUsageDescription</key>

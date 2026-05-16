@@ -1629,6 +1629,8 @@ struct KRXSettingsView: View {
     @State private var lastUpdated: Date? = nil
     @State private var isFetching = false
     @State private var statusMessage: String? = nil
+    @State private var apiKeyInput = ""
+    @State private var isApiKeyConfigured = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -1644,6 +1646,13 @@ struct KRXSettingsView: View {
                         .font(.caption).foregroundStyle(.secondary)
                     Text("(\(KRXManager.shared.lastTradingDate()) 기준)")
                         .font(.caption2).foregroundStyle(.tertiary)
+                    if isApiKeyConfigured {
+                        Text("· KRX OpenAPI")
+                            .font(.caption2).foregroundStyle(.blue)
+                    } else {
+                        Text("· 네이버 증권")
+                            .font(.caption2).foregroundStyle(.tertiary)
+                    }
                 } else {
                     Text("데이터 없음").font(.caption).foregroundStyle(.secondary)
                 }
@@ -1672,10 +1681,45 @@ struct KRXSettingsView: View {
                     .foregroundStyle(msg.hasPrefix("✓") ? .green : .red)
             }
 
-            Text("전종목 OHLCV·PER/PBR. 평일 16:00 이후 자동 갱신, API 키 불필요.")
+            // KRX OpenAPI 키 설정
+            Divider()
+            Text("KRX OpenAPI 키").font(.subheadline).foregroundStyle(.secondary)
+
+            if isApiKeyConfigured {
+                HStack(spacing: 8) {
+                    Circle().fill(.blue).frame(width: 8, height: 8)
+                    Text("KRX OpenAPI 키 저장됨 — 공식 API 사용 중")
+                        .font(.caption).foregroundStyle(.secondary)
+                    Spacer()
+                    Button("삭제", role: .destructive) {
+                        KeychainHelper.delete(account: "krx.apiKey")
+                        isApiKeyConfigured = false
+                    }
+                    .buttonStyle(.borderless).foregroundStyle(.red).font(.caption)
+                }
+                .padding(10)
+                .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
+            } else {
+                HStack(spacing: 8) {
+                    SecureField("KRX OpenAPI 인증키", text: $apiKeyInput)
+                    Button("저장") {
+                        let key = apiKeyInput.trimmingCharacters(in: .whitespaces)
+                        guard !key.isEmpty else { return }
+                        KeychainHelper.save(key, account: "krx.apiKey")
+                        isApiKeyConfigured = true
+                        apiKeyInput = ""
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(apiKeyInput.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+            }
+            Text("openapi.krx.co.kr에서 발급. 미설정 시 네이버 증권 API로 대체 (업종 정보 미제공).")
                 .font(.caption2).foregroundStyle(.tertiary)
         }
-        .onAppear { loadStats() }
+        .onAppear {
+            loadStats()
+            isApiKeyConfigured = !(KeychainHelper.load(account: "krx.apiKey") ?? "").isEmpty
+        }
         .onReceive(NotificationCenter.default.publisher(for: .krxDataUpdated)) { _ in
             loadStats()
         }
@@ -1687,8 +1731,6 @@ struct KRXSettingsView: View {
         statusMessage = nil
         Task {
             await KRXManager.shared.fetchAndStore()
-            // fetchAndStore()가 guard로 조기 return하거나 네트워크 실패 시에도
-            // Task 완료 후 직접 상태를 동기화해 isFetching이 고착되는 것을 방지
             loadStats()
             if stockCount == 0 {
                 statusMessage = "수신 실패 — 네트워크 연결을 확인하거나 잠시 후 다시 시도하세요"
@@ -1705,6 +1747,7 @@ struct KRXSettingsView: View {
         stockCount = (try? DatabaseManager.shared.stockUniverseCount()) ?? 0
         lastUpdated = try? DatabaseManager.shared.stockUniverseLastUpdated()
         isFetching = KRXManager.shared.isFetching
+        isApiKeyConfigured = !(KeychainHelper.load(account: "krx.apiKey") ?? "").isEmpty
     }
 }
 

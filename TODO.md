@@ -1,6 +1,6 @@
 # StockWatch — 개발 진행 체크리스트
 
-> PRD v0.3 기반 | 업데이트: 2026-05-17 (Phase 5 전체 완료 — KRX 연동 + 조건 스크리너 + Claude AI 분석)  
+> PRD v0.3 기반 | 업데이트: 2026-05-17 (Phase 5.5 — KRX OpenAPI 공식 연동)  
 > Claude Code로 단계별 개발 진행. 각 Phase 완료 시 검증 항목 확인 후 다음 단계로 이동.
 
 ---
@@ -572,12 +572,25 @@
   - [x] 분석 결과 스트리밍 시트 (`AnalysisSheetView`) — 실시간 토큰 표시
   - [x] 분석 결과 클립보드 복사 버튼
 
+### 5.5 KRX OpenAPI 공식 연동 (API 키 방식)
+
+- [x] `KRXManager.swift` — API 키 유무에 따라 소스 자동 전환
+  - [x] KRX 공식 API: `http://data-dbg.krx.co.kr/svc/apis/sto/stk_bydd_trd` (KOSPI), `/sto/ksq_bydd_trd` (KOSDAQ)
+  - [x] 인증: `AUTH_KEY` 요청 헤더, 쿼리 파라미터 `basDd=YYYYMMDD`
+  - [x] 응답: `{"OutBlock_1": [...]}` — 모든 필드 콤마 포함 문자열로 반환
+  - [x] 업종(`SECT_TP_NM`), 실제 OHLCV 포함 — 네이버 대비 데이터 품질 향상
+  - [x] 네이버 증권 API 폴백 유지 (API 키 미설정 시)
+- [x] `Info.plist` — ATS 예외 추가 (`data-dbg.krx.co.kr` HTTP 허용)
+- [x] Keychain 키 `krx.apiKey` 추가
+- [x] `KRXSettingsView` — API 키 입력 UI 추가 (저장/삭제, 현재 소스 표시)
+
 ### ✅ Phase 5 검증
 - [ ] KRX OpenAPI 연동 → 전종목 데이터 정상 수신 및 DB 저장 확인
 - [ ] 조건 스크리닝 → PER·PBR·시총 조건 조합으로 필터링 결과 확인
 - [ ] KRX 버튼 → 업데이트 중 스피너 표시 + 완료 메시지 확인 (버그 수정)
 - [ ] Claude API 분석 → 스크리닝 결과 시트에서 스트리밍 응답 정상 수신 확인
 - [ ] 장 마감 후 자동 갱신 동작 확인 (평일 16:00)
+- [ ] KRX OpenAPI 키 입력 후 업데이트 → 업종 포함 데이터 수신 확인
 
 ---
 
