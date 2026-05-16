@@ -1628,6 +1628,7 @@ struct KRXSettingsView: View {
     @State private var stockCount: Int = 0
     @State private var lastUpdated: Date? = nil
     @State private var isFetching = false
+    @State private var statusMessage: String? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -1641,17 +1642,14 @@ struct KRXSettingsView: View {
                 if stockCount > 0 {
                     Text("\(stockCount)개 종목")
                         .font(.caption).foregroundStyle(.secondary)
-                    if let date = lastUpdated {
-                        Text("(\(KRXManager.shared.lastTradingDate()) 기준)")
-                            .font(.caption2).foregroundStyle(.tertiary)
-                    }
+                    Text("(\(KRXManager.shared.lastTradingDate()) 기준)")
+                        .font(.caption2).foregroundStyle(.tertiary)
                 } else {
                     Text("데이터 없음").font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
                 Button {
-                    isFetching = true
-                    Task { await KRXManager.shared.fetchAndStore() }
+                    fetch()
                 } label: {
                     if isFetching {
                         HStack(spacing: 4) {
@@ -1668,13 +1666,38 @@ struct KRXSettingsView: View {
             .padding(10)
             .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
 
+            if let msg = statusMessage {
+                Text(msg)
+                    .font(.caption)
+                    .foregroundStyle(msg.hasPrefix("✓") ? .green : .red)
+            }
+
             Text("전종목 OHLCV·PER/PBR. 평일 16:00 이후 자동 갱신, API 키 불필요.")
                 .font(.caption2).foregroundStyle(.tertiary)
         }
         .onAppear { loadStats() }
         .onReceive(NotificationCenter.default.publisher(for: .krxDataUpdated)) { _ in
             loadStats()
-            isFetching = false
+        }
+    }
+
+    private func fetch() {
+        guard !isFetching else { return }
+        isFetching = true
+        statusMessage = nil
+        Task {
+            await KRXManager.shared.fetchAndStore()
+            // fetchAndStore()가 guard로 조기 return하거나 네트워크 실패 시에도
+            // Task 완료 후 직접 상태를 동기화해 isFetching이 고착되는 것을 방지
+            loadStats()
+            if stockCount == 0 {
+                statusMessage = "수신 실패 — 네트워크 연결을 확인하거나 잠시 후 다시 시도하세요"
+            } else {
+                statusMessage = "✓ 업데이트 완료"
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                    if statusMessage?.hasPrefix("✓") == true { statusMessage = nil }
+                }
+            }
         }
     }
 

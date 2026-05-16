@@ -11,6 +11,12 @@ struct ScreenerView: View {
     @State private var sectors: [String] = []
     @State private var markets: [String] = []
 
+    @AppStorage("Screener.claudeEnabled") private var claudeEnabled = false
+    @State private var showAnalysis = false
+    @State private var analysisText = ""
+    @State private var isAnalyzing = false
+    @State private var analysisError: String?
+
     private let conditionsKey = "Screener.savedConditions"
 
     var body: some View {
@@ -22,6 +28,14 @@ struct ScreenerView: View {
             }
         }
         .onAppear { loadState() }
+        .sheet(isPresented: $showAnalysis) {
+            AnalysisSheetView(
+                text: $analysisText,
+                isAnalyzing: $isAnalyzing,
+                error: $analysisError,
+                isPresented: $showAnalysis
+            )
+        }
     }
 
     // MARK: - Condition Panel
@@ -124,6 +138,17 @@ struct ScreenerView: View {
                         }
                     }
                 }
+
+                if claudeEnabled {
+                    Button {
+                        startAnalysis()
+                    } label: {
+                        Label("AI 분석", systemImage: "wand.and.stars")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.purple)
+                }
             }
         }
     }
@@ -142,6 +167,27 @@ struct ScreenerView: View {
     }
 
     // MARK: - Actions
+
+    private func startAnalysis() {
+        analysisText = ""
+        analysisError = nil
+        isAnalyzing = true
+        showAnalysis = true
+        let snapshot = (conditions: conditions, results: results)
+        Task {
+            do {
+                try await ClaudeAnalyzer.shared.analyze(
+                    conditions: snapshot.conditions,
+                    results: snapshot.results
+                ) { @MainActor token in
+                    analysisText += token
+                }
+            } catch {
+                analysisError = error.localizedDescription
+            }
+            isAnalyzing = false
+        }
+    }
 
     private func runScreener() {
         guard !conditions.isEmpty else { return }
@@ -346,5 +392,70 @@ private struct ScreenerResultRowView: View {
         var w = WatchlistItem(symbol: item.symbol, name: item.name, alias: nil, group: .watchlist)
         try? DatabaseManager.shared.insert(&w)
         added = true
+    }
+}
+
+// MARK: - Analysis Sheet
+
+private struct AnalysisSheetView: View {
+    @Binding var text: String
+    @Binding var isAnalyzing: Bool
+    @Binding var error: String?
+    @Binding var isPresented: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label("AI 종목 분석", systemImage: "wand.and.stars")
+                    .font(.title3).bold()
+                Spacer()
+                if isAnalyzing {
+                    ProgressView().scaleEffect(0.8)
+                }
+                Button("닫기") { isPresented = false }
+                    .buttonStyle(.borderless)
+                    .disabled(isAnalyzing)
+            }
+
+            Divider()
+
+            if let err = error {
+                Text(err)
+                    .foregroundStyle(.red)
+                    .font(.callout)
+            } else if text.isEmpty && isAnalyzing {
+                HStack {
+                    ProgressView()
+                    Text("분석 중...").foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            } else {
+                ScrollView {
+                    Text(text)
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(4)
+                }
+
+                if !text.isEmpty {
+                    HStack {
+                        Spacer()
+                        Button {
+                            NSPasteboard.general.clearContents()
+                            NSPasteboard.general.setString(text, forType: .string)
+                        } label: {
+                            Label("클립보드 복사", systemImage: "doc.on.doc")
+                        }
+                        .buttonStyle(.borderless)
+                        .font(.caption)
+                    }
+                }
+            }
+
+            Text("본 분석은 투자 권고가 아닌 참고 목적입니다.")
+                .font(.caption2).foregroundStyle(.tertiary)
+        }
+        .padding(20)
+        .frame(width: 560, height: 480)
     }
 }

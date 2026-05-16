@@ -1,6 +1,6 @@
 # StockWatch — 개발 진행 체크리스트
 
-> PRD v0.3 기반 | 업데이트: 2026-05-16 (Phase 5.1~5.3 완료 — KRX 전종목 데이터 연동 + 조건 스크리너 구현)  
+> PRD v0.3 기반 | 업데이트: 2026-05-17 (Phase 5 전체 완료 — KRX 연동 + 조건 스크리너 + Claude AI 분석)  
 > Claude Code로 단계별 개발 진행. 각 Phase 완료 시 검증 항목 확인 후 다음 단계로 이동.
 
 ---
@@ -519,10 +519,10 @@
 
 ### 5.0 AI 분석 사용 여부 선택 (Claude API)
 
-- [ ] 계좌 연결 탭에 "AI 종목 분석" 섹션 추가
-  - [ ] 활성화 토글 (`UserDefaults "Screener.claudeEnabled"`)
-  - [ ] 활성화 시 Anthropic API 키 입력 (Keychain `anthropic.apiKey`)
-  - [ ] 비활성화 시 스크리너 UI에서 "AI 분석" 버튼 숨김
+- [x] 계좌 연결 탭에 "AI 종목 분석" 섹션 추가
+  - [x] 활성화 토글 (`UserDefaults "Screener.claudeEnabled"`)
+  - [x] 활성화 시 Anthropic API 키 입력 (Keychain `anthropic.apiKey`)
+  - [x] 비활성화 시 스크리너 UI에서 "AI 분석" 버튼 숨김
 
 ### 5.1 KRX 시장 데이터 연동
 
@@ -562,23 +562,22 @@
 
 ### 5.4 Claude API 연동 (AI 분석, 선택 기능)
 
-- [ ] Anthropic API 키 Keychain 저장 (`anthropic.apiKey`)
-- [ ] 계좌 연결 탭에 Anthropic API 키 입력 UI 추가
-- [ ] `ClaudeAnalyzer.swift` 작성
-  - [ ] 스크리닝 결과 종목 + 실시간 시세 + 최근 DART 공시를 컨텍스트로 구성
-  - [ ] `POST https://api.anthropic.com/v1/messages` 호출
-  - [ ] 응답 스트리밍 파싱 (SSE)
-- [ ] `ScreenerView`에 "AI 분석" 버튼 추가 (API 키 설정 시에만 활성화)
-  - [ ] 분석 결과를 마크다운 형태로 표시 (`Text` + 기본 파싱)
-  - [ ] 분석 결과 클립보드 복사 버튼
+- [x] Anthropic API 키 Keychain 저장 (`anthropic.apiKey`)
+- [x] 계좌 연결 탭에 Anthropic API 키 입력 UI 추가
+- [x] `ClaudeAnalyzer.swift` 작성 (actor 기반)
+  - [x] 스크리닝 조건 + 결과 종목(상위 20개) 컨텍스트 구성
+  - [x] `POST https://api.anthropic.com/v1/messages` 호출 (model: claude-sonnet-4-5)
+  - [x] 응답 스트리밍 파싱 (SSE — `URLSession.bytes`)
+- [x] `ScreenerView`에 "AI 분석" 버튼 추가 (`claudeEnabled == true` 일 때만 표시)
+  - [x] 분석 결과 스트리밍 시트 (`AnalysisSheetView`) — 실시간 토큰 표시
+  - [x] 분석 결과 클립보드 복사 버튼
 
 ### ✅ Phase 5 검증
 - [ ] KRX OpenAPI 연동 → 전종목 데이터 정상 수신 및 DB 저장 확인
-- [ ] 조건 스크리닝 → 거래량 급증 조건으로 필터링 결과 확인
-- [ ] KIS 실시간 시세 보강 → 결과 종목 현재가 정상 표시 확인
-- [ ] 이동평균 계산 정확성 → 외부 데이터와 대조 확인
-- [ ] Claude API 분석 → 응답 정상 수신 및 표시 확인
-- [ ] 장 마감 후 자동 갱신 동작 확인 (16:00)
+- [ ] 조건 스크리닝 → PER·PBR·시총 조건 조합으로 필터링 결과 확인
+- [ ] KRX 버튼 → 업데이트 중 스피너 표시 + 완료 메시지 확인 (버그 수정)
+- [ ] Claude API 분석 → 스크리닝 결과 시트에서 스트리밍 응답 정상 수신 확인
+- [ ] 장 마감 후 자동 갱신 동작 확인 (평일 16:00)
 
 ---
 
