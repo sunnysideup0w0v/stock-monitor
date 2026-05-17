@@ -135,7 +135,7 @@ AppDelegate (NSApplicationDelegate, @MainActor)
 4. 알림설정
 5. 알림 이력 (날짜 범위 필터 + 타입 필터 + CSV 내보내기)
 6. 자산 차트 (AssetChartView — Swift Charts 기반)
-7. 종목 추천 (ScreenerView — 조건 스크리너 + Claude AI 분석)
+7. 종목 검색 (ScreenerView — 조건 스크리너 + Claude AI 분석)
 
 ## 커밋 규칙
 
@@ -158,6 +158,26 @@ Phase 2: WebSocket 실시간 시세 구현
 
 - 제목은 한국어로 간결하게, 무엇을 했는지 중심으로 작성
 - 본문은 생략해도 무방하나, 설계 결정이나 트레이드오프가 있었다면 기록
+
+## 버전 관리 규칙
+
+버전 형식은 `MAJOR.PHASE.PATCH` (예: `1.5.2`)이며, `StockWatch/project.yml`의 `MARKETING_VERSION`을 직접 수정한다. 버전 변경 후에는 반드시 `xcodegen generate`를 실행한다.
+
+**PATCH 올리기** (+0.0.1) — 기능 추가 없이 수정만 있을 때
+- 버그 수정
+- 텍스트·UI 미세 조정 (탭 이름 변경, 레이아웃 조정 등)
+- 리팩토링 (동작 변화 없음)
+
+**MINOR 올리기** (+0.1.0, PATCH → 0 리셋) — Phase 완료 시
+- TODO.md의 Phase 하나가 완료됐을 때 Phase 번호를 MINOR에 반영
+- 예: Phase 6 완료 → `1.6.0`
+- Phase 내 중간 커밋은 버전 변경 없음
+
+**MAJOR 올리기** (+1.0.0, MINOR·PATCH → 0 리셋) — 아래 중 하나라도 해당될 때
+- DB 파괴적 변경: 기존 데이터 손실 또는 복구 불가능한 마이그레이션
+- 핵심 아키텍처 교체: DB 엔진 변경, 브로커 API 전면 교체 등
+- macOS 최소 지원 버전 상향 (예: 14.0 → 15.0)
+- MINOR가 9를 초과할 시점 (`1.10.x`가 되기 전에 `2.0.0`으로 전환)
 
 ## 앱 재실행 규칙
 

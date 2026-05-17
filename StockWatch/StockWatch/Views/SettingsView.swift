@@ -5,8 +5,7 @@ import ServiceManagement
 struct SettingsView: View {
     private var versionString: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
-        let build   = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—"
-        return "v\(version) (\(build))"
+        return "v\(version)"
     }
 
     var body: some View {
@@ -25,7 +24,7 @@ struct SettingsView: View {
                 AssetChartView()
                     .tabItem { Label("자산 차트", systemImage: "chart.xyaxis.line") }
                 ScreenerView()
-                    .tabItem { Label("종목 추천", systemImage: "wand.and.stars") }
+                    .tabItem { Label("종목 검색", systemImage: "wand.and.stars") }
             }
 
             Text(versionString)
@@ -41,6 +40,13 @@ struct SettingsView: View {
 }
 
 // MARK: - Shared Components
+
+private extension View {
+    func dismissFocusOnTap() -> some View {
+        contentShape(Rectangle())
+            .onTapGesture { NSApp.keyWindow?.makeFirstResponder(nil) }
+    }
+}
 
 // React의 children prop과 동일. @ViewBuilder가 클로저 안의 뷰들을 하나의 Content로 합쳐준다.
 struct SettingsTabContainer<Content: View>: View {
@@ -59,6 +65,7 @@ struct SettingsTabContainer<Content: View>: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding([.horizontal, .bottom], 8)
+        .dismissFocusOnTap()
     }
 }
 
@@ -825,6 +832,7 @@ struct AccountSettingsView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .topLeading)
                 .padding(.bottom, 8)
+                .dismissFocusOnTap()
             }
         }
         .onAppear { loadState() }

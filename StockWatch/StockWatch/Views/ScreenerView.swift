@@ -25,7 +25,7 @@ struct ScreenerView: View {
     private let conditionsKey = "Screener.savedConditions"
 
     var body: some View {
-        SettingsTabContainer(title: "종목 추천") {
+        SettingsTabContainer(title: "종목 검색") {
             HStack(alignment: .top, spacing: 10) {
                 VStack(alignment: .leading, spacing: 8) {
                     conditionPanel
@@ -100,6 +100,12 @@ struct ScreenerView: View {
                         }
                     }
                 }
+                .frame(maxWidth: .infinity)
+                .background(
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture { NSApp.keyWindow?.makeFirstResponder(nil) }
+                )
             }
 
             Button {
