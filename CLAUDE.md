@@ -7,6 +7,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **StockWatch** — macOS 메뉴바 상주형 주식 시세 모니터링 앱 (개인 사용 목적).  
 한국투자증권(KIS) REST/WebSocket API로 국내 주식 시세를 수신하고, DART 공시 감지·포트폴리오 수익률 도달 등 다양한 조건 충족 시 macOS 네이티브 알림을 발송한다.
 
+## 프로젝트 문서
+
+새 세션을 시작할 때 아래 파일들을 읽어 현재 상태를 파악한다.
+
+| 파일 | 설명 |
+|------|------|
+| `TODO.md` | 전체 Phase 계획 및 진행 상황. 완료된 항목은 `[x]`, 미완료는 `[ ]`. **현재 어디까지 됐는지 파악하려면 반드시 읽을 것** |
+| `docs/PRD.md` | 제품 요구사항 정의서. 기능 목록, Phase별 로드맵, 화면 구성 |
+| `docs/일지/YYYY-MM-DD.md` | 날짜별 개발 일지. 당일 작업 내역, 설계 결정, 파일 변경 목록 기록 |
+
+> 작업 맥락이 필요하면 `TODO.md` → 최신 일지(`docs/일지/`) → `docs/PRD.md` 순으로 읽는다.
+
 ## 기술 스택
 
 - **언어**: Swift 6.0 (strict concurrency 활성화)
