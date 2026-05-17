@@ -49,25 +49,37 @@ struct ScreenerCondition: Codable, Identifiable {
             }
         }
 
+        var unit: String {
+            switch self {
+            case .priceRange:      return "원"
+            case .volumeMin:       return "주"
+            case .changeRateRange: return "%"
+            case .perRange:        return "배"
+            case .pbrRange:        return "배"
+            case .marketCapRange:  return "억원"
+            default: return ""
+            }
+        }
+
         var minPlaceholder: String {
             switch self {
-            case .priceRange:      return "최소 가격"
-            case .volumeMin:       return "최소 거래량"
-            case .changeRateRange: return "최소 등락률"
-            case .perRange:        return "최소 PER"
-            case .pbrRange:        return "최소 PBR"
-            case .marketCapRange:  return "최소 시가총액 (억)"
+            case .priceRange:      return "예: 10000"
+            case .volumeMin:       return "예: 100000"
+            case .changeRateRange: return "예: -5"
+            case .perRange:        return "예: 0"
+            case .pbrRange:        return "예: 0"
+            case .marketCapRange:  return "예: 1000"
             default: return ""
             }
         }
 
         var maxPlaceholder: String {
             switch self {
-            case .priceRange:      return "최대 가격"
-            case .changeRateRange: return "최대 등락률"
-            case .perRange:        return "최대 PER"
-            case .pbrRange:        return "최대 PBR"
-            case .marketCapRange:  return "최대 시가총액 (억)"
+            case .priceRange:      return "예: 100000"
+            case .changeRateRange: return "예: 5"
+            case .perRange:        return "예: 15"
+            case .pbrRange:        return "예: 1"
+            case .marketCapRange:  return "예: 50000"
             default: return ""
             }
         }

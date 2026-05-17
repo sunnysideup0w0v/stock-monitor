@@ -17,6 +17,9 @@ struct ScreenerView: View {
     @State private var isAnalyzing = false
     @State private var analysisError: String?
 
+    @State private var toastMessage: String?
+    private var toastTask: Task<Void, Never>?
+
     private let conditionsKey = "Screener.savedConditions"
 
     var body: some View {
@@ -131,13 +134,25 @@ struct ScreenerView: View {
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             } else {
-                ScrollView {
-                    LazyVStack(spacing: 4) {
-                        ForEach(results, id: \.symbol) { item in
-                            ScreenerResultRowView(item: item)
+                ZStack(alignment: .bottom) {
+                    ScrollView {
+                        LazyVStack(spacing: 4) {
+                            ForEach(Array(results.enumerated()), id: \.element.symbol) { idx, item in
+                                ScreenerResultRowView(item: item, rank: idx + 1) { name in
+                                    showToast("\(name) 관심종목에 추가됨")
+                                }
+                            }
                         }
+                        .padding(.bottom, 4)
+                    }
+
+                    if let msg = toastMessage {
+                        ToastBannerView(message: msg)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                            .zIndex(1)
                     }
                 }
+                .animation(.easeInOut(duration: 0.25), value: toastMessage)
 
                 if claudeEnabled {
                     Button {
@@ -167,6 +182,14 @@ struct ScreenerView: View {
     }
 
     // MARK: - Actions
+
+    private func showToast(_ message: String) {
+        toastMessage = message
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(2))
+            toastMessage = nil
+        }
+    }
 
     private func startAnalysis() {
         analysisText = ""
@@ -302,21 +325,29 @@ private struct ConditionRowView: View {
     }
 
     private var numericRangeInput: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 4) {
             if condition.type.supportsMin {
                 TextField(condition.type.minPlaceholder, text: $minText)
                     .textFieldStyle(.roundedBorder)
                     .font(.caption)
+                    .frame(minWidth: 60)
                     .onChange(of: minText) { _, v in condition.minValue = parseNumber(v) }
             }
             if condition.type.supportsMin && condition.type.supportsMax {
-                Text("~").foregroundStyle(.secondary)
+                Text("~").foregroundStyle(.secondary).font(.caption)
             }
             if condition.type.supportsMax {
                 TextField(condition.type.maxPlaceholder, text: $maxText)
                     .textFieldStyle(.roundedBorder)
                     .font(.caption)
+                    .frame(minWidth: 60)
                     .onChange(of: maxText) { _, v in condition.maxValue = parseNumber(v) }
+            }
+            if !condition.type.unit.isEmpty {
+                Text(condition.type.unit)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize()
             }
         }
     }
@@ -334,7 +365,14 @@ private struct ConditionRowView: View {
 
 private struct ScreenerResultRowView: View {
     let item: StockUniverseItem
+    let rank: Int
+    let onAdd: (String) -> Void
     @State private var added = false
+
+    private var changeRate: Double {
+        guard item.open > 0 else { return 0 }
+        return Double(item.close - item.open) / Double(item.open) * 100
+    }
 
     private var priceStr: String {
         let f = NumberFormatter()
@@ -342,31 +380,51 @@ private struct ScreenerResultRowView: View {
         return (f.string(from: NSNumber(value: item.close)) ?? "\(item.close)") + "원"
     }
 
+    private var changeRateStr: String {
+        let r = changeRate
+        return (r >= 0 ? "+" : "") + String(format: "%.2f%%", r)
+    }
+
+    private var changeRateColor: Color { changeRate >= 0 ? .red : .blue }
+
     private var marketCapStr: String {
         let 억 = item.marketCap / 100
-        if 억 >= 10000 {
-            return String(format: "%.1f조", Double(억) / 10000)
-        }
+        if 억 >= 10000 { return String(format: "%.1f조", Double(억) / 10000) }
         return "\(억.formatted())억"
     }
 
+    private var isKospi: Bool { item.market == "KOSPI" || item.market.contains("코스피") }
+
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
+        HStack(spacing: 8) {
+            Text("\(rank)")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+                .frame(width: 20, alignment: .trailing)
+                .monospacedDigit()
+
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 5) {
                     Text(item.name).font(.callout).fontWeight(.medium)
-                    Text(item.symbol).font(.caption).foregroundStyle(.secondary)
-                    Text(item.market).font(.caption2)
+                    Text(item.symbol).font(.caption2).foregroundStyle(.secondary)
+                    Text(item.market)
+                        .font(.caption2)
                         .padding(.horizontal, 4).padding(.vertical, 1)
-                        .background(item.market.contains("코스피") || item.market == "KOSPI"
-                            ? Color.blue.opacity(0.15) : Color.green.opacity(0.15))
-                        .cornerRadius(3)
+                        .background(isKospi ? Color.blue.opacity(0.12) : Color.green.opacity(0.12))
+                        .foregroundStyle(isKospi ? Color.blue : Color.green)
+                        .clipShape(RoundedRectangle(cornerRadius: 3))
                 }
-                HStack(spacing: 10) {
-                    Text(priceStr).font(.caption)
+                HStack(spacing: 8) {
+                    Text(priceStr).font(.caption).monospacedDigit()
+                    Text(changeRateStr).font(.caption).foregroundStyle(changeRateColor).monospacedDigit()
                     Text(marketCapStr).font(.caption).foregroundStyle(.secondary)
-                    if let per = item.per { Text("PER \(String(format: "%.1f", per))").font(.caption).foregroundStyle(.secondary) }
-                    if let sector = item.sector { Text(sector).font(.caption2).foregroundStyle(.tertiary) }
+                    if let per = item.per {
+                        Text("PER \(String(format: "%.1f", per))")
+                            .font(.caption2).foregroundStyle(.tertiary)
+                    }
+                    if let sector = item.sector {
+                        Text(sector).font(.caption2).foregroundStyle(.tertiary)
+                    }
                 }
             }
 
@@ -377,6 +435,7 @@ private struct ScreenerResultRowView: View {
             } label: {
                 Image(systemName: added ? "checkmark" : "plus")
                     .font(.caption)
+                    .contentTransition(.symbolEffect(.replace))
             }
             .buttonStyle(.bordered)
             .controlSize(.mini)
@@ -385,13 +444,35 @@ private struct ScreenerResultRowView: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
         .background(Color.primary.opacity(0.03))
-        .cornerRadius(6)
+        .clipShape(RoundedRectangle(cornerRadius: 6))
     }
 
     private func addToWatchlist() {
         var w = WatchlistItem(symbol: item.symbol, name: item.name, alias: nil, group: .watchlist)
         try? DatabaseManager.shared.insert(&w)
         added = true
+        onAdd(item.name)
+    }
+}
+
+// MARK: - Toast Banner
+
+private struct ToastBannerView: View {
+    let message: String
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "star.fill")
+                .font(.caption)
+                .foregroundStyle(.yellow)
+            Text(message)
+                .font(.caption)
+                .foregroundStyle(.white)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .background(.black.opacity(0.75), in: Capsule())
+        .padding(.bottom, 8)
     }
 }
 
