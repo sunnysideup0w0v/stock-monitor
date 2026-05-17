@@ -197,7 +197,7 @@ pkill -x StockWatch 2>/dev/null; sleep 0.5 && open "$(find ~/Library/Developer/X
 **DB 스키마 변경 시**
 - `DatabaseManager.swift`에 새 `migrator.registerMigration("vN_...")` 추가
 - 기존 Migration은 절대 수정하지 않는다
-- 현재 최신: v9 (`stock_universe` 테이블 추가). 다음 마이그레이션은 v10부터
+- 현재 최신: v10 (`stock_universe.isEtf` 컬럼 추가). 다음 마이그레이션은 v11부터
 
 **AlertCondition.TriggerType 추가 시**
 `TriggerType`은 여러 곳에서 exhaustive switch로 사용된다. 새 케이스 추가 시 아래 모두 업데이트 필요:
@@ -206,6 +206,14 @@ pkill -x StockWatch 2>/dev/null; sleep 0.5 && open "$(find ~/Library/Developer/X
 - `AlertHistoryView`: 필터 Picker의 타입 목록
 현재 케이스: `targetPrice`, `stopLoss`, `rateUp`, `rateDown`, `volumeSpike`, `portfolioGain`, `portfolioLoss`, `portfolioGainRate`, `portfolioLossRate`, `dartDisclosure`
 - `.dartDisclosure`와 portfolio 계열은 종목별 `isTriggered()`에서 `false` 반환 (별도 경로로 평가)
+
+**ScreenerCondition.ConditionType 추가 시**
+새 케이스 추가 시 아래 모두 업데이트 필요:
+- `ScreenerEngine.apply(_:to:)`: 새 케이스에 대한 필터 로직 추가
+- `ClaudeAnalyzer.describeCondition(_:)`: 프롬프트 출력용 설명 추가
+- `ConditionType.usesStringValue`: 문자열 값 사용 여부 (`sectorFilter`, `marketFilter`, `instrumentType`만 `true`)
+- `ConditionType.supportsMin/supportsMax`: 숫자 입력 지원 여부
+- 문자열 다중 선택 조건(`usesStringValue = true`)은 `stringValue`에 콤마 구분 저장 → `ScreenerEngine.multiValues(_:)`로 파싱 → GRDB `Collection.contains(Column)` 으로 `IN` 쿼리 생성
 
 **계정 종속 데이터 (관심종목 · 포트폴리오)**
 - `AccountManager.currentAccountId` — `"KIS-" + appKey.prefix(8)`, 미로그인 시 `""`
@@ -226,11 +234,26 @@ pkill -x StockWatch 2>/dev/null; sleep 0.5 && open "$(find ~/Library/Developer/X
 - `open` 컬럼 = 전일 종가 (= `TDD_CLSPRC - CMPPREVDD_PRC`) — `ScreenerEngine.changeRateRange` SQL 수식이 이 규약에 의존
 - Keychain: `krx.apiKey` (openapi.krx.co.kr에서 서비스별 신청 후 발급)
 
+**로깅 (`AppLogger` / `CrashLogger`)**
+- `AppLogger.log(_:level:category:)` — `os.Logger` + 파일 이중 기록. Console.app에서 `subsystem:com.personal.StockWatch` 필터로 조회
+  - 파일 경로: `~/Library/Logs/StockWatch/app-YYYY-MM-DD.log`
+  - 카테고리별 정적 인스턴스: `AppLogger.screener`, `AppLogger.app`
+- `CrashLogger` — ObjC 예외(`NSSetUncaughtExceptionHandler`) + Swift 시그널(`SIGABRT`, `SIGILL`, `SIGSEGV`, `SIGFPE`, `SIGBUS`, `SIGTRAP`) 양쪽 포착
+  - 파일 경로: `~/Library/Logs/StockWatch/crash-YYYY-MM-DD.log`
+  - 시그널 핸들러는 반드시 `signal(caught, SIG_DFL); raise(caught)` 로 재발생시켜 시스템 크래시 리포트도 생성
+
+**MarkdownUI (`AnalysisSheetView`) 패턴**
+- 패키지: `gonzalezreal/swift-markdown-ui` 2.4.0 (`project.yml` 등록)
+- **Swift 6 주의**: `markdownTextStyle { }` 블록 클로저는 nonisolated 컨텍스트 — `@MainActor`인 `markdownTextStyle(textStyle:)` 를 직접 호출하면 컴파일 오류 발생
+  - 해결: `Theme.gitHub`를 base로 사용하고 `.strong { }`, `.code { }`, `.blockquote { }` 등 블록 클로저에서는 `markdownTextStyle` 대신 표준 SwiftUI 모디파이어만 사용
+- 스트리밍 중 실시간 렌더링 금지 — 부분 파싱으로 레이아웃 깨짐. 로딩 스피너 표시 → 완료 후 전체 렌더링
+- 커스텀 테마는 `extension MarkdownUI.Theme { static var analysis: Theme { ... } }` 패턴으로 정의
+
 **Swift Charts (`AssetChartView`) 패턴**
 - 중첩 `ForEach` + `LineMark` 조합은 컴파일러 타입 체크 타임아웃 유발 → `chartBody` computed property와 `@ChartContentBuilder` 메서드로 분리
 - 세그먼트 분리(데이터 공백 처리): `series: .value("s", idx)` 로 시리즈를 달리 지정
 - `PortfolioSnapshot`은 `Identifiable` 미구현 → `ForEach(seg, id: \.timestamp)` 사용
-- SourceKit이 "Cannot find type in scope" 오류를 표시해도 실제 빌드는 성공하는 경우가 많음 — 빌드 결과로만 판단할 것
+- SourceKit이 "Cannot find type in scope", "No such module 'MarkdownUI'" 등 오류를 표시해도 실제 `xcodebuild` 는 성공하는 경우가 많음 — **빌드 결과로만 판단할 것**. GRDB 커스텀 타입, MarkdownUI, 외부 패키지 전반에서 재현됨
 
 **CSV 내보내기**
 - UTF-8 BOM 필수 (`Data([0xEF, 0xBB, 0xBF])`) — Excel 한글 호환
