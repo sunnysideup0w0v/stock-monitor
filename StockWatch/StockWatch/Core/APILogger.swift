@@ -5,8 +5,8 @@ import Foundation
 enum APILogger {
 
     private static let logsDir: URL = {
-        let path = ("~/Documents/study/stock-monitor/logs" as NSString).expandingTildeInPath
-        let url = URL(fileURLWithPath: path)
+        let url = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Logs/StockWatch")
         try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
         return url
     }()
