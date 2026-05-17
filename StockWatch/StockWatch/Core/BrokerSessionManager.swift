@@ -41,6 +41,7 @@ final class BrokerSessionManager: ObservableObject {
         }
         QuoteManager.shared.startRealtime(credentials: creds, isMock: isMock)
 
+        AccountManager.invalidateCache()
         isKISConnected = true
         kisLoginDate = now
         kisSavedAccountNumber = accountNumber
@@ -57,6 +58,7 @@ final class BrokerSessionManager: ObservableObject {
         QuoteManager.shared.removeAdapter(id: accountId)
         BrokerRegistry.shared.unregister(brokerName: "한국투자증권")
 
+        AccountManager.invalidateCache()
         isKISConnected = false
         kisLoginDate = nil
     }
@@ -95,6 +97,7 @@ final class BrokerSessionManager: ObservableObject {
             await MainActor.run { BrokerRegistry.shared.register(adapter) }
         }
 
+        AccountManager.invalidateCache()
         isKiwoomConnected = true
         kiwoomLoginDate = now
         kiwoomSavedAccountNumber = accountNumber
@@ -109,6 +112,7 @@ final class BrokerSessionManager: ObservableObject {
         QuoteManager.shared.removeAdapter(id: accountId)
         BrokerRegistry.shared.unregister(brokerName: "키움증권")
 
+        AccountManager.invalidateCache()
         isKiwoomConnected = false
         kiwoomLoginDate = nil
     }

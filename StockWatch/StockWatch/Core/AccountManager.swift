@@ -6,11 +6,19 @@ enum AccountManager {
     nonisolated(unsafe) static var testAccountId: String? = nil
     #endif
 
+    // 반복적인 Keychain I/O 방지 — BrokerSessionManager login/logout 시 invalidateCache() 호출
+    nonisolated(unsafe) private static var _cachedConnectedIds: [String]? = nil
+
+    static func invalidateCache() {
+        _cachedConnectedIds = nil
+    }
+
     /// 현재 Keychain에 자격증명이 존재하는 모든 계좌 ID 목록.
     static var connectedAccountIds: [String] {
         #if DEBUG
         if let override = testAccountId { return [override] }
         #endif
+        if let cached = _cachedConnectedIds { return cached }
         var ids: [String] = []
         if let appKey = KeychainHelper.load(account: KeychainKey.kisAppKey), !appKey.isEmpty {
             ids.append("KIS-" + String(appKey.prefix(8)))
@@ -18,6 +26,7 @@ enum AccountManager {
         if let appKey = KeychainHelper.load(account: KeychainKey.kiwoomAppKey), !appKey.isEmpty {
             ids.append("KIWOOM-" + String(appKey.prefix(8)))
         }
+        _cachedConnectedIds = ids
         return ids
     }
 

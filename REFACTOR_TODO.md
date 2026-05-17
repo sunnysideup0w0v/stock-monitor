@@ -146,7 +146,9 @@ DB 쿼리(`fetchWatchlist`, `fetchPortfolio`), View의 `onAppear`, 필터 계산
   - `@Published var connectedAccountIds: [String]` — 로그인/로그아웃 시 업데이트
   - 캐싱으로 반복 Keychain 읽기 제거
   - **단점**: singleton 참조 패턴 변경 필요, SwiftUI 환경 주입 필요
-- [ ] OR 경량 접근: `connectedAccountIds` 계산 결과를 메모리에 캐시 + `BrokerSessionManager` 로그인/아웃 시 무효화
+- [x] OR 경량 접근: `connectedAccountIds` 계산 결과를 메모리에 캐시 + `BrokerSessionManager` 로그인/아웃 시 무효화
+  - `nonisolated(unsafe) static var _cachedConnectedIds: [String]?` + `invalidateCache()` 구현
+  - KIS/Kiwoom login/logout 4곳에서 `AccountManager.invalidateCache()` 호출
 
 ---
 
