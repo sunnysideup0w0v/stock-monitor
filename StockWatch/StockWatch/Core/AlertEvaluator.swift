@@ -111,9 +111,14 @@ final class AlertEvaluator {
         }
     }
 
+    private static let decimalFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        return f
+    }()
+
     private func makePortfolioMessage(totalGain: Int, gainRate: Double, condition: AlertCondition) -> String {
-        let fmt = NumberFormatter()
-        fmt.numberStyle = .decimal
+        let fmt = AlertEvaluator.decimalFormatter
         func fmtAmt(_ v: Int) -> String { fmt.string(from: NSNumber(value: abs(v))) ?? "\(abs(v))" }
 
         switch condition.triggerType {
@@ -150,8 +155,7 @@ final class AlertEvaluator {
     }
 
     private func makeMessage(quote: StockQuote, condition: AlertCondition) -> String {
-        let fmt = NumberFormatter()
-        fmt.numberStyle = .decimal
+        let fmt = AlertEvaluator.decimalFormatter
 
         func fmtPrice(_ v: Int) -> String { fmt.string(from: NSNumber(value: v)) ?? "\(v)" }
 

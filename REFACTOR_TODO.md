@@ -128,14 +128,12 @@ UserDefaults 키와 Keychain 계정 이름이 SettingsView · AppDelegate · Acc
 
 `DispatchQueue.main.asyncAfter`와 `Task { await ... }` 패턴이 혼용되고 있다.
 
-- [ ] `KRXSettingsView.fetch()` — `DispatchQueue.main.asyncAfter(deadline: .now() + 3)` 
+- [x] `KRXSettingsView.fetch()` — `DispatchQueue.main.asyncAfter(deadline: .now() + 3)` 
   → `try? await Task.sleep(for: .seconds(3))` 로 교체
-- [ ] `AppDelegate.applicationDidFinishLaunching()` — `DispatchQueue.main.asyncAfter` 2개
+- [x] `AppDelegate.applicationDidFinishLaunching()` — `DispatchQueue.main.asyncAfter` 2개
   → `Task { try? await Task.sleep(for: ...) }` 로 교체
-- [ ] `AlertEvaluator.makePortfolioMessage()` 내 `NumberFormatter()` 매 호출 생성
-  → static let으로 캐싱
-- [ ] `AlertEvaluator.makeMessage()` 내 `NumberFormatter()` 동일 문제
-  → static let으로 캐싱
+- [x] `AlertEvaluator.makePortfolioMessage()` / `makeMessage()` 내 `NumberFormatter()` 매 호출 생성
+  → `private static let decimalFormatter` 로 캐싱
 
 ---
 

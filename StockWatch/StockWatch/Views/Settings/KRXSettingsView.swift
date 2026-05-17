@@ -111,9 +111,8 @@ struct KRXSettingsView: View {
                 statusMessage = "수신 실패 — 네트워크 연결을 확인하거나 잠시 후 다시 시도하세요"
             } else {
                 statusMessage = "✓ 업데이트 완료"
-                DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                    if statusMessage?.hasPrefix("✓") == true { statusMessage = nil }
-                }
+                try? await Task.sleep(for: .seconds(3))
+                if statusMessage?.hasPrefix("✓") == true { statusMessage = nil }
             }
         }
     }

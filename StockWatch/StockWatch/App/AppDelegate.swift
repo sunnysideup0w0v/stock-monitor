@@ -27,9 +27,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         KRXManager.shared.start()
 
         if CommandLine.arguments.contains("--uitesting") {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { self.openSettings() }
+            Task { try? await Task.sleep(for: .milliseconds(500)); self.openSettings() }
         } else if !UserDefaults.standard.bool(forKey: UserDefaultsKey.onboardingCompleted) {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { self.openOnboarding() }
+            Task { try? await Task.sleep(for: .milliseconds(300)); self.openOnboarding() }
         }
 
         NotificationCenter.default.addObserver(
