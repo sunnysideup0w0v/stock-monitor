@@ -24,15 +24,11 @@ struct ScreenerView: View {
 
     var body: some View {
         SettingsTabContainer(title: "종목 추천") {
-            HStack(alignment: .top, spacing: 0) {
+            HStack(alignment: .top, spacing: 10) {
                 conditionPanel
                     .padding(12)
                     .frame(width: 290)
                     .background(panelBackground)
-
-                Divider()
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 4)
 
                 resultPanel
                     .padding(12)
@@ -68,24 +64,24 @@ struct ScreenerView: View {
 
             Divider()
 
-            SettingsFormSection(title: "스크리닝 조건") {
-                VStack(spacing: 6) {
-                    ForEach($conditions) { $cond in
-                        ConditionRowView(condition: $cond, sectors: sectors, markets: markets) {
-                            conditions.removeAll { $0.id == cond.id }
-                        }
-                    }
+            Text("스크리닝 조건").font(.headline)
 
-                    Button {
-                        conditions.append(ScreenerCondition(type: .priceRange))
-                    } label: {
-                        Label("조건 추가", systemImage: "plus.circle")
-                            .font(.callout)
+            VStack(spacing: 6) {
+                ForEach($conditions) { $cond in
+                    ConditionRowView(condition: $cond, sectors: sectors, markets: markets) {
+                        conditions.removeAll { $0.id == cond.id }
                     }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.blue)
-                    .padding(.top, 4)
                 }
+
+                Button {
+                    conditions.append(ScreenerCondition(type: .priceRange))
+                } label: {
+                    Label("조건 추가", systemImage: "plus.circle")
+                        .font(.callout)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.blue)
+                .padding(.top, 2)
             }
 
             Button {
@@ -309,39 +305,40 @@ private struct ConditionRowView: View {
     @State private var maxText = ""
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Picker("", selection: $condition.type) {
-                    ForEach(ScreenerCondition.ConditionType.allCases, id: \.self) { t in
-                        Text(t.displayName).tag(t)
-                    }
+        HStack(spacing: 6) {
+            Picker("", selection: $condition.type) {
+                ForEach(ScreenerCondition.ConditionType.allCases, id: \.self) { t in
+                    Text(t.shortName).tag(t)
                 }
-                .labelsHidden()
-                .frame(width: 160)
-                .onChange(of: condition.type) { _, _ in
-                    condition.minValue = nil
-                    condition.maxValue = nil
-                    condition.stringValue = nil
-                    minText = ""
-                    maxText = ""
-                }
-
-                Spacer()
-                Button(action: onDelete) {
-                    Image(systemName: "minus.circle.fill").foregroundStyle(.red)
-                }
-                .buttonStyle(.plain)
+            }
+            .labelsHidden()
+            .frame(width: 86)
+            .onChange(of: condition.type) { _, _ in
+                condition.minValue = nil
+                condition.maxValue = nil
+                condition.stringValue = nil
+                minText = ""
+                maxText = ""
             }
 
-            if condition.type.usesStringValue {
-                stringValueInput
-            } else {
-                numericRangeInput
+            Group {
+                if condition.type.usesStringValue {
+                    stringValueInput
+                } else {
+                    numericRangeInput
+                }
             }
+            .frame(maxWidth: .infinity)
+
+            Button(action: onDelete) {
+                Image(systemName: "minus.circle.fill").foregroundStyle(.red)
+            }
+            .buttonStyle(.plain)
         }
-        .padding(8)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 7)
         .background(Color.primary.opacity(0.04))
-        .cornerRadius(6)
+        .clipShape(RoundedRectangle(cornerRadius: 6))
         .onAppear {
             minText = condition.minValue.map { formatNumber($0) } ?? ""
             maxText = condition.maxValue.map { formatNumber($0) } ?? ""
@@ -359,6 +356,7 @@ private struct ConditionRowView: View {
                 ForEach(sectors, id: \.self) { Text($0).tag($0) }
             }
             .labelsHidden()
+            .frame(maxWidth: .infinity)
         } else if condition.type == .marketFilter {
             Picker("시장", selection: Binding(
                 get: { condition.stringValue ?? "" },
@@ -368,6 +366,7 @@ private struct ConditionRowView: View {
                 ForEach(markets, id: \.self) { Text($0).tag($0) }
             }
             .labelsHidden()
+            .frame(maxWidth: .infinity)
         }
     }
 
@@ -377,7 +376,7 @@ private struct ConditionRowView: View {
                 TextField(condition.type.minPlaceholder, text: $minText)
                     .textFieldStyle(.roundedBorder)
                     .font(.caption)
-                    .frame(minWidth: 60)
+                    .frame(maxWidth: .infinity)
                     .onChange(of: minText) { _, v in condition.minValue = parseNumber(v) }
             }
             if condition.type.supportsMin && condition.type.supportsMax {
@@ -387,7 +386,7 @@ private struct ConditionRowView: View {
                 TextField(condition.type.maxPlaceholder, text: $maxText)
                     .textFieldStyle(.roundedBorder)
                     .font(.caption)
-                    .frame(minWidth: 60)
+                    .frame(maxWidth: .infinity)
                     .onChange(of: maxText) { _, v in condition.maxValue = parseNumber(v) }
             }
             if !condition.type.unit.isEmpty {

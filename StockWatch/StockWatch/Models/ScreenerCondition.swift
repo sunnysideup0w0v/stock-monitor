@@ -31,6 +31,19 @@ struct ScreenerCondition: Codable, Identifiable {
             }
         }
 
+        var shortName: String {
+            switch self {
+            case .priceRange:      return "현재가"
+            case .volumeMin:       return "거래량"
+            case .changeRateRange: return "등락률"
+            case .perRange:        return "PER"
+            case .pbrRange:        return "PBR"
+            case .marketCapRange:  return "시가총액"
+            case .sectorFilter:    return "업종"
+            case .marketFilter:    return "시장"
+            }
+        }
+
         var usesStringValue: Bool {
             self == .sectorFilter || self == .marketFilter
         }
