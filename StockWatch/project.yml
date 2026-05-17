@@ -10,6 +10,9 @@ packages:
   GRDB:
     url: https://github.com/groue/GRDB.swift
     from: 6.0.0
+  MarkdownUI:
+    url: https://github.com/gonzalezreal/swift-markdown-ui
+    from: 2.4.0
 
 targets:
   StockWatch:
@@ -21,6 +24,7 @@ targets:
       - path: StockWatch/Resources
     dependencies:
       - package: GRDB
+      - package: MarkdownUI
     postBuildScripts:
       - name: "Install to ~/Applications"
         script: |

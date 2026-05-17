@@ -99,9 +99,21 @@ final class KRXManager {
                 marketCap: parseKRXInt64(rec.MKTCAP) / 1_000_000,  // 원 → 백만원
                 per: nil,
                 pbr: nil,
+                isEtf: KRXManager.detectEtf(rec.ISU_NM),
                 updatedAt: now
             )
         }
+    }
+
+    // 이름 기반 ETF 감지 — KRX·네이버 양쪽에서 공통 사용
+    static func detectEtf(_ name: String) -> Bool {
+        let prefixes = [
+            "KODEX", "TIGER", "ARIRANG", "KINDEX", "HANARO", "KOSEF",
+            "ACE ", "SOL ", "PLUS ", "TIMEFOLIO", "히어로즈", "KB스타",
+            "BNK", "TREX", "SMART", "KIRIUM", "KTOP"
+        ]
+        if prefixes.contains(where: { name.hasPrefix($0) }) { return true }
+        return name.hasSuffix("ETF") || name.contains(" ETF ")
     }
 
     private func parseKRXInt(_ s: String) -> Int {
@@ -140,6 +152,7 @@ final class KRXManager {
                 marketCap: raw.marketCapMillions,
                 per: nil,
                 pbr: nil,
+                isEtf: KRXManager.detectEtf(raw.stockName),
                 updatedAt: now
             )
         }

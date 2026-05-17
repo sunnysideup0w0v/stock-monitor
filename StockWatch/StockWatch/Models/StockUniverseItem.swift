@@ -15,6 +15,7 @@ struct StockUniverseItem: Codable, FetchableRecord, MutablePersistableRecord {
     var marketCap: Int      // 백만원 단위
     var per: Double?
     var pbr: Double?
+    var isEtf: Bool
     var updatedAt: Date
 
     static let databaseTableName = "stock_universe"

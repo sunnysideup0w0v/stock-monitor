@@ -1,4 +1,5 @@
 import SwiftUI
+import MarkdownUI
 
 struct ScreenerView: View {
     @State private var conditions: [ScreenerCondition] = []
@@ -13,6 +14,7 @@ struct ScreenerView: View {
 
     @AppStorage("Screener.claudeEnabled") private var claudeEnabled = false
     @AppStorage("Screener.keepOnReopen") private var keepOnReopen = true
+    @State private var hasRun = false
     @State private var showAnalysis = false
     @State private var analysisText = ""
     @State private var isAnalyzing = false
@@ -25,18 +27,42 @@ struct ScreenerView: View {
     var body: some View {
         SettingsTabContainer(title: "종목 추천") {
             HStack(alignment: .top, spacing: 10) {
-                conditionPanel
-                    .padding(12)
-                    .frame(width: 290)
-                    .background(panelBackground)
+                VStack(alignment: .leading, spacing: 8) {
+                    conditionPanel
+                        .padding(12)
+                        .frame(maxHeight: .infinity)
+                        .background(panelBackground)
+
+                    Toggle(isOn: $keepOnReopen) {
+                        Text("설정 창을 다시 열 때 조건·결과 유지")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .toggleStyle(.checkbox)
+                    .controlSize(.small)
+                    .padding(.leading, 4)
+                }
+                .frame(width: 290)
 
                 resultPanel
                     .padding(12)
-                    .frame(maxWidth: .infinity)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(panelBackground)
             }
         }
-        .onAppear { loadState() }
+        .onAppear {
+            AppLogger.log("ScreenerView appeared", category: "Screener")
+            hasRun = false
+            loadState()
+        }
+        .onDisappear {
+            AppLogger.log("ScreenerView disappeared (hasRun=\(hasRun))", category: "Screener")
+            if hasRun {
+                cleanEmptyConditions()
+                saveConditions()
+            }
+            // hasRun == false 시 저장하지 않음 → 다음 onAppear에서 마지막 저장값 복원
+        }
         .sheet(isPresented: $showAnalysis) {
             AnalysisSheetView(
                 text: $analysisText,
@@ -66,23 +92,24 @@ struct ScreenerView: View {
 
             Text("스크리닝 조건").font(.headline)
 
-            VStack(spacing: 6) {
-                ForEach($conditions) { $cond in
-                    ConditionRowView(condition: $cond, sectors: sectors, markets: markets) {
-                        conditions.removeAll { $0.id == cond.id }
+            ScrollView {
+                VStack(spacing: 6) {
+                    ForEach($conditions) { $cond in
+                        ConditionRowView(condition: $cond, sectors: sectors, markets: markets) {
+                            conditions.removeAll { $0.id == cond.id }
+                        }
                     }
                 }
-
-                Button {
-                    conditions.append(ScreenerCondition(type: .priceRange))
-                } label: {
-                    Label("조건 추가", systemImage: "plus.circle")
-                        .font(.callout)
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(.blue)
-                .padding(.top, 2)
             }
+
+            Button {
+                conditions.append(ScreenerCondition(type: .priceRange))
+            } label: {
+                Label("조건 추가", systemImage: "plus.circle")
+                    .font(.callout)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.blue)
 
             Button {
                 runScreener()
@@ -100,16 +127,6 @@ struct ScreenerView: View {
             if let err = errorMessage {
                 Text(err).font(.caption).foregroundStyle(.red)
             }
-
-            Toggle(isOn: $keepOnReopen) {
-                Text("설정 창을 다시 열 때 조건·결과 유지")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .toggleStyle(.checkbox)
-            .controlSize(.small)
-
-            Spacer()
         }
     }
 
@@ -237,17 +254,33 @@ struct ScreenerView: View {
 
     private func runScreener() {
         guard !conditions.isEmpty else { return }
+        cleanEmptyConditions()
+        guard !conditions.isEmpty else { return }
         saveConditions()
+        hasRun = true
         isRunning = true
         errorMessage = nil
+        AppLogger.log("runScreener: conditions=\(conditions.count)", category: "Screener")
         Task {
             do {
                 results = try ScreenerEngine.shared.run(conditions: conditions)
                 lastRunDate = Date()
+                AppLogger.log("runScreener: completed results=\(results.count)", category: "Screener")
             } catch {
                 errorMessage = "스크리닝 오류: \(error.localizedDescription)"
+                AppLogger.log("runScreener: error=\(error)", level: .error, category: "Screener")
             }
             isRunning = false
+        }
+    }
+
+    private func cleanEmptyConditions() {
+        conditions = conditions.filter { cond in
+            if cond.type.usesStringValue {
+                return !(cond.stringValue?.isEmpty ?? true)
+            } else {
+                return cond.minValue != nil || cond.maxValue != nil
+            }
         }
     }
 
@@ -259,6 +292,7 @@ struct ScreenerView: View {
 
         if keepOnReopen {
             loadConditions()
+            cleanEmptyConditions()
             if !conditions.isEmpty {
                 autoRunScreener()
             }
@@ -270,12 +304,16 @@ struct ScreenerView: View {
     }
 
     private func autoRunScreener() {
+        AppLogger.log("autoRunScreener: conditions=\(conditions.count)", category: "Screener")
         Task {
             do {
                 let r = try ScreenerEngine.shared.run(conditions: conditions)
                 results = r
                 if !r.isEmpty { lastRunDate = Date() }
-            } catch { }
+                AppLogger.log("autoRunScreener: completed results=\(r.count)", category: "Screener")
+            } catch {
+                AppLogger.log("autoRunScreener: error=\(error)", level: .error, category: "Screener")
+            }
         }
     }
 
@@ -305,15 +343,14 @@ private struct ConditionRowView: View {
     @State private var maxText = ""
 
     var body: some View {
-        HStack(alignment: .top, spacing: 6) {
-            VStack(alignment: .leading, spacing: 5) {
+        HStack(alignment: .center, spacing: 6) {
+            VStack(alignment: .leading, spacing: 7) {
                 Picker("", selection: $condition.type) {
                     ForEach(ScreenerCondition.ConditionType.allCases, id: \.self) { t in
                         Text(t.shortName).tag(t)
                     }
                 }
                 .labelsHidden()
-                .frame(maxWidth: .infinity)
                 .onChange(of: condition.type) { _, _ in
                     condition.minValue = nil
                     condition.maxValue = nil
@@ -329,14 +366,15 @@ private struct ConditionRowView: View {
                 }
             }
 
+            Spacer()
+
             Button(action: onDelete) {
                 Image(systemName: "minus.circle.fill").foregroundStyle(.red)
             }
             .buttonStyle(.plain)
-            .padding(.top, 4)
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, 8)
+        .padding(.vertical, 6)
         .background(Color.primary.opacity(0.04))
         .clipShape(RoundedRectangle(cornerRadius: 6))
         .onAppear {
@@ -348,26 +386,60 @@ private struct ConditionRowView: View {
     @ViewBuilder
     private var stringValueInput: some View {
         if condition.type == .sectorFilter {
-            Picker("업종", selection: Binding(
-                get: { condition.stringValue ?? "" },
-                set: { condition.stringValue = $0 }
-            )) {
-                Text("선택").tag("")
-                ForEach(sectors, id: \.self) { Text($0).tag($0) }
+            if sectors.isEmpty {
+                Text("업종 데이터 없음 — KRX API 키 필요")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                checkboxGroup(options: sectors, columns: 1)
             }
-            .labelsHidden()
-            .frame(maxWidth: .infinity)
         } else if condition.type == .marketFilter {
-            Picker("시장", selection: Binding(
-                get: { condition.stringValue ?? "" },
-                set: { condition.stringValue = $0 }
-            )) {
-                Text("전체").tag("")
-                ForEach(markets, id: \.self) { Text($0).tag($0) }
-            }
-            .labelsHidden()
-            .frame(maxWidth: .infinity)
+            checkboxGroup(options: markets.isEmpty ? ["KOSPI", "KOSDAQ"] : markets, columns: 2)
+        } else if condition.type == .instrumentType {
+            checkboxGroup(options: ["주식", "ETF"], columns: 2)
         }
+    }
+
+    @ViewBuilder
+    private func checkboxGroup(options: [String], columns: Int) -> some View {
+        let selected = selectedSet
+        if columns == 2 {
+            HStack(spacing: 12) {
+                ForEach(options, id: \.self) { opt in
+                    checkboxButton(opt, selected: selected)
+                }
+            }
+        } else {
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(options, id: \.self) { opt in
+                    checkboxButton(opt, selected: selected)
+                }
+            }
+        }
+    }
+
+    private func checkboxButton(_ option: String, selected: Set<String>) -> some View {
+        Button { toggleOption(option) } label: {
+            HStack(spacing: 5) {
+                Image(systemName: selected.contains(option) ? "checkmark.square.fill" : "square")
+                    .foregroundStyle(selected.contains(option) ? Color.accentColor : .secondary)
+                    .font(.system(size: 14))
+                Text(option)
+                    .font(.callout)
+                    .foregroundStyle(.primary)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var selectedSet: Set<String> {
+        Set((condition.stringValue ?? "").split(separator: ",").map(String.init).filter { !$0.isEmpty })
+    }
+
+    private func toggleOption(_ option: String) {
+        var sel = selectedSet
+        if sel.contains(option) { sel.remove(option) } else { sel.insert(option) }
+        condition.stringValue = sel.sorted().joined(separator: ",")
     }
 
     private var numericRangeInput: some View {
@@ -531,59 +603,127 @@ private struct AnalysisSheetView: View {
     @Binding var error: String?
     @Binding var isPresented: Bool
 
+    @State private var copied = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Label("AI 종목 분석", systemImage: "wand.and.stars")
-                    .font(.title3).bold()
-                Spacer()
-                if isAnalyzing {
-                    ProgressView().scaleEffect(0.8)
+            if error == nil {
+                HStack {
+                    Label("AI 종목 분석", systemImage: "wand.and.stars")
+                        .font(.title3).bold()
+                    Spacer()
+                    Button("닫기") { isPresented = false }
+                        .buttonStyle(.borderless)
+                        .disabled(isAnalyzing)
                 }
-                Button("닫기") { isPresented = false }
-                    .buttonStyle(.borderless)
-                    .disabled(isAnalyzing)
+                Divider()
             }
 
-            Divider()
-
             if let err = error {
-                Text(err)
-                    .foregroundStyle(.red)
-                    .font(.callout)
-            } else if text.isEmpty && isAnalyzing {
-                HStack {
+                VStack(spacing: 20) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 40))
+                        .foregroundStyle(.orange)
+                    Text(err)
+                        .foregroundStyle(.secondary)
+                        .font(.callout)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 360)
+                    Button("닫기") { isPresented = false }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            } else if isAnalyzing {
+                VStack(spacing: 16) {
                     ProgressView()
-                    Text("분석 중...").foregroundStyle(.secondary)
+                        .scaleEffect(1.2)
+                    Text("AI가 종목을 분석하고 있습니다...")
+                        .foregroundStyle(.secondary)
+                        .font(.callout)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             } else {
                 ScrollView {
-                    Text(text)
+                    Markdown(text)
                         .textSelection(.enabled)
+                        .markdownTheme(.analysis)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(4)
+                        .padding(.horizontal, 4)
+                        .padding(.bottom, 8)
                 }
+                .frame(maxHeight: .infinity)
 
                 if !text.isEmpty {
                     HStack {
+                        Text("본 분석은 투자 권고가 아닌 참고 목적입니다.")
+                            .font(.caption2).foregroundStyle(.tertiary)
                         Spacer()
                         Button {
                             NSPasteboard.general.clearContents()
                             NSPasteboard.general.setString(text, forType: .string)
+                            withAnimation { copied = true }
+                            Task {
+                                try? await Task.sleep(for: .seconds(2))
+                                withAnimation { copied = false }
+                            }
                         } label: {
-                            Label("클립보드 복사", systemImage: "doc.on.doc")
+                            Label(
+                                copied ? "복사됨" : "클립보드 복사",
+                                systemImage: copied ? "checkmark" : "doc.on.doc"
+                            )
                         }
                         .buttonStyle(.borderless)
                         .font(.caption)
+                        .foregroundStyle(copied ? .green : .secondary)
+                        .animation(.default, value: copied)
                     }
                 }
             }
-
-            Text("본 분석은 투자 권고가 아닌 참고 목적입니다.")
-                .font(.caption2).foregroundStyle(.tertiary)
         }
         .padding(20)
         .frame(width: 560, height: 480)
+    }
+}
+
+// MARK: - MarkdownUI 커스텀 테마
+
+extension MarkdownUI.Theme {
+    // Theme.gitHub 기반 — 헤딩 크기·굵기·색상을 포함한 기본 스타일 상속
+    // Swift 6 strict concurrency: 블록 클로저 내부에서 markdownTextStyle 사용 불가
+    // → 블록 스타일은 표준 SwiftUI 모디파이어만 사용
+    static var analysis: Theme {
+        Theme.gitHub
+            .text {
+                FontSize(12.5)  // 이모지 포함 전체 텍스트 사이즈 축소
+            }
+            .strong {
+                FontWeight(.semibold)
+                ForegroundColor(Color.orange)
+            }
+            .code {
+                FontFamilyVariant(.monospaced)
+                FontSize(11.5)
+                BackgroundColor(Color.primary.opacity(0.07))
+            }
+            .blockquote { config in
+                config.label
+                    .padding(.vertical, 6)
+                    .padding(.leading, 12)
+                    .padding(.trailing, 6)
+                    .background(Color.accentColor.opacity(0.07))
+                    .overlay(alignment: .leading) {
+                        Rectangle()
+                            .frame(width: 3)
+                            .foregroundStyle(Color.accentColor.opacity(0.5))
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
+            }
+            .codeBlock { config in
+                config.label
+                    .padding(8)
+                    .background(Color.primary.opacity(0.05))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+            }
     }
 }

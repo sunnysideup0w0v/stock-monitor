@@ -41,9 +41,11 @@
 		9895C317774C9E7C480E7D6A /* BrokerAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 120E543584AD0CEC78ACF6F1 /* BrokerAdapter.swift */; };
 		9DEB07B30156A5FD72A26689 /* AlertHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CA6753273E034494E5C9BFE /* AlertHistory.swift */; };
 		A9433B253662D3B34C9DD9C9 /* APILogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96023ABC9674B6FD06210FF9 /* APILogger.swift */; };
+		A997B54AB391A205C7F77674 /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = 20AAA3CBE37D1DA71E2B6357 /* MarkdownUI */; };
 		AB8B3DEC935F08EB6EF096A1 /* CrashLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6082E6170C01C27465D4829F /* CrashLogger.swift */; };
 		B5855FE030A686AF05682334 /* ClaudeAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99A0AEAF32224F79E899675E /* ClaudeAnalyzer.swift */; };
 		B76AA2F6EAAE047116DB0FC7 /* ScreenerEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A9C1A99BE2A7EF4A6DACE20 /* ScreenerEngine.swift */; };
+		C332291B4F4EAF667735DBF8 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D30D3FB5A44BE8ADDC9ECA2 /* AppLogger.swift */; };
 		D1B18537D3C8A84AEC78959E /* AlertEvaluatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D55D467063C92591D5F3AF32 /* AlertEvaluatorTests.swift */; };
 		D355B90BDD80617758C47DA9 /* WatchlistItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD0E3054289D0C4A03DA88CB /* WatchlistItem.swift */; };
 		D5197D156AD652C931C382A6 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E91457CAFFE46128C1369488 /* OnboardingView.swift */; };
@@ -85,6 +87,7 @@
 		27964784296E0D3236DF6643 /* StockWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = StockWatch.entitlements; sourceTree = "<group>"; };
 		32ACEFDE6676F785B24819F2 /* StockUniverseItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockUniverseItem.swift; sourceTree = "<group>"; };
 		3CA6753273E034494E5C9BFE /* AlertHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertHistory.swift; sourceTree = "<group>"; };
+		3D30D3FB5A44BE8ADDC9ECA2 /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
 		454863BF153C297039535D2A /* KISAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KISAdapter.swift; sourceTree = "<group>"; };
 		485F5E3B2F81922FF587857A /* AlertEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertEvaluator.swift; sourceTree = "<group>"; };
 		4EB723879B41A5C7856EBCD4 /* NotificationManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManagerTests.swift; sourceTree = "<group>"; };
@@ -137,6 +140,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				647CB488BA748CF9E75DC473 /* GRDB in Frameworks */,
+				A997B54AB391A205C7F77674 /* MarkdownUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -201,6 +205,7 @@
 				AAD47F453A0B461750CDA537 /* AccountManager.swift */,
 				485F5E3B2F81922FF587857A /* AlertEvaluator.swift */,
 				96023ABC9674B6FD06210FF9 /* APILogger.swift */,
+				3D30D3FB5A44BE8ADDC9ECA2 /* AppLogger.swift */,
 				A21A4E16C58943E49ACCFC79 /* BackupManager.swift */,
 				99A0AEAF32224F79E899675E /* ClaudeAnalyzer.swift */,
 				6082E6170C01C27465D4829F /* CrashLogger.swift */,
@@ -353,6 +358,7 @@
 			name = StockWatch;
 			packageProductDependencies = (
 				7799957FF90B2FF48DC7C87F /* GRDB */,
+				20AAA3CBE37D1DA71E2B6357 /* MarkdownUI */,
 			);
 			productName = StockWatch;
 			productReference = 693BBA6F9D04AC0BDD39110D /* StockWatch.app */;
@@ -393,6 +399,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				CA41273201FCC61ED5F46525 /* XCRemoteSwiftPackageReference "GRDB.swift" */,
+				3F83A2BCDF028EF4C9ABC887 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 43AEC6F7C3D0DA84675A3742 /* Products */;
@@ -458,6 +465,7 @@
 				5C32C172B9F267DD888430FB /* AlertEvaluator.swift in Sources */,
 				9DEB07B30156A5FD72A26689 /* AlertHistory.swift in Sources */,
 				74A2E886B82508C5D7E02DCA /* AppDelegate.swift in Sources */,
+				C332291B4F4EAF667735DBF8 /* AppLogger.swift in Sources */,
 				EBBA37C13D78A1B9BF4040A8 /* AssetChartView.swift in Sources */,
 				E27457020673252EEBC0D7AC /* BackupManager.swift in Sources */,
 				9895C317774C9E7C480E7D6A /* BrokerAdapter.swift in Sources */,
@@ -819,6 +827,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		3F83A2BCDF028EF4C9ABC887 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/gonzalezreal/swift-markdown-ui";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.4.0;
+			};
+		};
 		CA41273201FCC61ED5F46525 /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/groue/GRDB.swift";
@@ -830,6 +846,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		20AAA3CBE37D1DA71E2B6357 /* MarkdownUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3F83A2BCDF028EF4C9ABC887 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */;
+			productName = MarkdownUI;
+		};
 		7799957FF90B2FF48DC7C87F /* GRDB */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = CA41273201FCC61ED5F46525 /* XCRemoteSwiftPackageReference "GRDB.swift" */;

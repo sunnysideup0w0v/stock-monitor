@@ -119,6 +119,12 @@ final class DatabaseManager: @unchecked Sendable {
             }
         }
 
+        migrator.registerMigration("v10_isEtf") { db in
+            try db.alter(table: "stock_universe") { t in
+                t.add(column: "isEtf", .boolean).notNull().defaults(to: false)
+            }
+        }
+
         try migrator.migrate(dbQueue)
     }
 

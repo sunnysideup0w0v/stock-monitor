@@ -17,6 +17,7 @@ struct ScreenerCondition: Codable, Identifiable {
         case marketCapRange
         case sectorFilter
         case marketFilter
+        case instrumentType
 
         var displayName: String {
             switch self {
@@ -28,6 +29,7 @@ struct ScreenerCondition: Codable, Identifiable {
             case .marketCapRange:  return "시가총액 (억원)"
             case .sectorFilter:    return "업종"
             case .marketFilter:    return "시장 구분"
+            case .instrumentType:  return "종목 유형"
             }
         }
 
@@ -41,23 +43,24 @@ struct ScreenerCondition: Codable, Identifiable {
             case .marketCapRange:  return "시가총액"
             case .sectorFilter:    return "업종"
             case .marketFilter:    return "시장"
+            case .instrumentType:  return "종목유형"
             }
         }
 
         var usesStringValue: Bool {
-            self == .sectorFilter || self == .marketFilter
+            self == .sectorFilter || self == .marketFilter || self == .instrumentType
         }
 
         var supportsMin: Bool {
             switch self {
-            case .sectorFilter, .marketFilter: return false
+            case .sectorFilter, .marketFilter, .instrumentType: return false
             default: return true
             }
         }
 
         var supportsMax: Bool {
             switch self {
-            case .volumeMin, .sectorFilter, .marketFilter: return false
+            case .volumeMin, .sectorFilter, .marketFilter, .instrumentType: return false
             default: return true
             }
         }

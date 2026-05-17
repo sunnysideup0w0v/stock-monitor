@@ -44,7 +44,21 @@ actor ClaudeAnalyzer {
 
     private func buildPrompt(conditions: [ScreenerCondition], results: [StockUniverseItem]) -> String {
         var lines: [String] = [
-            "다음은 한국 주식 시장 스크리닝 결과입니다. 투자 인사이트를 한국어로 간결하게 분석해주세요.",
+            """
+            당신은 한국 주식 시장 분석가입니다. 아래 스크리닝 결과를 바탕으로 투자 인사이트를 상세하게 분석해주세요.
+
+            **출력 형식 규칙 (반드시 준수):**
+            - 마크다운 문법만 사용 (HTML 태그 금지)
+            - 섹션 제목은 ## 또는 ### 사용
+            - 핵심 수치·종목명은 **볼드** 처리
+            - 긍정 신호는 🟢, 부정/위험은 🔴, 주의사항은 ⚠️ 이모지 사용
+            - 핵심 결론은 > 블록쿼트로 강조
+
+            **주목 종목 분석 시 각 종목마다 아래 항목을 포함해주세요:**
+            - 최근 주가·실적 동향
+            - 최근 주요 이슈 1~2개 (공시, 신제품, 계약, 규제, 인사 등)
+            - 투자 포인트 및 리스크
+            """,
             "",
             "## 스크리닝 조건"
         ]
@@ -66,7 +80,7 @@ actor ClaudeAnalyzer {
         }
 
         lines.append("")
-        lines.append("주목할 종목과 그 이유, 그리고 주의사항을 분석해주세요. 본 분석은 투자 권고가 아닌 참고 목적입니다.")
+        lines.append("주목할 종목(최근 동향 + 주요 이슈 포함), 섹터 전반 동향, 종합 주의사항 순서로 분석해주세요.")
         return lines.joined(separator: "\n")
     }
 
@@ -80,6 +94,7 @@ actor ClaudeAnalyzer {
         case .marketCapRange:  return "시가총액: \(rangeDesc(cond, unit: "억원"))"
         case .sectorFilter:    return "업종: \(cond.stringValue ?? "—")"
         case .marketFilter:    return "시장: \(cond.stringValue ?? "—")"
+        case .instrumentType:  return "종목유형: \(cond.stringValue ?? "—")"
         }
     }
 
@@ -101,7 +116,7 @@ actor ClaudeAnalyzer {
     private func buildRequestBody(prompt: String) throws -> Data {
         let body: [String: Any] = [
             "model": "claude-sonnet-4-5",
-            "max_tokens": 1024,
+            "max_tokens": 2048,
             "stream": true,
             "messages": [["role": "user", "content": prompt]]
         ]

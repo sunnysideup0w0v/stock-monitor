@@ -24,6 +24,10 @@ final class ScreenerEngine: @unchecked Sendable {
         try DatabaseManager.shared.fetchDistinctValues(column: "market", table: "stock_universe")
     }
 
+    private func multiValues(_ cond: ScreenerCondition) -> [String] {
+        (cond.stringValue ?? "").split(separator: ",").map(String.init).filter { !$0.isEmpty }
+    }
+
     private func apply(
         _ cond: ScreenerCondition,
         to req: QueryInterfaceRequest<StockUniverseItem>
@@ -63,14 +67,19 @@ final class ScreenerEngine: @unchecked Sendable {
             if let max = cond.maxValue { r = r.filter(Column("marketCap") <= Int(max * 100)) }
 
         case .sectorFilter:
-            if let sector = cond.stringValue, !sector.isEmpty {
-                r = r.filter(Column("sector") == sector)
-            }
+            let sectors = multiValues(cond)
+            if !sectors.isEmpty { r = r.filter(sectors.contains(Column("sector"))) }
 
         case .marketFilter:
-            if let market = cond.stringValue, !market.isEmpty {
-                r = r.filter(Column("market") == market)
+            let markets = multiValues(cond)
+            if !markets.isEmpty { r = r.filter(markets.contains(Column("market"))) }
+
+        case .instrumentType:
+            let values = multiValues(cond)
+            if values.count == 1 {
+                r = r.filter(Column("isEtf") == (values[0] == "ETF"))
             }
+            // 둘 다 or 없음 → 필터 없음
         }
         return r
     }
