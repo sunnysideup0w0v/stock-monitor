@@ -127,7 +127,7 @@ struct MenuBarPopoverView: View {
     }
 
     private func brokerDivider(_ brokerId: String) -> some View {
-        let name = brokerId.hasPrefix("KIS-") ? "KIS" : brokerId.hasPrefix("KIWOOM-") ? "키움" : brokerId
+        let name = AccountManager.displayName(for: brokerId)
         return HStack(spacing: 6) {
             Text(name)
                 .font(.system(size: 10, weight: .medium))

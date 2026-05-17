@@ -24,6 +24,13 @@ enum AccountManager {
     /// 하나 이상의 브로커가 로그인된 상태인지.
     static var isAnyConnected: Bool { !connectedAccountIds.isEmpty }
 
+    /// accountId 접두사로 사람이 읽을 수 있는 브로커 이름 반환.
+    static func displayName(for accountId: String) -> String {
+        if accountId.hasPrefix("KIS-") { return "KIS" }
+        if accountId.hasPrefix("KIWOOM-") { return "키움" }
+        return accountId
+    }
+
     /// 하위 호환 — 첫 번째 연결된 계좌 ID, 없으면 "".
     static var currentAccountId: String {
         #if DEBUG

@@ -116,7 +116,7 @@ struct AccountSettingsView: View {
                 }
                 GridRow {
                     Text("앱 키").foregroundStyle(.secondary).gridColumnAlignment(.trailing)
-                    Text(maskedKey(KeychainHelper.load(account: KeychainKey.kiwoomAppKey) ?? ""))
+                    Text(KeychainHelper.masked(KeychainHelper.load(account: KeychainKey.kiwoomAppKey) ?? ""))
                         .fontDesign(.monospaced).foregroundStyle(.secondary)
                 }
                 if let date = session.kiwoomLoginDate {
@@ -236,7 +236,7 @@ struct AccountSettingsView: View {
                 }
                 GridRow {
                     Text("앱 키").foregroundStyle(.secondary).gridColumnAlignment(.trailing)
-                    Text(maskedKey(KeychainHelper.load(account: KeychainKey.kisAppKey) ?? ""))
+                    Text(KeychainHelper.masked(KeychainHelper.load(account: KeychainKey.kisAppKey) ?? ""))
                         .fontDesign(.monospaced).foregroundStyle(.secondary)
                 }
                 if let date = session.kisLoginDate {
@@ -350,8 +350,4 @@ struct AccountSettingsView: View {
         }
     }
 
-    private func maskedKey(_ key: String) -> String {
-        guard key.count > 8 else { return String(repeating: "•", count: key.count) }
-        return String(key.prefix(4)) + String(repeating: "•", count: 12) + String(key.suffix(4))
-    }
 }

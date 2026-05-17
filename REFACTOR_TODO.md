@@ -85,13 +85,13 @@ UserDefaults 키와 Keychain 계정 이름이 SettingsView · AppDelegate · Acc
 
 ## R4 — 중복 UI 컴포넌트 제거
 
-- [ ] `WatchlistSettingsView.accountRequiredView`와 `PortfolioSettingsView.accountRequiredView`가 거의 동일
-  → `AccountRequiredView(description:)` 공용 View로 추출
-- [ ] `brokerDisplayName(_ accountId: String)` 로직이 `PortfolioSettingsView`, `MenuBarPopoverView`, AppDelegate에 각각 구현됨
-  → `AccountManager.displayName(for accountId:) -> String` 정적 메서드로 통합
-- [ ] `maskedKey(_ key:)` 함수가 `AccountSettingsView`에만 있으나 디버그 표시용으로 `KeychainHelper` 확장에 두는 것이 더 적합
+- [x] `WatchlistSettingsView.accountRequiredView`와 `PortfolioSettingsView.accountRequiredView`가 거의 동일
+  → `AccountRequiredView(description:)` 공용 View로 추출 (`SettingsComponents.swift`)
+- [x] `brokerDisplayName(_ accountId: String)` 로직이 `PortfolioSettingsView`, `MenuBarPopoverView`에 각각 구현됨
+  → `AccountManager.displayName(for:) -> String` 정적 메서드로 통합
+- [x] `maskedKey(_ key:)` 함수가 `AccountSettingsView`에만 있으나 디버그 표시용으로 `KeychainHelper` 확장에 두는 것이 더 적합
   → `KeychainHelper.masked(_ value:) -> String` static 메서드로 이동
-- [ ] 분리 후 기존 중복 코드 삭제
+- [x] 분리 후 기존 중복 코드 삭제
 
 ---
 

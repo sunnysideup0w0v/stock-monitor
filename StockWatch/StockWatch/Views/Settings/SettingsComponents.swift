@@ -28,6 +28,25 @@ struct SettingsTabContainer<Content: View>: View {
     }
 }
 
+struct AccountRequiredView: View {
+    let description: String
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "person.crop.circle.badge.exclamationmark")
+                .font(.system(size: 40))
+                .foregroundStyle(.secondary)
+            Text("계좌 연결이 필요합니다")
+                .font(.headline)
+            Text(description)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
 struct SettingsFormSection<Content: View>: View {
     let title: String
     let content: Content

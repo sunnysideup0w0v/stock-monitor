@@ -33,6 +33,12 @@ enum KeychainHelper {
         return String(data: data, encoding: .utf8)
     }
 
+    /// 키 앞 4자 + 가운데 마스킹 + 뒤 4자 형식으로 반환. 8자 미만은 전체 마스킹.
+    static func masked(_ value: String) -> String {
+        guard value.count > 8 else { return String(repeating: "•", count: value.count) }
+        return String(value.prefix(4)) + String(repeating: "•", count: 12) + String(value.suffix(4))
+    }
+
     static func delete(account: String) {
         let query: [CFString: Any] = [
             kSecClass:       kSecClassGenericPassword,

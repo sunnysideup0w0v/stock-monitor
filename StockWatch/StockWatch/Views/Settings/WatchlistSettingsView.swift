@@ -73,18 +73,7 @@ struct WatchlistSettingsView: View {
     }
 
     private var accountRequiredView: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "person.crop.circle.badge.exclamationmark")
-                .font(.system(size: 40))
-                .foregroundStyle(.secondary)
-            Text("계좌 연결이 필요합니다")
-                .font(.headline)
-            Text("계좌 연결 탭에서 API 키를 입력하면\n관심종목을 관리할 수 있습니다.")
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        AccountRequiredView(description: "계좌 연결 탭에서 API 키를 입력하면\n관심종목을 관리할 수 있습니다.")
     }
 
     private func loadItems() {

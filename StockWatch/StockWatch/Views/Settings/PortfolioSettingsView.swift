@@ -30,17 +30,11 @@ struct PortfolioSettingsView: View {
 
     private var filterLabel: String {
         if selectedBrokerIds.count == connectedBrokerIds.count || selectedBrokerIds.isEmpty { return "전체 브로커" }
-        return selectedBrokerIds.map { brokerDisplayName($0) }.joined(separator: ", ")
+        return selectedBrokerIds.map { AccountManager.displayName(for:$0) }.joined(separator: ", ")
     }
 
     private var isShowingAllBrokers: Bool {
         isMultiBroker && (selectedBrokerIds.isEmpty || selectedBrokerIds.count == connectedBrokerIds.count)
-    }
-
-    private func brokerDisplayName(_ accountId: String) -> String {
-        if accountId.hasPrefix("KIS-") { return "KIS" }
-        if accountId.hasPrefix("KIWOOM-") { return "키움" }
-        return accountId
     }
 
     var body: some View {
@@ -59,25 +53,14 @@ struct PortfolioSettingsView: View {
         }
         .confirmationDialog("어느 계좌에서 가져올까요?", isPresented: $showImportBrokerAlert, titleVisibility: .visible) {
             ForEach(connectedBrokerIds, id: \.self) { id in
-                Button(brokerDisplayName(id)) { performImport(for: id) }
+                Button(AccountManager.displayName(for:id)) { performImport(for: id) }
             }
             Button("취소", role: .cancel) {}
         }
     }
 
     private var accountRequiredView: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "person.crop.circle.badge.exclamationmark")
-                .font(.system(size: 40))
-                .foregroundStyle(.secondary)
-            Text("계좌 연결이 필요합니다")
-                .font(.headline)
-            Text("계좌 연결 탭에서 API 키를 입력하면\n포트폴리오를 관리할 수 있습니다.")
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        AccountRequiredView(description: "계좌 연결 탭에서 API 키를 입력하면\n포트폴리오를 관리할 수 있습니다.")
     }
 
     private var portfolioContentView: some View {
@@ -90,7 +73,7 @@ struct PortfolioSettingsView: View {
                                 if selectedBrokerIds.contains(id) { selectedBrokerIds.remove(id) }
                                 else { selectedBrokerIds.insert(id) }
                             } label: {
-                                Label(brokerDisplayName(id),
+                                Label(AccountManager.displayName(for:id),
                                       systemImage: selectedBrokerIds.contains(id) ? "checkmark" : "")
                             }
                         }
@@ -128,7 +111,7 @@ struct PortfolioSettingsView: View {
             List {
                 if isShowingAllBrokers {
                     ForEach(connectedBrokerIds, id: \.self) { brokerId in
-                        Section(brokerDisplayName(brokerId)) {
+                        Section(AccountManager.displayName(for:brokerId)) {
                             ForEach(items.filter { $0.accountId == brokerId }, id: \.id) { item in
                                 portfolioRow(item)
                             }
