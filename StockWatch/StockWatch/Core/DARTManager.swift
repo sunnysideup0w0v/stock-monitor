@@ -11,12 +11,12 @@ final class DARTManager {
     // MARK: - Public Interface
 
     var isConfigured: Bool {
-        let key = KeychainHelper.load(account: "dart.apiKey") ?? ""
+        let key = KeychainHelper.load(account: KeychainKey.dartApiKey) ?? ""
         return !key.isEmpty
     }
 
     func start(symbols: [String]) {
-        guard let apiKey = KeychainHelper.load(account: "dart.apiKey"),
+        guard let apiKey = KeychainHelper.load(account: KeychainKey.dartApiKey),
               !apiKey.isEmpty, !symbols.isEmpty else { return }
         stop()
         pollingTask = Task {
@@ -54,10 +54,10 @@ final class DARTManager {
             let since = lastCheckDate(for: symbol)
             let disclosures = try await fetchDisclosures(corpCode: corpCode, apiKey: apiKey, since: since)
 
-            let seenKey = "DART.seen.\(symbol)"
+            let seenKey = UserDefaultsKey.dartSeen(symbol)
             var seenIds = Set(UserDefaults.standard.stringArray(forKey: seenKey) ?? [])
             let newDisclosures = disclosures.filter { !seenIds.contains($0.rceptNo) }
-            let filterTypes = UserDefaults.standard.stringArray(forKey: "DART.filterTypes") ?? []
+            let filterTypes = UserDefaults.standard.stringArray(forKey: UserDefaultsKey.dartFilterTypes) ?? []
 
             for disclosure in newDisclosures {
                 let typeOK = filterTypes.isEmpty || filterTypes.contains(disclosure.disclosureType)
@@ -185,12 +185,11 @@ final class DARTManager {
     // MARK: - Helpers
 
     private func lastCheckDate(for symbol: String) -> String {
-        let key = "DART.lastCheck.\(symbol)"
-        return UserDefaults.standard.string(forKey: key) ?? todayString()
+        UserDefaults.standard.string(forKey: UserDefaultsKey.dartLastCheck(symbol)) ?? todayString()
     }
 
     private func updateLastCheckDate(for symbol: String) {
-        UserDefaults.standard.set(todayString(), forKey: "DART.lastCheck.\(symbol)")
+        UserDefaults.standard.set(todayString(), forKey: UserDefaultsKey.dartLastCheck(symbol))
     }
 
     private func todayString() -> String {

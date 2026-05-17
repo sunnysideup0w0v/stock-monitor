@@ -116,7 +116,7 @@ struct AccountSettingsView: View {
                 }
                 GridRow {
                     Text("앱 키").foregroundStyle(.secondary).gridColumnAlignment(.trailing)
-                    Text(maskedKey(KeychainHelper.load(account: "kiwoom.appKey") ?? ""))
+                    Text(maskedKey(KeychainHelper.load(account: KeychainKey.kiwoomAppKey) ?? ""))
                         .fontDesign(.monospaced).foregroundStyle(.secondary)
                 }
                 if let date = session.kiwoomLoginDate {
@@ -236,7 +236,7 @@ struct AccountSettingsView: View {
                 }
                 GridRow {
                     Text("앱 키").foregroundStyle(.secondary).gridColumnAlignment(.trailing)
-                    Text(maskedKey(KeychainHelper.load(account: "kis.appKey") ?? ""))
+                    Text(maskedKey(KeychainHelper.load(account: KeychainKey.kisAppKey) ?? ""))
                         .fontDesign(.monospaced).foregroundStyle(.secondary)
                 }
                 if let date = session.kisLoginDate {

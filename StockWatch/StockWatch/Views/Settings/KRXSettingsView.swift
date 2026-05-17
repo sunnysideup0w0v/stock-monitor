@@ -67,7 +67,7 @@ struct KRXSettingsView: View {
                         .font(.caption).foregroundStyle(.secondary)
                     Spacer()
                     Button("삭제", role: .destructive) {
-                        KeychainHelper.delete(account: "krx.apiKey")
+                        KeychainHelper.delete(account: KeychainKey.krxApiKey)
                         isApiKeyConfigured = false
                     }
                     .buttonStyle(.borderless).foregroundStyle(.red).font(.caption)
@@ -80,7 +80,7 @@ struct KRXSettingsView: View {
                     Button("저장") {
                         let key = apiKeyInput.trimmingCharacters(in: .whitespaces)
                         guard !key.isEmpty else { return }
-                        KeychainHelper.save(key, account: "krx.apiKey")
+                        KeychainHelper.save(key, account: KeychainKey.krxApiKey)
                         isApiKeyConfigured = true
                         apiKeyInput = ""
                     }
@@ -93,7 +93,7 @@ struct KRXSettingsView: View {
         }
         .onAppear {
             loadStats()
-            isApiKeyConfigured = !(KeychainHelper.load(account: "krx.apiKey") ?? "").isEmpty
+            isApiKeyConfigured = !(KeychainHelper.load(account: KeychainKey.krxApiKey) ?? "").isEmpty
         }
         .onReceive(NotificationCenter.default.publisher(for: .krxDataUpdated)) { _ in
             loadStats()
@@ -122,6 +122,6 @@ struct KRXSettingsView: View {
         stockCount = (try? DatabaseManager.shared.stockUniverseCount()) ?? 0
         lastUpdated = try? DatabaseManager.shared.stockUniverseLastUpdated()
         isFetching = KRXManager.shared.isFetching
-        isApiKeyConfigured = !(KeychainHelper.load(account: "krx.apiKey") ?? "").isEmpty
+        isApiKeyConfigured = !(KeychainHelper.load(account: KeychainKey.krxApiKey) ?? "").isEmpty
     }
 }

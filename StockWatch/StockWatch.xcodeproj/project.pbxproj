@@ -36,6 +36,7 @@
 		647CB488BA748CF9E75DC473 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 7799957FF90B2FF48DC7C87F /* GRDB */; };
 		687F91821C4C630BA708C4A0 /* MenuBarPopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14A3725923C78C18CCFFECD6 /* MenuBarPopoverView.swift */; };
 		68A053190EE46F1D1EBCAA6F /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C98C3F9477E7B17A8E9D72F0 /* NotificationManager.swift */; };
+		6B823B2B5F120BCAF41475A3 /* KeychainKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = B240670EB3EDF97314547715 /* KeychainKey.swift */; };
 		6DFAF541B90C1083B5B2C888 /* DARTManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA4EE76E88F846A8FB9E2C8 /* DARTManager.swift */; };
 		719D37B11AAC437EF1F1F00E /* BrokerSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 409AFB9E7CADA2E56BEDA9C8 /* BrokerSessionManager.swift */; };
 		735F9C5A8E2FB9F13FF698F2 /* StockQuoteTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 713FCE641DED6E48FFF016F5 /* StockQuoteTests.swift */; };
@@ -51,6 +52,7 @@
 		964B5A628DE1672AAB62983F /* BackupManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF41AE3482D24E4098CDAEF6 /* BackupManagerTests.swift */; };
 		981026A55B0D6C77A5FF6873 /* QuoteManagerAdapterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6FF9845DB289424B022E2A4 /* QuoteManagerAdapterTests.swift */; };
 		9895C317774C9E7C480E7D6A /* BrokerAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 120E543584AD0CEC78ACF6F1 /* BrokerAdapter.swift */; };
+		9906D3E3DD217312DC4F695D /* UserDefaultsKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87911CD83481F76D445A52B8 /* UserDefaultsKey.swift */; };
 		9DEB07B30156A5FD72A26689 /* AlertHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CA6753273E034494E5C9BFE /* AlertHistory.swift */; };
 		A2A3A33A152FE0C1944228EC /* PortfolioSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F315C36609EF366044E5CAC1 /* PortfolioSettingsView.swift */; };
 		A9433B253662D3B34C9DD9C9 /* APILogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96023ABC9674B6FD06210FF9 /* APILogger.swift */; };
@@ -126,6 +128,7 @@
 		7A9C1A99BE2A7EF4A6DACE20 /* ScreenerEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenerEngine.swift; sourceTree = "<group>"; };
 		7B48A2F93F56DFBD853F6C02 /* ScreenerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenerView.swift; sourceTree = "<group>"; };
 		831B19FB962ED8687DF4CBFD /* PortfolioItemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioItemTests.swift; sourceTree = "<group>"; };
+		87911CD83481F76D445A52B8 /* UserDefaultsKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefaultsKey.swift; sourceTree = "<group>"; };
 		96023ABC9674B6FD06210FF9 /* APILogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APILogger.swift; sourceTree = "<group>"; };
 		96036A94BC463B8118C8EB3D /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		99A0AEAF32224F79E899675E /* ClaudeAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeAnalyzer.swift; sourceTree = "<group>"; };
@@ -138,6 +141,7 @@
 		A957540D6B9A8D3899BCA642 /* DatabaseManagerCRUDTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseManagerCRUDTests.swift; sourceTree = "<group>"; };
 		AAD47F453A0B461750CDA537 /* AccountManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountManager.swift; sourceTree = "<group>"; };
 		B18D1CB241596D88278D7F25 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B240670EB3EDF97314547715 /* KeychainKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainKey.swift; sourceTree = "<group>"; };
 		B73C72C6F1D88F72B97D7362 /* DARTDisclosure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DARTDisclosure.swift; sourceTree = "<group>"; };
 		BB99440BD1A277CA6004621F /* SettingsWindowUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowUITests.swift; sourceTree = "<group>"; };
 		BD0E3054289D0C4A03DA88CB /* WatchlistItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistItem.swift; sourceTree = "<group>"; };
@@ -242,11 +246,13 @@
 				6082E6170C01C27465D4829F /* CrashLogger.swift */,
 				1DA4EE76E88F846A8FB9E2C8 /* DARTManager.swift */,
 				96036A94BC463B8118C8EB3D /* KeychainHelper.swift */,
+				B240670EB3EDF97314547715 /* KeychainKey.swift */,
 				4FB34D35F6866AFF1E3C7635 /* KRXManager.swift */,
 				5E5AB112AF506EF87D40BA14 /* QuoteManager.swift */,
 				9F5A6472AE55E5203993C25F /* RealtimeQuoteManager.swift */,
 				7A9C1A99BE2A7EF4A6DACE20 /* ScreenerEngine.swift */,
 				DDF76FE9576C82370C6293FD /* SnapshotManager.swift */,
+				87911CD83481F76D445A52B8 /* UserDefaultsKey.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -538,6 +544,7 @@
 				7F82405A564BD9A0824203B2 /* KRXManager.swift in Sources */,
 				2DD3270DBABFAAFBE627BF77 /* KRXSettingsView.swift in Sources */,
 				0C649CA67BBEF3201E143D91 /* KeychainHelper.swift in Sources */,
+				6B823B2B5F120BCAF41475A3 /* KeychainKey.swift in Sources */,
 				5D85B405631F1A6E2AD57A22 /* KiwoomAdapter.swift in Sources */,
 				687F91821C4C630BA708C4A0 /* MenuBarPopoverView.swift in Sources */,
 				57D99242DAA246F7A6594F57 /* MiraeAssetAdapter.swift in Sources */,
@@ -561,6 +568,7 @@
 				D8E109B6F45699E062615F16 /* StockUniverseItem.swift in Sources */,
 				896F1D508E1C6C42CFCE8329 /* StockWatchApp.swift in Sources */,
 				F2F9D0EE68C04C87CEA667EC /* ToastWindowManager.swift in Sources */,
+				9906D3E3DD217312DC4F695D /* UserDefaultsKey.swift in Sources */,
 				D355B90BDD80617758C47DA9 /* WatchlistItem.swift in Sources */,
 				37EA78BF264F418F6BF3FBB7 /* WatchlistSettingsView.swift in Sources */,
 			);

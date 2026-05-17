@@ -100,7 +100,7 @@ struct OnboardingView: View {
     }
 
     private func finish() {
-        UserDefaults.standard.set(true, forKey: "Onboarding.completed")
+        UserDefaults.standard.set(true, forKey: UserDefaultsKey.onboardingCompleted)
         isPresented = false
     }
 }

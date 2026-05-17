@@ -131,17 +131,17 @@ final class DatabaseManager: @unchecked Sendable {
     // MARK: - Account Migration
 
     /// 기존 accountId == "" 행을 현재 계정으로 일회성 마이그레이션.
-    /// UserDefaults "DB.v8AccountIdMigrated" 플래그로 중복 실행 방지.
+    /// UserDefaults UserDefaultsKey.dbV8Migrated 플래그로 중복 실행 방지.
     func assignAccountIdToOrphanedItems(accountId: String) throws {
         guard !accountId.isEmpty,
-              !UserDefaults.standard.bool(forKey: "DB.v8AccountIdMigrated") else { return }
+              !UserDefaults.standard.bool(forKey: UserDefaultsKey.dbV8Migrated) else { return }
         try dbQueue.write { db in
             try db.execute(sql: "UPDATE watchlist SET accountId = ? WHERE accountId = ''",
                            arguments: [accountId])
             try db.execute(sql: "UPDATE portfolio SET accountId = ? WHERE accountId = ''",
                            arguments: [accountId])
         }
-        UserDefaults.standard.set(true, forKey: "DB.v8AccountIdMigrated")
+        UserDefaults.standard.set(true, forKey: UserDefaultsKey.dbV8Migrated)
     }
 
     // MARK: - Watchlist

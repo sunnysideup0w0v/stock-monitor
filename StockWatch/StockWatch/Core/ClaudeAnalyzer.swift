@@ -11,7 +11,7 @@ actor ClaudeAnalyzer {
         results: [StockUniverseItem],
         onToken: @MainActor @escaping (String) -> Void
     ) async throws {
-        guard let apiKey = KeychainHelper.load(account: "anthropic.apiKey"), !apiKey.isEmpty else {
+        guard let apiKey = KeychainHelper.load(account: KeychainKey.anthropicApiKey), !apiKey.isEmpty else {
             throw AnalyzerError.noApiKey
         }
 

@@ -28,7 +28,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         if CommandLine.arguments.contains("--uitesting") {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { self.openSettings() }
-        } else if !UserDefaults.standard.bool(forKey: "Onboarding.completed") {
+        } else if !UserDefaults.standard.bool(forKey: UserDefaultsKey.onboardingCompleted) {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { self.openOnboarding() }
         }
 

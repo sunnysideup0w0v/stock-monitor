@@ -42,7 +42,7 @@ final class KRXManager {
         }
 
         let date = lastTradingDate()
-        let apiKey = KeychainHelper.load(account: "krx.apiKey") ?? ""
+        let apiKey = KeychainHelper.load(account: KeychainKey.krxApiKey) ?? ""
 
         let items: [StockUniverseItem]
         if !apiKey.isEmpty {
@@ -222,7 +222,7 @@ final class KRXManager {
     // MARK: - API 소스 정보
 
     var isUsingOfficialAPI: Bool {
-        !(KeychainHelper.load(account: "krx.apiKey") ?? "").isEmpty
+        !(KeychainHelper.load(account: KeychainKey.krxApiKey) ?? "").isEmpty
     }
 }
 

@@ -7,11 +7,9 @@ final class AlertEvaluator {
 
     // MARK: - 장 시간 제어
 
-    private static let marketHoursOnlyKey = "Alert.marketHoursOnly"
-
     static var marketHoursOnly: Bool {
-        get { UserDefaults.standard.object(forKey: marketHoursOnlyKey) as? Bool ?? true }
-        set { UserDefaults.standard.set(newValue, forKey: marketHoursOnlyKey) }
+        get { UserDefaults.standard.object(forKey: UserDefaultsKey.alertMarketHours) as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: UserDefaultsKey.alertMarketHours) }
     }
 
     static func isWithinMarketHours() -> Bool {

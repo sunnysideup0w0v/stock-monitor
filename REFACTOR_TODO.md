@@ -74,41 +74,12 @@ Keychain 쓰기 · 어댑터 생성 · QuoteManager 호출이 뒤섞여 있다.
 
 UserDefaults 키와 Keychain 계정 이름이 SettingsView · AppDelegate · AccountManager · DatabaseManager 등 여러 파일에 흩어져 있다.
 
-- [ ] `KeychainKey.swift` 신규 작성
-  ```swift
-  enum KeychainKey {
-      static let kisAppKey       = "kis.appKey"
-      static let kisAppSecret    = "kis.appSecret"
-      static let kisAccountNumber = "kis.accountNumber"
-      static let kiwoomAppKey    = "kiwoom.appKey"
-      static let kiwoomAppSecret = "kiwoom.appSecret"
-      static let kiwoomAccountNumber = "kiwoom.accountNumber"
-      static let dartApiKey      = "dart.apiKey"
-      static let krxApiKey       = "krx.apiKey"
-      static let anthropicApiKey = "anthropic.apiKey"
-  }
-  ```
-- [ ] `UserDefaultsKey.swift` 신규 작성
-  ```swift
-  enum UserDefaultsKey {
-      static let kisMock         = "KIS.isMock"
-      static let kisLoginDate    = "KIS.loginDate"
-      static let kiwoomLoginDate = "Kiwoom.loginDate"
-      static let dartFilterTypes = "DART.filterTypes"
-      static let dartSeenRceptNos = "DART.seenRceptNos"
-      static let dbV8Migrated    = "DB.v8AccountIdMigrated"
-      static let onboardingCompleted = "Onboarding.completed"
-      static let disconnectAlert = "QuoteManager.disconnectAlert"
-      static let alertMarketHours = "Alert.marketHoursOnly"
-      static let snapshotMarketHours = "SnapshotManager.marketHoursOnly"
-      static let snapshotCustomRanges = "SnapshotManager.customRanges"
-      static let snapshotKeepDays = "SnapshotManager.keepDays"
-      static let screenerClaudeEnabled = "Screener.claudeEnabled"
-      static let screenerLastConditions = "Screener.lastConditions"
-  }
-  ```
-- [ ] 모든 파일의 문자열 리터럴을 위 상수로 교체 (AppDelegate, SettingsView, AccountManager, DatabaseManager, DARTManager, SnapshotManager, AlertEvaluator, QuoteManager, KRXManager, ClaudeAnalyzer)
-- [ ] 컴파일 오류 없음 확인
+- [x] `KeychainKey.swift` 신규 작성
+- [x] `UserDefaultsKey.swift` 신규 작성
+  - 실제 코드의 키 값 사용 (`"Snapshot.*"`, `"Screener.savedConditions"` 등 — TODO의 값과 일부 상이)
+  - per-symbol 동적 키(`DART.seen.*`, `DART.lastCheck.*`)는 static func로 추가
+- [x] 모든 파일의 문자열 리터럴을 위 상수로 교체 (AppDelegate, AccountSettingsView, AccountManager, DatabaseManager, DARTManager/DARTSettingsView, SnapshotManager, AlertEvaluator, QuoteManager, KRXManager/KRXSettingsView, ClaudeAnalyzer/ClaudeSettingsView, ScreenerView, OnboardingView, BrokerSessionManager)
+- [x] 컴파일 오류 없음 확인
 
 ---
 

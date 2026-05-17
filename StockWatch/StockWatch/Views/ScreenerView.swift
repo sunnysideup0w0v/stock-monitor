@@ -12,8 +12,8 @@ struct ScreenerView: View {
     @State private var sectors: [String] = []
     @State private var markets: [String] = []
 
-    @AppStorage("Screener.claudeEnabled") private var claudeEnabled = false
-    @AppStorage("Screener.keepOnReopen") private var keepOnReopen = true
+    @AppStorage(UserDefaultsKey.screenerClaudeEnabled) private var claudeEnabled = false
+    @AppStorage(UserDefaultsKey.screenerKeepOnReopen) private var keepOnReopen = true
     @State private var hasRun = false
     @State private var showAnalysis = false
     @State private var analysisText = ""
@@ -22,7 +22,7 @@ struct ScreenerView: View {
 
     @State private var toastMessage: String?
 
-    private let conditionsKey = "Screener.savedConditions"
+    private let conditionsKey = UserDefaultsKey.screenerSavedConditions
 
     var body: some View {
         SettingsTabContainer(title: "종목 검색") {

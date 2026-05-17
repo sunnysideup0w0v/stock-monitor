@@ -12,10 +12,10 @@ enum AccountManager {
         if let override = testAccountId { return [override] }
         #endif
         var ids: [String] = []
-        if let appKey = KeychainHelper.load(account: "kis.appKey"), !appKey.isEmpty {
+        if let appKey = KeychainHelper.load(account: KeychainKey.kisAppKey), !appKey.isEmpty {
             ids.append("KIS-" + String(appKey.prefix(8)))
         }
-        if let appKey = KeychainHelper.load(account: "kiwoom.appKey"), !appKey.isEmpty {
+        if let appKey = KeychainHelper.load(account: KeychainKey.kiwoomAppKey), !appKey.isEmpty {
             ids.append("KIWOOM-" + String(appKey.prefix(8)))
         }
         return ids

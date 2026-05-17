@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ClaudeSettingsView: View {
-    @AppStorage("Screener.claudeEnabled") private var claudeEnabled = false
+    @AppStorage(UserDefaultsKey.screenerClaudeEnabled) private var claudeEnabled = false
     @State private var apiKeyInput = ""
     @State private var isConfigured = false
 
@@ -22,7 +22,7 @@ struct ClaudeSettingsView: View {
                             .font(.subheadline).foregroundStyle(.secondary)
                         Spacer()
                         Button("삭제", role: .destructive) {
-                            KeychainHelper.delete(account: "anthropic.apiKey")
+                            KeychainHelper.delete(account: KeychainKey.anthropicApiKey)
                             isConfigured = false
                         }
                         .buttonStyle(.borderless).foregroundStyle(.red).font(.caption)
@@ -35,7 +35,7 @@ struct ClaudeSettingsView: View {
                         Button("저장") {
                             let key = apiKeyInput.trimmingCharacters(in: .whitespaces)
                             guard !key.isEmpty else { return }
-                            KeychainHelper.save(key, account: "anthropic.apiKey")
+                            KeychainHelper.save(key, account: KeychainKey.anthropicApiKey)
                             isConfigured = true
                             apiKeyInput = ""
                         }
@@ -51,7 +51,7 @@ struct ClaudeSettingsView: View {
             }
         }
         .onAppear {
-            isConfigured = !(KeychainHelper.load(account: "anthropic.apiKey") ?? "").isEmpty
+            isConfigured = !(KeychainHelper.load(account: KeychainKey.anthropicApiKey) ?? "").isEmpty
         }
     }
 }

@@ -29,30 +29,30 @@ final class SnapshotManager {
     // MARK: - Settings (UserDefaults)
 
     var marketHoursOnly: Bool {
-        get { UserDefaults.standard.object(forKey: "Snapshot.marketHoursOnly") as? Bool ?? true }
-        set { UserDefaults.standard.set(newValue, forKey: "Snapshot.marketHoursOnly") }
+        get { UserDefaults.standard.object(forKey: UserDefaultsKey.snapshotMarketHours) as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: UserDefaultsKey.snapshotMarketHours) }
     }
 
     var customRanges: [SnapshotTimeRange] {
         get {
-            guard let data = UserDefaults.standard.data(forKey: "Snapshot.customRanges"),
+            guard let data = UserDefaults.standard.data(forKey: UserDefaultsKey.snapshotCustomRanges),
                   let ranges = try? JSONDecoder().decode([SnapshotTimeRange].self, from: data)
             else { return [] }
             return ranges
         }
         set {
             let data = try? JSONEncoder().encode(newValue)
-            UserDefaults.standard.set(data, forKey: "Snapshot.customRanges")
+            UserDefaults.standard.set(data, forKey: UserDefaultsKey.snapshotCustomRanges)
         }
     }
 
     // -1 = 무제한, 0 = 미설정(기본값 365일 적용), 양수 = 보존 일수
     var keepDays: Int {
         get {
-            let v = UserDefaults.standard.integer(forKey: "Snapshot.keepDays")
+            let v = UserDefaults.standard.integer(forKey: UserDefaultsKey.snapshotKeepDays)
             return v == 0 ? 365 : v  // 미설정(0) → 기본 365일
         }
-        set { UserDefaults.standard.set(newValue, forKey: "Snapshot.keepDays") }
+        set { UserDefaults.standard.set(newValue, forKey: UserDefaultsKey.snapshotKeepDays) }
     }
 
     // MARK: - Lifecycle

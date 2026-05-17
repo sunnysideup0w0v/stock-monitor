@@ -47,7 +47,7 @@ struct DARTSettingsView: View {
                 Text("공시 알림 활성화됨").font(.subheadline).foregroundStyle(.secondary)
                 Spacer()
                 Button("삭제", role: .destructive) {
-                    KeychainHelper.delete(account: "dart.apiKey")
+                    KeychainHelper.delete(account: KeychainKey.dartApiKey)
                     DARTManager.shared.stop()
                     isConfigured = false
                 }
@@ -96,7 +96,7 @@ struct DARTSettingsView: View {
         let key = apiKeyInput.trimmingCharacters(in: .whitespaces)
         guard !key.isEmpty else { return }
         isSaving = true
-        KeychainHelper.save(key, account: "dart.apiKey")
+        KeychainHelper.save(key, account: KeychainKey.dartApiKey)
         let symbols = (try? DatabaseManager.shared.fetchWatchlist().map { $0.symbol }) ?? []
         DARTManager.shared.start(symbols: symbols)
         apiKeyInput = ""
@@ -105,15 +105,15 @@ struct DARTSettingsView: View {
     }
 
     private func loadFilterTypes() {
-        let saved = UserDefaults.standard.stringArray(forKey: "DART.filterTypes") ?? []
+        let saved = UserDefaults.standard.stringArray(forKey: UserDefaultsKey.dartFilterTypes) ?? []
         enabledTypes = saved.isEmpty ? Self.allCodes : Set(saved)
     }
 
     private func saveFilterTypes() {
         if enabledTypes == Self.allCodes {
-            UserDefaults.standard.removeObject(forKey: "DART.filterTypes")
+            UserDefaults.standard.removeObject(forKey: UserDefaultsKey.dartFilterTypes)
         } else {
-            UserDefaults.standard.set(Array(enabledTypes), forKey: "DART.filterTypes")
+            UserDefaults.standard.set(Array(enabledTypes), forKey: UserDefaultsKey.dartFilterTypes)
         }
     }
 }

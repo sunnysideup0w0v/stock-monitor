@@ -20,12 +20,12 @@ final class BrokerSessionManager: ObservableObject {
 
     func loginKIS(appKey: String, appSecret: String, accountNumber: String, isMock: Bool) {
         let accountId = "KIS-" + String(appKey.prefix(8))
-        KeychainHelper.save(appKey, account: "kis.appKey")
-        KeychainHelper.save(appSecret, account: "kis.appSecret")
-        KeychainHelper.save(accountNumber, account: "kis.accountNumber")
-        UserDefaults.standard.set(isMock, forKey: "KIS.isMock")
+        KeychainHelper.save(appKey, account: KeychainKey.kisAppKey)
+        KeychainHelper.save(appSecret, account: KeychainKey.kisAppSecret)
+        KeychainHelper.save(accountNumber, account: KeychainKey.kisAccountNumber)
+        UserDefaults.standard.set(isMock, forKey: UserDefaultsKey.kisMock)
         let now = Date()
-        UserDefaults.standard.set(now, forKey: "KIS.loginDate")
+        UserDefaults.standard.set(now, forKey: UserDefaultsKey.kisLoginDate)
         try? DatabaseManager.shared.assignAccountIdToOrphanedItems(accountId: accountId)
 
         let creds = BrokerCredentials(
@@ -48,11 +48,11 @@ final class BrokerSessionManager: ObservableObject {
     }
 
     func logoutKIS() {
-        let accountId = "KIS-" + String((KeychainHelper.load(account: "kis.appKey") ?? "").prefix(8))
-        KeychainHelper.delete(account: "kis.appKey")
-        KeychainHelper.delete(account: "kis.appSecret")
-        KeychainHelper.delete(account: "kis.accountNumber")
-        UserDefaults.standard.removeObject(forKey: "KIS.loginDate")
+        let accountId = "KIS-" + String((KeychainHelper.load(account: KeychainKey.kisAppKey) ?? "").prefix(8))
+        KeychainHelper.delete(account: KeychainKey.kisAppKey)
+        KeychainHelper.delete(account: KeychainKey.kisAppSecret)
+        KeychainHelper.delete(account: KeychainKey.kisAccountNumber)
+        UserDefaults.standard.removeObject(forKey: UserDefaultsKey.kisLoginDate)
         QuoteManager.shared.stopRealtime()
         QuoteManager.shared.removeAdapter(id: accountId)
         BrokerRegistry.shared.unregister(brokerName: "한국투자증권")
@@ -76,11 +76,11 @@ final class BrokerSessionManager: ObservableObject {
 
     func loginKiwoom(appKey: String, appSecret: String, accountNumber: String) {
         let accountId = "KIWOOM-" + String(appKey.prefix(8))
-        KeychainHelper.save(appKey, account: "kiwoom.appKey")
-        KeychainHelper.save(appSecret, account: "kiwoom.appSecret")
-        KeychainHelper.save(accountNumber, account: "kiwoom.accountNumber")
+        KeychainHelper.save(appKey, account: KeychainKey.kiwoomAppKey)
+        KeychainHelper.save(appSecret, account: KeychainKey.kiwoomAppSecret)
+        KeychainHelper.save(accountNumber, account: KeychainKey.kiwoomAccountNumber)
         let now = Date()
-        UserDefaults.standard.set(now, forKey: "Kiwoom.loginDate")
+        UserDefaults.standard.set(now, forKey: UserDefaultsKey.kiwoomLoginDate)
         try? DatabaseManager.shared.assignAccountIdToOrphanedItems(accountId: accountId)
 
         let creds = BrokerCredentials(
@@ -101,11 +101,11 @@ final class BrokerSessionManager: ObservableObject {
     }
 
     func logoutKiwoom() {
-        let accountId = "KIWOOM-" + String((KeychainHelper.load(account: "kiwoom.appKey") ?? "").prefix(8))
-        KeychainHelper.delete(account: "kiwoom.appKey")
-        KeychainHelper.delete(account: "kiwoom.appSecret")
-        KeychainHelper.delete(account: "kiwoom.accountNumber")
-        UserDefaults.standard.removeObject(forKey: "Kiwoom.loginDate")
+        let accountId = "KIWOOM-" + String((KeychainHelper.load(account: KeychainKey.kiwoomAppKey) ?? "").prefix(8))
+        KeychainHelper.delete(account: KeychainKey.kiwoomAppKey)
+        KeychainHelper.delete(account: KeychainKey.kiwoomAppSecret)
+        KeychainHelper.delete(account: KeychainKey.kiwoomAccountNumber)
+        UserDefaults.standard.removeObject(forKey: UserDefaultsKey.kiwoomLoginDate)
         QuoteManager.shared.removeAdapter(id: accountId)
         BrokerRegistry.shared.unregister(brokerName: "키움증권")
 
@@ -129,11 +129,11 @@ final class BrokerSessionManager: ObservableObject {
     func restoreAllSessions() {
         var hasRealAdapter = false
 
-        if let appKey = KeychainHelper.load(account: "kis.appKey"),
-           let appSecret = KeychainHelper.load(account: "kis.appSecret"),
+        if let appKey = KeychainHelper.load(account: KeychainKey.kisAppKey),
+           let appSecret = KeychainHelper.load(account: KeychainKey.kisAppSecret),
            !appKey.isEmpty, !appSecret.isEmpty {
-            let isMock = UserDefaults.standard.bool(forKey: "KIS.isMock")
-            let accountNumber = KeychainHelper.load(account: "kis.accountNumber")
+            let isMock = UserDefaults.standard.bool(forKey: UserDefaultsKey.kisMock)
+            let accountNumber = KeychainHelper.load(account: KeychainKey.kisAccountNumber)
             let creds = BrokerCredentials(appKey: appKey, appSecret: appSecret, accountNumber: accountNumber)
             let adapter = KISAdapter(isMock: isMock)
             let accountId = "KIS-" + String(appKey.prefix(8))
@@ -147,10 +147,10 @@ final class BrokerSessionManager: ObservableObject {
             hasRealAdapter = true
         }
 
-        if let appKey = KeychainHelper.load(account: "kiwoom.appKey"),
-           let appSecret = KeychainHelper.load(account: "kiwoom.appSecret"),
+        if let appKey = KeychainHelper.load(account: KeychainKey.kiwoomAppKey),
+           let appSecret = KeychainHelper.load(account: KeychainKey.kiwoomAppSecret),
            !appKey.isEmpty, !appSecret.isEmpty {
-            let accountNumber = KeychainHelper.load(account: "kiwoom.accountNumber")
+            let accountNumber = KeychainHelper.load(account: KeychainKey.kiwoomAccountNumber)
             let creds = BrokerCredentials(appKey: appKey, appSecret: appSecret, accountNumber: accountNumber)
             let adapter = KiwoomAdapter()
             let accountId = "KIWOOM-" + String(appKey.prefix(8))
@@ -173,13 +173,13 @@ final class BrokerSessionManager: ObservableObject {
     // MARK: - UI 상태 동기화
 
     func loadState() {
-        isKISConnected = !(KeychainHelper.load(account: "kis.appKey") ?? "").isEmpty
-        kisSavedAccountNumber = KeychainHelper.load(account: "kis.accountNumber") ?? ""
-        kisSavedIsMock = UserDefaults.standard.bool(forKey: "KIS.isMock")
-        kisLoginDate = UserDefaults.standard.object(forKey: "KIS.loginDate") as? Date
+        isKISConnected = !(KeychainHelper.load(account: KeychainKey.kisAppKey) ?? "").isEmpty
+        kisSavedAccountNumber = KeychainHelper.load(account: KeychainKey.kisAccountNumber) ?? ""
+        kisSavedIsMock = UserDefaults.standard.bool(forKey: UserDefaultsKey.kisMock)
+        kisLoginDate = UserDefaults.standard.object(forKey: UserDefaultsKey.kisLoginDate) as? Date
 
-        isKiwoomConnected = !(KeychainHelper.load(account: "kiwoom.appKey") ?? "").isEmpty
-        kiwoomSavedAccountNumber = KeychainHelper.load(account: "kiwoom.accountNumber") ?? ""
-        kiwoomLoginDate = UserDefaults.standard.object(forKey: "Kiwoom.loginDate") as? Date
+        isKiwoomConnected = !(KeychainHelper.load(account: KeychainKey.kiwoomAppKey) ?? "").isEmpty
+        kiwoomSavedAccountNumber = KeychainHelper.load(account: KeychainKey.kiwoomAccountNumber) ?? ""
+        kiwoomLoginDate = UserDefaults.standard.object(forKey: UserDefaultsKey.kiwoomLoginDate) as? Date
     }
 }

@@ -21,8 +21,8 @@ final class QuoteManager: ObservableObject {
     private var disconnectNotified = false
 
     static var disconnectAlertEnabled: Bool {
-        get { UserDefaults.standard.object(forKey: "QuoteManager.disconnectAlert") as? Bool ?? true }
-        set { UserDefaults.standard.set(newValue, forKey: "QuoteManager.disconnectAlert") }
+        get { UserDefaults.standard.object(forKey: UserDefaultsKey.disconnectAlert) as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: UserDefaultsKey.disconnectAlert) }
     }
 
     private init() {}
