@@ -137,6 +137,21 @@ AppDelegate (NSApplicationDelegate, @MainActor)
 6. 자산 차트 (AssetChartView — Swift Charts 기반)
 7. 종목 검색 (ScreenerView — 조건 스크리너 + Claude AI 분석)
 
+## Git / GitHub 워크플로우 규칙
+
+로컬 작업과 원격 작업을 도구별로 구분해서 사용한다.
+
+| 작업 | 명령 |
+|------|------|
+| 스테이징·커밋·로그·diff | `git add`, `git commit`, `git log`, `git diff` |
+| 원격 push | `git push` (`gh` HTTPS 인증을 자동으로 활용) |
+| PR 생성·조회·병합 | `gh pr create`, `gh pr list`, `gh pr merge` |
+| 이슈·릴리스 관리 | `gh issue`, `gh release` |
+| 원격 저장소 정보 조회 | `gh repo view` |
+
+- `gh auth status`로 인증 상태를 확인할 수 있다
+- 원격: `https://github.com/sunnysideup0w0v/stock-monitor.git` (main 브랜치)
+
 ## 커밋 규칙
 
 작업 중 아래 시점에 맞춰 자동으로 `git commit`을 남긴다. 별도 요청 없이도 해당 시점이 되면 커밋한다.
