@@ -1,8 +1,6 @@
 import Foundation
 
-/// 미래에셋증권 Open API 어댑터 (Stub — 추후 실 API 구현 예정)
-///
-/// 미래에셋증권 Open Trading Platform (https://openapi.miraeasset.com)
+#warning("미래에셋 어댑터 미구현 — 구현 계획 확정 전까지 stub 유지")
 actor MiraeAssetAdapter: BrokerAdapter {
     nonisolated let brokerName = "미래에셋증권"
 
@@ -32,10 +30,6 @@ actor MiraeAssetAdapter: BrokerAdapter {
 
     func fetchPortfolio() async throws -> [PortfolioItem] {
         throw BrokerError.apiError("미래에셋증권 잔고조회는 아직 구현 중입니다.")
-    }
-
-    func fetchNews(symbol: String) async throws -> [NewsItem] {
-        return []
     }
 
     func fetchDailyVolumes(symbol: String, days: Int) async throws -> [Int] {

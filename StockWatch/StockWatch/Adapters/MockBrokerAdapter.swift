@@ -44,10 +44,6 @@ final class MockBrokerAdapter: BrokerAdapter {
         return []
     }
 
-    func fetchNews(symbol: String) async throws -> [NewsItem] {
-        return []
-    }
-
     func fetchDailyVolumes(symbol: String, days: Int) async throws -> [Int] {
         // 테스트용: 종목당 고정 평균 1,000,000주 반환
         // Mock fetchQuote가 최대 10,000,000까지 반환하므로 threshold=3.0 이상에서 트리거 가능

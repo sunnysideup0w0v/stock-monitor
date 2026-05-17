@@ -6,13 +6,6 @@ struct BrokerCredentials: Sendable {
     let accountNumber: String?
 }
 
-struct NewsItem: Sendable {
-    let title: String
-    let summary: String
-    let publishedAt: Date
-    let url: String?
-}
-
 enum BrokerError: Error, Sendable {
     case notConnected
     case symbolNotFound(String)
@@ -41,7 +34,6 @@ protocol BrokerAdapter: Sendable {
     func disconnect() async
     func fetchQuote(symbol: String) async throws -> StockQuote
     func fetchPortfolio() async throws -> [PortfolioItem]
-    func fetchNews(symbol: String) async throws -> [NewsItem]
     /// 최근 N 영업일의 일별 거래량을 최신순으로 반환
     func fetchDailyVolumes(symbol: String, days: Int) async throws -> [Int]
 }

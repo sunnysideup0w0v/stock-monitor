@@ -120,8 +120,6 @@ actor KiwoomAdapter: BrokerAdapter {
         }
     }
 
-    func fetchNews(symbol: String) async throws -> [NewsItem] { return [] }
-
     func fetchDailyVolumes(symbol: String, days: Int) async throws -> [Int] {
         // TODO: 키움 일별시세 TR 코드 확인 후 구현
         return []

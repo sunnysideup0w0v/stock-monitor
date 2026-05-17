@@ -152,14 +152,14 @@ DB 쿼리(`fetchWatchlist`, `fetchPortfolio`), View의 `onAppear`, 필터 계산
 
 ## R9 — 미구현 Stub 코드 정리
 
-- [ ] `MiraeAssetAdapter.swift` — 모든 메서드가 에러 throw만 하는 stub
+- [x] `MiraeAssetAdapter.swift` — 모든 메서드가 에러 throw만 하는 stub
   - `AccountSettingsView.BrokerSelection.miraeAsset` 케이스도 "준비 중" UI만 표시
   - 파일은 유지하되 `#warning("미래에셋 어댑터 미구현")` 추가, UI 케이스도 동일
   - 구현 계획이 없으면 파일 자체 삭제 검토
-- [ ] `BrokerAdapter.fetchNews(symbol:)` — KIS, Kiwoom 모두 `[]` 반환하는 stub
+- [x] `BrokerAdapter.fetchNews(symbol:)` — KIS, Kiwoom 모두 `[]` 반환하는 stub
   - 사용처가 없으면 프로토콜에서 제거
-- [ ] `ClaudeAnalyzer.swift` — `claude-sonnet-4-5` 모델명 하드코딩
-  → `Constants.claudeModel = "claude-sonnet-4-6"` 상수로 추출 (현재 최신 버전으로 업데이트)
+- [x] `ClaudeAnalyzer.swift` — `claude-sonnet-4-5` 모델명 하드코딩
+  → `private static let claudeModel = "claude-sonnet-4-6"` 상수로 추출 (현재 최신 버전으로 업데이트)
 
 ---
 

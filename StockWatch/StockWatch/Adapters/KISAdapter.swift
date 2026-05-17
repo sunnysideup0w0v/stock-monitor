@@ -179,10 +179,6 @@ actor KISAdapter: BrokerAdapter {
         }
     }
 
-    func fetchNews(symbol: String) async throws -> [NewsItem] {
-        return []
-    }
-
     func fetchDailyVolumes(symbol: String, days: Int) async throws -> [Int] {
         let token = try await validToken()
         guard let creds = credentials else { throw BrokerError.notConnected }

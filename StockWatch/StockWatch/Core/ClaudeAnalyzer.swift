@@ -4,6 +4,7 @@ actor ClaudeAnalyzer {
     static let shared = ClaudeAnalyzer()
     private init() {}
 
+    private static let claudeModel = "claude-sonnet-4-6"
     private let endpoint = URL(string: "https://api.anthropic.com/v1/messages")!
 
     func analyze(
@@ -115,7 +116,7 @@ actor ClaudeAnalyzer {
 
     private func buildRequestBody(prompt: String) throws -> Data {
         let body: [String: Any] = [
-            "model": "claude-sonnet-4-5",
+            "model": ClaudeAnalyzer.claudeModel,
             "max_tokens": 2048,
             "stream": true,
             "messages": [["role": "user", "content": prompt]]
