@@ -57,16 +57,16 @@ xcodebuild test -scheme StockWatch -destination 'platform=macOS' \
 현재 `login()`, `logout()`, `kiwoomLogin()`, `kiwoomLogout()` 메서드 안에  
 Keychain 쓰기 · 어댑터 생성 · QuoteManager 호출이 뒤섞여 있다.
 
-- [ ] `BrokerSessionManager.swift` (또는 `@MainActor final class`) 신규 작성
+- [x] `BrokerSessionManager.swift` (또는 `@MainActor final class`) 신규 작성
   - `loginKIS(appKey:appSecret:accountNumber:isMock:)` — Keychain 저장, 어댑터 생성, addAdapter, BrokerRegistry 등록
   - `logoutKIS()` — Keychain 삭제, removeAdapter, BrokerRegistry 해제
   - `loginKiwoom(appKey:appSecret:accountNumber:)` / `logoutKiwoom()`
   - `testConnectionKIS(...)` / `testConnectionKiwoom(...)`
-- [ ] `AppDelegate.setupAdapter()` → `BrokerSessionManager.restoreAllSessions()` 위임으로 교체
+- [x] `AppDelegate.setupAdapter()` → `BrokerSessionManager.restoreAllSessions()` 위임으로 교체
   - 두 파일에 중복된 어댑터 초기화 로직을 단일 진실 공급원으로 통합
-- [ ] `AccountSettingsView`는 `BrokerSessionManager`를 ObservableObject로 관찰, UI 상태만 보유
-- [ ] 기존 `login()` / `kiwoomLogin()` 로직 완전히 제거하고 위임 호출로 교체
-- [ ] 빌드 + 유닛 테스트 통과 확인
+- [x] `AccountSettingsView`는 `BrokerSessionManager`를 ObservableObject로 관찰, UI 상태만 보유
+- [x] 기존 `login()` / `kiwoomLogin()` 로직 완전히 제거하고 위임 호출로 교체
+- [x] 빌드 + 유닛 테스트 통과 확인
 
 ---
 

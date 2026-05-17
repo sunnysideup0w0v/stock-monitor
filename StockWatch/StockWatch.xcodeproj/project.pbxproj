@@ -37,6 +37,7 @@
 		687F91821C4C630BA708C4A0 /* MenuBarPopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14A3725923C78C18CCFFECD6 /* MenuBarPopoverView.swift */; };
 		68A053190EE46F1D1EBCAA6F /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C98C3F9477E7B17A8E9D72F0 /* NotificationManager.swift */; };
 		6DFAF541B90C1083B5B2C888 /* DARTManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA4EE76E88F846A8FB9E2C8 /* DARTManager.swift */; };
+		719D37B11AAC437EF1F1F00E /* BrokerSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 409AFB9E7CADA2E56BEDA9C8 /* BrokerSessionManager.swift */; };
 		735F9C5A8E2FB9F13FF698F2 /* StockQuoteTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 713FCE641DED6E48FFF016F5 /* StockQuoteTests.swift */; };
 		74A2E886B82508C5D7E02DCA /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC7646622AD611A41C94A421 /* AppDelegate.swift */; };
 		7ED9AE857C8A1EE7F0B46043 /* StockQuote.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58693606248BA2082C34DD2C /* StockQuote.swift */; };
@@ -104,6 +105,7 @@
 		32ACEFDE6676F785B24819F2 /* StockUniverseItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockUniverseItem.swift; sourceTree = "<group>"; };
 		3CA6753273E034494E5C9BFE /* AlertHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertHistory.swift; sourceTree = "<group>"; };
 		3D30D3FB5A44BE8ADDC9ECA2 /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
+		409AFB9E7CADA2E56BEDA9C8 /* BrokerSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrokerSessionManager.swift; sourceTree = "<group>"; };
 		454863BF153C297039535D2A /* KISAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KISAdapter.swift; sourceTree = "<group>"; };
 		485F5E3B2F81922FF587857A /* AlertEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertEvaluator.swift; sourceTree = "<group>"; };
 		486A17A19D8C469CF9B7C580 /* WatchlistSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistSettingsView.swift; sourceTree = "<group>"; };
@@ -235,6 +237,7 @@
 				96023ABC9674B6FD06210FF9 /* APILogger.swift */,
 				3D30D3FB5A44BE8ADDC9ECA2 /* AppLogger.swift */,
 				A21A4E16C58943E49ACCFC79 /* BackupManager.swift */,
+				409AFB9E7CADA2E56BEDA9C8 /* BrokerSessionManager.swift */,
 				99A0AEAF32224F79E899675E /* ClaudeAnalyzer.swift */,
 				6082E6170C01C27465D4829F /* CrashLogger.swift */,
 				1DA4EE76E88F846A8FB9E2C8 /* DARTManager.swift */,
@@ -523,6 +526,7 @@
 				E27457020673252EEBC0D7AC /* BackupManager.swift in Sources */,
 				9895C317774C9E7C480E7D6A /* BrokerAdapter.swift in Sources */,
 				1BA2239BCF2C3CC0B54F8CC0 /* BrokerRegistry.swift in Sources */,
+				719D37B11AAC437EF1F1F00E /* BrokerSessionManager.swift in Sources */,
 				B5855FE030A686AF05682334 /* ClaudeAnalyzer.swift in Sources */,
 				8DA71518B94C85A1B2F67CE3 /* ClaudeSettingsView.swift in Sources */,
 				AB8B3DEC935F08EB6EF096A1 /* CrashLogger.swift in Sources */,

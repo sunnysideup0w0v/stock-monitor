@@ -22,7 +22,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         CrashLogger.install()
         setupStatusBar()
         NotificationManager.shared.requestAuthorization()
-        setupAdapter()
+        BrokerSessionManager.shared.restoreAllSessions()
         startPollingFromDB()
         KRXManager.shared.start()
 
@@ -49,49 +49,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] state in self?.updateStatusBarIcon(state) }
             .store(in: &cancellables)
-    }
-
-    private func setupAdapter() {
-        var hasRealAdapter = false
-
-        if let appKey = KeychainHelper.load(account: "kis.appKey"),
-           let appSecret = KeychainHelper.load(account: "kis.appSecret"),
-           !appKey.isEmpty, !appSecret.isEmpty {
-            let isMock = UserDefaults.standard.bool(forKey: "KIS.isMock")
-            let accountNumber = KeychainHelper.load(account: "kis.accountNumber")
-            let creds = BrokerCredentials(appKey: appKey, appSecret: appSecret, accountNumber: accountNumber)
-            let adapter = KISAdapter(isMock: isMock)
-            let accountId = "KIS-" + String(appKey.prefix(8))
-            QuoteManager.shared.addAdapter(id: accountId, adapter: adapter)
-            try? DatabaseManager.shared.assignAccountIdToOrphanedItems(accountId: accountId)
-            Task {
-                try? await adapter.connect(credentials: creds)
-                await MainActor.run { BrokerRegistry.shared.register(adapter) }
-            }
-            QuoteManager.shared.startRealtime(credentials: creds, isMock: isMock)
-            hasRealAdapter = true
-        }
-
-        if let appKey = KeychainHelper.load(account: "kiwoom.appKey"),
-           let appSecret = KeychainHelper.load(account: "kiwoom.appSecret"),
-           !appKey.isEmpty, !appSecret.isEmpty {
-            let accountNumber = KeychainHelper.load(account: "kiwoom.accountNumber")
-            let creds = BrokerCredentials(appKey: appKey, appSecret: appSecret, accountNumber: accountNumber)
-            let adapter = KiwoomAdapter()
-            let accountId = "KIWOOM-" + String(appKey.prefix(8))
-            QuoteManager.shared.addAdapter(id: accountId, adapter: adapter)
-            try? DatabaseManager.shared.assignAccountIdToOrphanedItems(accountId: accountId)
-            Task {
-                try? await adapter.connect(credentials: creds)
-                await MainActor.run { BrokerRegistry.shared.register(adapter) }
-            }
-            // Kiwoom은 WebSocket 미지원 — REST 폴링만 사용
-            hasRealAdapter = true
-        }
-
-        if !hasRealAdapter {
-            QuoteManager.shared.setAdapter(MockBrokerAdapter())
-        }
     }
 
     // 앱 시작 시 DB의 관심종목 + 포트폴리오 종목으로 폴링·DART 시작 (팝업을 열지 않아도 알림이 동작)

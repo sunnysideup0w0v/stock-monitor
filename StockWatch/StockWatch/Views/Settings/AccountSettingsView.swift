@@ -2,25 +2,20 @@ import SwiftUI
 import ServiceManagement
 
 struct AccountSettingsView: View {
+    @ObservedObject private var session = BrokerSessionManager.shared
+
     @State private var selectedBroker: BrokerSelection = .kis
 
-    // KIS 상태
+    // KIS 입력 폼
     @State private var appKey = ""
     @State private var appSecret = ""
     @State private var accountNumber = ""
     @State private var isMock = false
-    @State private var isLoggedIn = false
-    @State private var loginDate: Date? = nil
-    @State private var savedAccountNumber = ""
-    @State private var savedIsMock = false
 
-    // 키움 상태
+    // 키움 입력 폼
     @State private var kiwoomAppKey = ""
     @State private var kiwoomAppSecret = ""
     @State private var kiwoomAccountNumber = ""
-    @State private var isKiwoomLoggedIn = false
-    @State private var kiwoomLoginDate: Date? = nil
-    @State private var savedKiwoomAccountNumber = ""
 
     @State private var testStatus: TestStatus = .idle
     @State private var launchAtLogin: Bool = (SMAppService.mainApp.status == .enabled)
@@ -59,9 +54,9 @@ struct AccountSettingsView: View {
                     Divider()
                     switch selectedBroker {
                     case .kis:
-                        if isLoggedIn { loggedInView } else { loginFormView }
+                        if session.isKISConnected { loggedInView } else { loginFormView }
                     case .kiwoom:
-                        if isKiwoomLoggedIn { kiwoomLoggedInView } else { kiwoomLoginFormView }
+                        if session.isKiwoomConnected { kiwoomLoggedInView } else { kiwoomLoginFormView }
                     case .miraeAsset:
                         comingSoonView
                     }
@@ -75,7 +70,7 @@ struct AccountSettingsView: View {
                 .dismissFocusOnTap()
             }
         }
-        .onAppear { loadState() }
+        .onAppear { loadInitialBrokerTab() }
     }
 
     // MARK: - 브로커 선택
@@ -88,8 +83,8 @@ struct AccountSettingsView: View {
                 ForEach(BrokerSelection.allCases, id: \.self) { broker in
                     let connected: Bool = {
                         switch broker {
-                        case .kis:        return isLoggedIn
-                        case .kiwoom:     return isKiwoomLoggedIn
+                        case .kis:        return session.isKISConnected
+                        case .kiwoom:     return session.isKiwoomConnected
                         case .miraeAsset: return false
                         }
                     }()
@@ -116,7 +111,7 @@ struct AccountSettingsView: View {
             Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 10) {
                 GridRow {
                     Text("계좌번호").foregroundStyle(.secondary).gridColumnAlignment(.trailing)
-                    Text(savedKiwoomAccountNumber.isEmpty ? "미입력" : savedKiwoomAccountNumber)
+                    Text(session.kiwoomSavedAccountNumber.isEmpty ? "미입력" : session.kiwoomSavedAccountNumber)
                         .fontDesign(.monospaced)
                 }
                 GridRow {
@@ -124,7 +119,7 @@ struct AccountSettingsView: View {
                     Text(maskedKey(KeychainHelper.load(account: "kiwoom.appKey") ?? ""))
                         .fontDesign(.monospaced).foregroundStyle(.secondary)
                 }
-                if let date = kiwoomLoginDate {
+                if let date = session.kiwoomLoginDate {
                     GridRow {
                         Text("로그인 시각").foregroundStyle(.secondary).gridColumnAlignment(.trailing)
                         Text(date, style: .date) + Text(" ") + Text(date, style: .time)
@@ -134,7 +129,10 @@ struct AccountSettingsView: View {
             .font(.body)
             Divider()
             HStack {
-                Button("로그아웃", role: .destructive) { kiwoomLogout() }
+                Button("로그아웃", role: .destructive) {
+                    withAnimation { session.logoutKiwoom() }
+                    testStatus = .idle
+                }
                 Spacer()
             }
         }
@@ -224,7 +222,7 @@ struct AccountSettingsView: View {
                 Circle().fill(.green).frame(width: 10, height: 10)
                 Text("연결됨").font(.headline).foregroundStyle(.green)
                 Text("·")
-                Text(savedIsMock ? "모의투자" : "실전투자")
+                Text(session.kisSavedIsMock ? "모의투자" : "실전투자")
                     .font(.subheadline).foregroundStyle(.secondary)
             }
 
@@ -233,7 +231,7 @@ struct AccountSettingsView: View {
             Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 10) {
                 GridRow {
                     Text("계좌번호").foregroundStyle(.secondary).gridColumnAlignment(.trailing)
-                    Text(savedAccountNumber.isEmpty ? "미입력" : savedAccountNumber)
+                    Text(session.kisSavedAccountNumber.isEmpty ? "미입력" : session.kisSavedAccountNumber)
                         .fontDesign(.monospaced)
                 }
                 GridRow {
@@ -241,7 +239,7 @@ struct AccountSettingsView: View {
                     Text(maskedKey(KeychainHelper.load(account: "kis.appKey") ?? ""))
                         .fontDesign(.monospaced).foregroundStyle(.secondary)
                 }
-                if let date = loginDate {
+                if let date = session.kisLoginDate {
                     GridRow {
                         Text("로그인 시각").foregroundStyle(.secondary).gridColumnAlignment(.trailing)
                         Text(date, style: .date) + Text(" ") + Text(date, style: .time)
@@ -253,7 +251,10 @@ struct AccountSettingsView: View {
             Divider()
 
             HStack {
-                Button("로그아웃", role: .destructive) { logout() }
+                Button("로그아웃", role: .destructive) {
+                    withAnimation { session.logoutKIS() }
+                    testStatus = .idle
+                }
                 Spacer()
             }
         }
@@ -304,119 +305,31 @@ struct AccountSettingsView: View {
 
     // MARK: - Actions
 
-    private func loadState() {
-        isLoggedIn = !(KeychainHelper.load(account: "kis.appKey") ?? "").isEmpty
-        savedAccountNumber = KeychainHelper.load(account: "kis.accountNumber") ?? ""
-        savedIsMock = UserDefaults.standard.bool(forKey: "KIS.isMock")
-        loginDate = UserDefaults.standard.object(forKey: "KIS.loginDate") as? Date
-
-        isKiwoomLoggedIn = !(KeychainHelper.load(account: "kiwoom.appKey") ?? "").isEmpty
-        savedKiwoomAccountNumber = KeychainHelper.load(account: "kiwoom.accountNumber") ?? ""
-        kiwoomLoginDate = UserDefaults.standard.object(forKey: "Kiwoom.loginDate") as? Date
-
-        if !isLoggedIn && isKiwoomLoggedIn { selectedBroker = .kiwoom }
+    private func loadInitialBrokerTab() {
+        session.loadState()
+        if !session.isKISConnected && session.isKiwoomConnected { selectedBroker = .kiwoom }
         else { selectedBroker = .kis }
     }
 
     private func login() {
-        let accountId = "KIS-" + String(appKey.prefix(8))
-        KeychainHelper.save(appKey, account: "kis.appKey")
-        KeychainHelper.save(appSecret, account: "kis.appSecret")
-        KeychainHelper.save(accountNumber, account: "kis.accountNumber")
-        UserDefaults.standard.set(isMock, forKey: "KIS.isMock")
-        let now = Date()
-        UserDefaults.standard.set(now, forKey: "KIS.loginDate")
-        try? DatabaseManager.shared.assignAccountIdToOrphanedItems(accountId: accountId)
-
-        let creds = BrokerCredentials(
-            appKey: appKey,
-            appSecret: appSecret,
-            accountNumber: accountNumber.isEmpty ? nil : accountNumber
-        )
-        let adapter = KISAdapter(isMock: isMock)
-        QuoteManager.shared.addAdapter(id: accountId, adapter: adapter)
-        Task {
-            try? await adapter.connect(credentials: creds)
-            await MainActor.run { BrokerRegistry.shared.register(adapter) }
-        }
-        QuoteManager.shared.startRealtime(credentials: creds, isMock: isMock)
-
-        withAnimation {
-            savedAccountNumber = accountNumber
-            savedIsMock = isMock
-            loginDate = now
-            isLoggedIn = true
-            appKey = ""; appSecret = ""; accountNumber = ""
-        }
+        session.loginKIS(appKey: appKey, appSecret: appSecret, accountNumber: accountNumber, isMock: isMock)
+        withAnimation { appKey = ""; appSecret = ""; accountNumber = "" }
     }
-
-    private func logout() {
-        let accountId = "KIS-" + String((KeychainHelper.load(account: "kis.appKey") ?? "").prefix(8))
-        KeychainHelper.delete(account: "kis.appKey")
-        KeychainHelper.delete(account: "kis.appSecret")
-        KeychainHelper.delete(account: "kis.accountNumber")
-        UserDefaults.standard.removeObject(forKey: "KIS.loginDate")
-        QuoteManager.shared.stopRealtime()
-        QuoteManager.shared.removeAdapter(id: accountId)
-        BrokerRegistry.shared.unregister(brokerName: "한국투자증권")
-        withAnimation { isLoggedIn = false; loginDate = nil; testStatus = .idle }
-    }
-
-    // MARK: - 키움 Actions
 
     private func kiwoomLogin() {
-        let accountId = "KIWOOM-" + String(kiwoomAppKey.prefix(8))
-        KeychainHelper.save(kiwoomAppKey, account: "kiwoom.appKey")
-        KeychainHelper.save(kiwoomAppSecret, account: "kiwoom.appSecret")
-        KeychainHelper.save(kiwoomAccountNumber, account: "kiwoom.accountNumber")
-        let now = Date()
-        UserDefaults.standard.set(now, forKey: "Kiwoom.loginDate")
-        try? DatabaseManager.shared.assignAccountIdToOrphanedItems(accountId: accountId)
-
-        let creds = BrokerCredentials(
-            appKey: kiwoomAppKey,
-            appSecret: kiwoomAppSecret,
-            accountNumber: kiwoomAccountNumber.isEmpty ? nil : kiwoomAccountNumber
-        )
-        let adapter = KiwoomAdapter()
-        QuoteManager.shared.addAdapter(id: accountId, adapter: adapter)
-        Task {
-            try? await adapter.connect(credentials: creds)
-            await MainActor.run { BrokerRegistry.shared.register(adapter) }
-        }
-
+        session.loginKiwoom(appKey: kiwoomAppKey, appSecret: kiwoomAppSecret, accountNumber: kiwoomAccountNumber)
         withAnimation {
-            savedKiwoomAccountNumber = kiwoomAccountNumber
-            kiwoomLoginDate = now
-            isKiwoomLoggedIn = true
             kiwoomAppKey = ""; kiwoomAppSecret = ""; kiwoomAccountNumber = ""
             testStatus = .idle
         }
     }
 
-    private func kiwoomLogout() {
-        let accountId = "KIWOOM-" + String((KeychainHelper.load(account: "kiwoom.appKey") ?? "").prefix(8))
-        KeychainHelper.delete(account: "kiwoom.appKey")
-        KeychainHelper.delete(account: "kiwoom.appSecret")
-        KeychainHelper.delete(account: "kiwoom.accountNumber")
-        UserDefaults.standard.removeObject(forKey: "Kiwoom.loginDate")
-        QuoteManager.shared.removeAdapter(id: accountId)
-        BrokerRegistry.shared.unregister(brokerName: "키움증권")
-        withAnimation { isKiwoomLoggedIn = false; kiwoomLoginDate = nil; testStatus = .idle }
-    }
-
-    private func kiwoomTestConnection() {
+    private func testConnection() {
         testStatus = .testing
-        let creds = BrokerCredentials(
-            appKey: kiwoomAppKey,
-            appSecret: kiwoomAppSecret,
-            accountNumber: kiwoomAccountNumber.isEmpty ? nil : kiwoomAccountNumber
-        )
-        let adapter = KiwoomAdapter()
+        let key = appKey, secret = appSecret, acct = accountNumber, mock = isMock
         Task {
             do {
-                try await adapter.connect(credentials: creds)
-                _ = try await adapter.fetchQuote(symbol: "005930")
+                try await session.testConnectionKIS(appKey: key, appSecret: secret, accountNumber: acct, isMock: mock)
                 testStatus = .success
             } catch {
                 testStatus = .failure(error.localizedDescription)
@@ -424,18 +337,12 @@ struct AccountSettingsView: View {
         }
     }
 
-    private func testConnection() {
+    private func kiwoomTestConnection() {
         testStatus = .testing
-        let creds = BrokerCredentials(
-            appKey: appKey,
-            appSecret: appSecret,
-            accountNumber: accountNumber.isEmpty ? nil : accountNumber
-        )
-        let adapter = KISAdapter(isMock: isMock)
+        let key = kiwoomAppKey, secret = kiwoomAppSecret, acct = kiwoomAccountNumber
         Task {
             do {
-                try await adapter.connect(credentials: creds)
-                _ = try await adapter.fetchQuote(symbol: "005930")
+                try await session.testConnectionKiwoom(appKey: key, appSecret: secret, accountNumber: acct)
                 testStatus = .success
             } catch {
                 testStatus = .failure(error.localizedDescription)
