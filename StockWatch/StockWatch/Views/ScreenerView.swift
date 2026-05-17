@@ -12,22 +12,31 @@ struct ScreenerView: View {
     @State private var markets: [String] = []
 
     @AppStorage("Screener.claudeEnabled") private var claudeEnabled = false
+    @AppStorage("Screener.keepOnReopen") private var keepOnReopen = true
     @State private var showAnalysis = false
     @State private var analysisText = ""
     @State private var isAnalyzing = false
     @State private var analysisError: String?
 
     @State private var toastMessage: String?
-    private var toastTask: Task<Void, Never>?
 
     private let conditionsKey = "Screener.savedConditions"
 
     var body: some View {
         SettingsTabContainer(title: "종목 추천") {
-            HStack(alignment: .top, spacing: 16) {
+            HStack(alignment: .top, spacing: 0) {
                 conditionPanel
-                    .frame(width: 280)
+                    .padding(12)
+                    .frame(width: 290)
+                    .background(panelBackground)
+
+                Divider()
+                    .padding(.vertical, 4)
+
                 resultPanel
+                    .padding(12)
+                    .frame(maxWidth: .infinity)
+                    .background(panelBackground)
             }
         }
         .onAppear { loadState() }
@@ -39,6 +48,15 @@ struct ScreenerView: View {
                 isPresented: $showAnalysis
             )
         }
+    }
+
+    private var panelBackground: some View {
+        RoundedRectangle(cornerRadius: 10)
+            .fill(Color.primary.opacity(0.03))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+            )
     }
 
     // MARK: - Condition Panel
@@ -85,6 +103,14 @@ struct ScreenerView: View {
             if let err = errorMessage {
                 Text(err).font(.caption).foregroundStyle(.red)
             }
+
+            Toggle(isOn: $keepOnReopen) {
+                Text("창 재열 시 조건·결과 유지")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .toggleStyle(.checkbox)
+            .controlSize(.small)
 
             Spacer()
         }
@@ -233,7 +259,27 @@ struct ScreenerView: View {
         universeUpdated = try? DatabaseManager.shared.stockUniverseLastUpdated()
         sectors = (try? ScreenerEngine.shared.availableSectors()) ?? []
         markets = (try? ScreenerEngine.shared.availableMarkets()) ?? []
-        loadConditions()
+
+        if keepOnReopen {
+            loadConditions()
+            if !conditions.isEmpty {
+                autoRunScreener()
+            }
+        } else {
+            conditions = []
+            results = []
+            lastRunDate = nil
+        }
+    }
+
+    private func autoRunScreener() {
+        Task {
+            do {
+                let r = try ScreenerEngine.shared.run(conditions: conditions)
+                results = r
+                if !r.isEmpty { lastRunDate = Date() }
+            } catch { }
+        }
     }
 
     private func saveConditions() {
