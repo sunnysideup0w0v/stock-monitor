@@ -31,6 +31,7 @@ struct ScreenerView: View {
                     .background(panelBackground)
 
                 Divider()
+                    .padding(.horizontal, 6)
                     .padding(.vertical, 4)
 
                 resultPanel
@@ -482,6 +483,7 @@ private struct ScreenerResultRowView: View {
                 Image(systemName: added ? "checkmark" : "plus")
                     .font(.caption)
                     .contentTransition(.symbolEffect(.replace))
+                    .padding(.vertical, 2)
             }
             .buttonStyle(.bordered)
             .controlSize(.mini)
