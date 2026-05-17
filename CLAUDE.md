@@ -265,3 +265,22 @@ pkill -x StockWatch 2>/dev/null; sleep 0.5 && open "$(find ~/Library/Developer/X
   - `custtype: P` (개인)
   - `prdy_vrss_sign` 2=상승 3=보합 4=하락 — 부호를 별도 파싱해야 함
 - 403 오류: 토큰 발급 시 일시적으로 발생할 수 있음 (재시도로 해결된 사례 있음)
+
+## 키움증권 REST API 참고
+
+- 포털: https://openapi.kiwoom.com (앱키·시크릿키 발급)
+- 공식 가이드: https://openapi.kiwoom.com/guide/apiguide
+
+| 구분 | REST Base URL | WebSocket URL |
+|------|---------------|----------------|
+| 실전투자 | `https://api.kiwoom.com` | `wss://api.kiwoom.com:10000` |
+| 모의투자 | `https://mockapi.kiwoom.com` | `wss://mockapi.kiwoom.com:10000` |
+
+> 모의투자는 KRX(국내주식) 시장만 지원
+
+- 토큰 발급: `POST /oauth2/token` (API ID: `au10001`) — `appkey` + `secretkey`로 접근토큰 발급
+- 토큰 폐기: `au10002`
+- 현재가 조회: `ka10001` (주식기본정보요청) — `stk_cd` 파라미터로 종목코드 전달
+- 인증 헤더: 발급된 접근토큰을 `Authorization: Bearer <token>` 형식으로 전달
+- 실시간 WebSocket: 19종 구독 타입 (`0B`=주식체결, `0C`=주식우선호가, `0D`=주식호가잔량 등)
+- Keychain 키 (추가 시): `kiwoom.appKey` / `kiwoom.appSecret` / `kiwoom.accountNumber`
