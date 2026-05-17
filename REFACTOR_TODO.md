@@ -5,6 +5,31 @@
 
 ---
 
+## 작업 규칙
+
+### 테스트 사이클 (매 항목 완료 후 필수)
+
+각 R 항목의 마지막 체크박스를 완료한 직후 아래 명령을 실행한다.
+
+```bash
+xcodebuild test -scheme StockWatch -destination 'platform=macOS' \
+  -only-testing:StockWatchTests CODE_SIGNING_ALLOWED=NO 2>&1 \
+  | grep -E "(error:|PASSED|FAILED|Executed [0-9])"
+```
+
+- **통과 시**: 해당 항목 완료로 간주하고 다음 R 항목으로 이동한다.
+- **실패 시**: 아래 루프를 테스트가 전부 통과할 때까지 반복한다.
+  1. 실패 로그에서 오류 원인 파악 (`error:` / `XCTFail` 메시지 분석)
+  2. 원인에 해당하는 소스 파일 수정
+  3. 다시 테스트 실행
+  4. 85개(기준선) 이상 통과 + 0 failures 확인 → 완료
+
+> **절대 실패한 채로 다음 항목으로 넘어가지 않는다.**  
+> 테스트를 삭제하거나 skip 처리해서 통과시키는 것은 허용하지 않는다.  
+> 리팩토링 중 테스트 자체가 잘못됐다고 판단될 경우, 수정 근거를 커밋 메시지에 명시한다.
+
+---
+
 ## R1 — SettingsView.swift 파일 분리 (1818줄 God File)
 
 현재 SettingsView.swift에 12개 View struct가 모두 들어 있다.  
