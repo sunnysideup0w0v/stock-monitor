@@ -452,9 +452,3 @@ struct AssetChartView: View {
         return fmt(v)
     }
 }
-
-private extension NumberFormatter {
-    static let decimal: NumberFormatter = {
-        let f = NumberFormatter(); f.numberStyle = .decimal; return f
-    }()
-}

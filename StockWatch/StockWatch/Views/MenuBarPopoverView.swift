@@ -273,11 +273,3 @@ struct StockRowView: View {
         .padding(.vertical, 3)
     }
 }
-
-private extension NumberFormatter {
-    static let decimal: NumberFormatter = {
-        let f = NumberFormatter()
-        f.numberStyle = .decimal
-        return f
-    }()
-}

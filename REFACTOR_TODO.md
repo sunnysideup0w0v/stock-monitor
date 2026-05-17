@@ -35,20 +35,20 @@ xcodebuild test -scheme StockWatch -destination 'platform=macOS' \
 현재 SettingsView.swift에 12개 View struct가 모두 들어 있다.  
 각 View를 `Views/Settings/` 하위 파일로 분리한다.
 
-- [ ] `Views/Settings/` 디렉토리 생성
-- [ ] `SettingsView.swift` → 탭 컨테이너 역할만 남기고 400줄 이하로 축소
-- [ ] `WatchlistSettingsView.swift` 분리
-- [ ] `PortfolioSettingsView.swift` + `PortfolioImportSheetView.swift` 분리
-- [ ] `AlertSettingsView.swift` 분리
-- [ ] `AlertHistoryView.swift` + `AlertHistoryRowView.swift` 분리
-- [ ] `SnapshotSettingsSection.swift` 분리
-- [ ] `AccountSettingsView.swift` 분리
-- [ ] `DARTSettingsView.swift` 분리
-- [ ] `KRXSettingsView.swift` 분리
-- [ ] `ClaudeSettingsView.swift` 분리
-- [ ] `SettingsComponents.swift` — `SettingsTabContainer`, `SettingsFormSection` 공용 컴포넌트
-- [ ] `NumberFormatter+Decimal.swift` — `NumberFormatter.decimal` extension 공용 파일로 이동
-- [ ] 분리 후 `xcodegen generate` → 빌드 성공 확인
+- [x] `Views/Settings/` 디렉토리 생성
+- [x] `SettingsView.swift` → 탭 컨테이너 역할만 남기고 400줄 이하로 축소
+- [x] `WatchlistSettingsView.swift` 분리
+- [x] `PortfolioSettingsView.swift` + `PortfolioImportSheetView.swift` 분리
+- [x] `AlertSettingsView.swift` 분리
+- [x] `AlertHistoryView.swift` + `AlertHistoryRowView.swift` 분리
+- [x] `SnapshotSettingsSection.swift` 분리
+- [x] `AccountSettingsView.swift` 분리
+- [x] `DARTSettingsView.swift` 분리
+- [x] `KRXSettingsView.swift` 분리
+- [x] `ClaudeSettingsView.swift` 분리
+- [x] `SettingsComponents.swift` — `SettingsTabContainer`, `SettingsFormSection` 공용 컴포넌트
+- [x] `NumberFormatter+Decimal.swift` — `NumberFormatter.decimal` extension 공용 파일로 이동
+- [x] 분리 후 `xcodegen generate` → 빌드 성공 확인
 
 ---
 
