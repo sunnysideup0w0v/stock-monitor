@@ -17,11 +17,11 @@ final class ScreenerEngine: @unchecked Sendable {
     }
 
     func availableSectors() throws -> [String] {
-        try DatabaseManager.shared.fetchDistinctValues(column: "sector", table: "stock_universe")
+        try DatabaseManager.shared.fetchDistinctValues(column: .sector)
     }
 
     func availableMarkets() throws -> [String] {
-        try DatabaseManager.shared.fetchDistinctValues(column: "market", table: "stock_universe")
+        try DatabaseManager.shared.fetchDistinctValues(column: .market)
     }
 
     private func multiValues(_ cond: ScreenerCondition) -> [String] {

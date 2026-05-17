@@ -305,10 +305,18 @@ final class DatabaseManager: @unchecked Sendable {
         try dbQueue.read { db in try request.fetchAll(db) }
     }
 
-    func fetchDistinctValues(column: String, table: String) throws -> [String] {
-        try dbQueue.read { db in
-            let rows = try Row.fetchAll(db, sql: "SELECT DISTINCT \(column) FROM \(table) WHERE \(column) IS NOT NULL ORDER BY \(column)")
-            return rows.compactMap { $0[column] as? String }
+    enum UniverseColumn: String {
+        case sector, market
+    }
+
+    func fetchDistinctValues(column: UniverseColumn) throws -> [String] {
+        let col = column.rawValue
+        return try dbQueue.read { db in
+            let rows = try Row.fetchAll(
+                db,
+                sql: "SELECT DISTINCT \(col) FROM stock_universe WHERE \(col) IS NOT NULL ORDER BY \(col)"
+            )
+            return rows.compactMap { $0[col] as? String }
         }
     }
 }

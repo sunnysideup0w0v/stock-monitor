@@ -99,19 +99,12 @@ UserDefaults 키와 Keychain 계정 이름이 SettingsView · AppDelegate · Acc
 
 현재 대부분의 DB 호출이 `try?`로 에러를 무시하고 있어 디버깅이 어렵다.
 
-- [ ] `SettingsView` 계열 View의 DB 쓰기 (insert/update/delete) 실패 시 에러 Toast 표시
-  → `ToastWindowManager` 또는 `@State private var errorMessage: String?` Alert로 처리
-- [ ] `AlertEvaluator.evaluate()` — DB 조회 실패 시 `AppLogger.log` 출력 추가
-- [ ] `AppDelegate.startPollingFromDB()` — DB 조회 실패 시 로그 출력 추가
-- [ ] `DatabaseManager.fetchDistinctValues(column:table:)` SQL 인젝션 패턴 수정
-  - `column`, `table` 파라미터를 허용 목록(allowlist)으로 검증하거나 내부 enum으로 제한
-  ```swift
-  // Before (위험)
-  sql: "SELECT DISTINCT \(column) FROM \(table) ..."
-  // After (안전)
-  enum UniverseColumn: String { case sector, market }
-  func fetchDistinctValues(column: UniverseColumn) throws -> [String]
-  ```
+- [x] `SettingsView` 계열 View의 DB 쓰기 (insert/update/delete) 실패 시 에러 Alert 표시
+  → `@State private var errorMessage: String?` + `.alert` modifier (WatchlistSettings / PortfolioSettings / AlertSettings)
+- [x] `AlertEvaluator.evaluate()` — DB 조회 실패 시 `AppLogger.log` 출력 추가
+- [x] `AppDelegate.startPollingFromDB()` — DB 조회 실패 시 로그 출력 추가
+- [x] `DatabaseManager.fetchDistinctValues(column:table:)` SQL 인젝션 패턴 수정
+  → `enum UniverseColumn: String { case sector, market }` + `fetchDistinctValues(column: UniverseColumn)`
 
 ---
 

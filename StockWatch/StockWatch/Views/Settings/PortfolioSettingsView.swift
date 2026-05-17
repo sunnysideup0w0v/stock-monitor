@@ -18,6 +18,7 @@ struct PortfolioSettingsView: View {
     @State private var selectedBrokerIds: Set<String> = []
     @State private var showImportBrokerAlert = false
     @AppStorage("Popover.showPortfolioDetail") private var showPopoverDetail = false
+    @State private var dbErrorMessage: String?
 
     private var connectedBrokerIds: [String] { AccountManager.connectedAccountIds }
     private var isMultiBroker: Bool { connectedBrokerIds.count > 1 }
@@ -46,6 +47,11 @@ struct PortfolioSettingsView: View {
             }
         }
         .onAppear { loadItems() }
+        .alert("저장 오류", isPresented: .init(get: { dbErrorMessage != nil }, set: { if !$0 { dbErrorMessage = nil } })) {
+            Button("확인") { dbErrorMessage = nil }
+        } message: {
+            Text(dbErrorMessage ?? "")
+        }
         .sheet(isPresented: $showImportSheet) {
             PortfolioImportSheetView(items: importedItems) { mode in
                 applyImport(mode: mode)
@@ -223,21 +229,33 @@ struct PortfolioSettingsView: View {
             averagePrice: avg,
             quantity: qty
         )
-        try? DatabaseManager.shared.insert(&item)
-        symbol = ""; name = ""; averagePriceText = ""; quantityText = ""
-        loadItems()
+        do {
+            try DatabaseManager.shared.insert(&item)
+            symbol = ""; name = ""; averagePriceText = ""; quantityText = ""
+            loadItems()
+        } catch {
+            dbErrorMessage = error.localizedDescription
+        }
     }
 
     private func deleteItem(_ item: PortfolioItem) {
-        try? DatabaseManager.shared.delete(item)
-        loadItems()
+        do {
+            try DatabaseManager.shared.delete(item)
+            loadItems()
+        } catch {
+            dbErrorMessage = error.localizedDescription
+        }
     }
 
     private func togglePopoverVisibility(_ item: PortfolioItem) {
         var updated = item
         updated.showInPopover = !item.showInPopover
-        try? DatabaseManager.shared.update(updated)
-        loadItems()
+        do {
+            try DatabaseManager.shared.update(updated)
+            loadItems()
+        } catch {
+            dbErrorMessage = error.localizedDescription
+        }
     }
 
     private func startImport() {
@@ -268,19 +286,23 @@ struct PortfolioSettingsView: View {
     }
 
     private func applyImport(mode: ImportSyncMode) {
-        switch mode {
-        case .replaceAll:
-            let existing = (try? DatabaseManager.shared.fetchPortfolio()) ?? []
-            for item in existing { try? DatabaseManager.shared.delete(item) }
-            for var item in importedItems { try? DatabaseManager.shared.insert(&item) }
-        case .addNew:
-            let existing = (try? DatabaseManager.shared.fetchPortfolio()) ?? []
-            let existingSymbols = Set(existing.map { $0.symbol })
-            for var item in importedItems where !existingSymbols.contains(item.symbol) {
-                try? DatabaseManager.shared.insert(&item)
+        do {
+            switch mode {
+            case .replaceAll:
+                let existing = try DatabaseManager.shared.fetchPortfolio()
+                for item in existing { try DatabaseManager.shared.delete(item) }
+                for var item in importedItems { try DatabaseManager.shared.insert(&item) }
+            case .addNew:
+                let existing = try DatabaseManager.shared.fetchPortfolio()
+                let existingSymbols = Set(existing.map { $0.symbol })
+                for var item in importedItems where !existingSymbols.contains(item.symbol) {
+                    try DatabaseManager.shared.insert(&item)
+                }
             }
+            loadItems()
+        } catch {
+            dbErrorMessage = error.localizedDescription
         }
-        loadItems()
     }
 }
 

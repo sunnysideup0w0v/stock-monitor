@@ -53,8 +53,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     // 앱 시작 시 DB의 관심종목 + 포트폴리오 종목으로 폴링·DART 시작 (팝업을 열지 않아도 알림이 동작)
     private func startPollingFromDB() {
-        let watchlistSymbols = (try? DatabaseManager.shared.fetchWatchlist().map { $0.symbol }) ?? []
-        let portfolioSymbols = ((try? DatabaseManager.shared.fetchPortfolio()) ?? []).map { $0.symbol }
+        var watchlistSymbols: [String] = []
+        var portfolioSymbols: [String] = []
+        do {
+            watchlistSymbols = try DatabaseManager.shared.fetchWatchlist().map { $0.symbol }
+            portfolioSymbols = try DatabaseManager.shared.fetchPortfolio().map { $0.symbol }
+        } catch {
+            AppLogger.log("startPollingFromDB: DB 조회 실패 — \(error.localizedDescription)", level: .error, category: "App")
+        }
 
         // 시세 폴링: 관심종목 + 포트폴리오 전체 (팝오버 표시 여부 무관)
         var allSymbols = watchlistSymbols

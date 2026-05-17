@@ -25,7 +25,13 @@ final class AlertEvaluator {
 
     func evaluate(quotes: [String: StockQuote]) {
         if AlertEvaluator.marketHoursOnly && !AlertEvaluator.isWithinMarketHours() { return }
-        guard let conditions = try? DatabaseManager.shared.fetchAlertConditions() else { return }
+        let conditions: [AlertCondition]
+        do {
+            conditions = try DatabaseManager.shared.fetchAlertConditions()
+        } catch {
+            AppLogger.log("AlertEvaluator: DB 조회 실패 — \(error.localizedDescription)", level: .error, category: "Alert")
+            return
+        }
         let now = Date()
 
         for (_, quote) in quotes {

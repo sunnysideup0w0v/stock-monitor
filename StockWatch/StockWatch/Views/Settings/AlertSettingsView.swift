@@ -11,6 +11,7 @@ struct AlertSettingsView: View {
     @State private var marketHoursOnly: Bool = AlertEvaluator.marketHoursOnly
     @State private var disconnectAlert: Bool = QuoteManager.disconnectAlertEnabled
     @State private var selectedSound: String = NotificationManager.selectedSound
+    @State private var errorMessage: String?
 
     var body: some View {
         SettingsTabContainer(title: "알림설정") {
@@ -121,6 +122,11 @@ struct AlertSettingsView: View {
             }
         }
         .onAppear { loadConditions() }
+        .alert("저장 오류", isPresented: .init(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
+            Button("확인") { errorMessage = nil }
+        } message: {
+            Text(errorMessage ?? "")
+        }
     }
 
     private func formatThreshold(_ c: AlertCondition) -> String {
@@ -152,20 +158,32 @@ struct AlertSettingsView: View {
             cooldownMinutes: cooldownMinutes,
             lastTriggeredAt: nil
         )
-        try? DatabaseManager.shared.insert(&condition)
-        symbol = ""; thresholdText = ""
-        loadConditions()
+        do {
+            try DatabaseManager.shared.insert(&condition)
+            symbol = ""; thresholdText = ""
+            loadConditions()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 
     private func toggleCondition(_ condition: AlertCondition, isActive: Bool) {
         var updated = condition
         updated.isActive = isActive
-        try? DatabaseManager.shared.update(updated)
-        loadConditions()
+        do {
+            try DatabaseManager.shared.update(updated)
+            loadConditions()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 
     private func deleteCondition(_ condition: AlertCondition) {
-        try? DatabaseManager.shared.delete(condition)
-        loadConditions()
+        do {
+            try DatabaseManager.shared.delete(condition)
+            loadConditions()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 }

@@ -8,6 +8,7 @@ struct WatchlistSettingsView: View {
     @State private var alias = ""
     @State private var group: WatchlistGroup = .watchlist
     @AppStorage("Popover.showWatchlistDetail") private var showPopoverDetail = false
+    @State private var errorMessage: String?
 
     var body: some View {
         SettingsTabContainer(title: "관심종목") {
@@ -70,6 +71,11 @@ struct WatchlistSettingsView: View {
             }
         }
         .onAppear { loadItems() }
+        .alert("저장 오류", isPresented: .init(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
+            Button("확인") { errorMessage = nil }
+        } message: {
+            Text(errorMessage ?? "")
+        }
     }
 
     private var accountRequiredView: some View {
@@ -89,15 +95,23 @@ struct WatchlistSettingsView: View {
             alias: alias.trimmingCharacters(in: .whitespaces).isEmpty ? nil : alias.trimmingCharacters(in: .whitespaces),
             group: group
         )
-        try? DatabaseManager.shared.insert(&item)
-        symbol = ""; name = ""; alias = ""
-        loadItems()
-        QuoteManager.shared.startPolling(symbols: items.map { $0.symbol })
+        do {
+            try DatabaseManager.shared.insert(&item)
+            symbol = ""; name = ""; alias = ""
+            loadItems()
+            QuoteManager.shared.startPolling(symbols: items.map { $0.symbol })
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 
     private func deleteItem(_ item: WatchlistItem) {
-        try? DatabaseManager.shared.delete(item)
-        loadItems()
-        QuoteManager.shared.startPolling(symbols: items.map { $0.symbol })
+        do {
+            try DatabaseManager.shared.delete(item)
+            loadItems()
+            QuoteManager.shared.startPolling(symbols: items.map { $0.symbol })
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 }
