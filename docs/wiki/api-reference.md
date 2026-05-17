@@ -208,6 +208,40 @@ page_count: 10
 
 ---
 
+## KRX OpenAPI
+
+KRXManager가 사용하는 한국거래소 시장 데이터 API.
+
+- 포털: https://openapi.krx.co.kr (서비스별 신청 후 발급)
+- Keychain: `krx.apiKey`
+- API 키 없으면 네이버 증권 폴백 자동 전환 (PER/PBR·업종 미제공)
+
+| 구분 | URL |
+|------|-----|
+| KOSPI 일별 시세 | `http://data-dbg.krx.co.kr/svc/apis/sto/stk_bydd_trd` |
+| KOSDAQ 일별 시세 | `http://data-dbg.krx.co.kr/svc/apis/sto/ksq_bydd_trd` |
+| 네이버 폴백 | `https://m.stock.naver.com/api/stocks/marketValue/{KOSPI\|KOSDAQ}` |
+
+**KRX 응답 파싱 주의사항**:
+- 응답 형식: `{"OutBlock_1": [...]}`
+- 모든 숫자 필드가 콤마 포함 문자열 (`"1,234,567"`) — 콤마 제거 후 변환
+- `MKTCAP` 단위: 원 → `÷ 1,000,000` → 백만원 (DB 저장 단위)
+- `open` 컬럼 = 전일 종가 (`TDD_CLSPRC - CMPPREVDD_PRC`) — ScreenerEngine `changeRateRange` SQL이 이 규약에 의존
+
+---
+
+## Anthropic Claude API
+
+ClaudeAnalyzer가 사용하는 AI 분석 API.
+
+- 엔드포인트: `https://api.anthropic.com/v1/messages`
+- Keychain: `anthropic.apiKey`
+- 스트리밍: SSE (`stream: true`), `URLSession.bytes(for:)` 로 수신
+- 현재 설정: `model: "claude-sonnet-4-5"`, `max_tokens: 2048`
+- 헤더: `x-api-key`, `anthropic-version: 2023-06-01`
+
+---
+
 ## Keychain 저장 키
 
 | account 키 | 내용 |
@@ -219,22 +253,25 @@ page_count: 10
 | `kiwoom.appSecret` | 키움 App Secret |
 | `kiwoom.accountNumber` | 키움 계좌번호 |
 | `dart.apiKey` | DART Open API 키 |
+| `krx.apiKey` | KRX OpenAPI 키 (미설정 시 네이버 폴백) |
+| `anthropic.apiKey` | Claude AI 분석용 (선택, 미설정 시 AI 분석 비활성화) |
 
 ## UserDefaults 키
 
 | 키 | 타입 | 기본값 | 내용 |
 |----|------|--------|------|
-| `KIS.isMock` | Bool | false | 모의투자 모드 |
+| `KIS.isMock` | Bool | false | KIS 모의투자 모드 |
 | `KIS.loginDate` | Date | — | KIS 로그인 시각 |
 | `Kiwoom.loginDate` | Date | — | 키움 로그인 시각 |
 | `DART.filterTypes` | [String] | [] | 공시 종류 필터 (빈 배열 = 전체) |
-| `DART.seenRceptNos` | [String] | [] | 이미 알림 발송한 공시 번호 |
 | `QuoteManager.disconnectAlert` | Bool | true | 단절/복구 알림 발송 여부 |
-| `AlertEvaluator.marketHoursOnly` | Bool | true | 장 시간(09~15:30)에만 알림 |
-| `SnapshotManager.marketHoursOnly` | Bool | true | 장 시간에만 스냅샷 수집 |
-| `SnapshotManager.customRanges` | Data (JSON) | [] | 추가 수집 시간대 |
-| `SnapshotManager.keepDays` | Int | 0 | 스냅샷 보존 기간 (0 = 365일) |
+| `Snapshot.marketHoursOnly` | Bool | true | 장 시간에만 스냅샷 수집 |
+| `Snapshot.customRanges` | Data (JSON) | [] | 추가 수집 시간대 |
+| `Snapshot.keepDays` | Int | 0 | 스냅샷 보존 기간 (0 = 365일, UI -1 = 무제한) |
 | `Popover.showWatchlistDetail` | Bool | false | 팝오버 관심종목 종목코드·그룹 표시 |
 | `Popover.showPortfolioDetail` | Bool | false | 팝오버 포트폴리오 매입/현재/수량 표시 |
+| `Screener.claudeEnabled` | Bool | false | AI 분석 기능 활성화 여부 |
+| `Screener.keepOnReopen` | Bool | false | 설정 창 재열 시 스크리너 조건·결과 유지 |
+| `Notification.sound` | Bool | true | 알림 사운드 여부 |
 | `Onboarding.completed` | Bool | false | 온보딩 완료 여부 |
 | `DB.v8AccountIdMigrated` | Bool | false | v8 accountId 마이그레이션 완료 여부 |

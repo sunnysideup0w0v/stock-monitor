@@ -2,7 +2,7 @@
 
 > GRDB.swift 6.x / SQLite  
 > 파일 위치: `~/Library/Application Support/StockWatch/db.sqlite`  
-> 현재 최신 Migration: **v8**. 다음 추가 시 v9부터 시작.
+> 현재 최신 Migration: **v10**. 다음 추가 시 v11부터 시작.
 
 ---
 
@@ -125,6 +125,29 @@ func gainRate(currentPrice: Int) -> Double { Double(currentPrice - averagePrice)
 
 ---
 
+### `stock_universe` (v9 + v10)
+
+KRX/네이버에서 수집한 전 종목 유니버스. 스크리너(`ScreenerEngine`)가 이 테이블을 조회한다.
+
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| `symbol` | TEXT PK | 종목코드 |
+| `name` | TEXT NOT NULL | 종목명 |
+| `market` | TEXT NOT NULL | `"KOSPI"` / `"KOSDAQ"` |
+| `sector` | TEXT | 업종명 (KRX API 키 없으면 NULL) |
+| `close` | INTEGER NOT NULL | 종가 (원) |
+| `open` | INTEGER NOT NULL | 전일 종가 (= `종가 - 전일대비`) — changeRateRange SQL이 이 규약에 의존 |
+| `volume` | INTEGER NOT NULL | 거래량 |
+| `per` | REAL | PER (배) — KRX API 키 없으면 NULL |
+| `pbr` | REAL | PBR (배) — KRX API 없으면 NULL |
+| `marketCap` | INTEGER NOT NULL | 시가총액 (백만원 단위) |
+| `isEtf` | BOOLEAN NOT NULL DEFAULT 0 | v10 추가. ETF 여부 (`KRXManager.detectEtf()` 이름 기반 감지) |
+| `updatedAt` | DATETIME NOT NULL | 마지막 업데이트 시각 |
+
+> 업데이트 시 전체 삭제 후 재삽입 (`replaceStockUniverse`) — 항상 최신 데이터만 유지.
+
+---
+
 ## Migration 이력
 
 | 버전 | 내용 |
@@ -137,6 +160,8 @@ func gainRate(currentPrice: Int) -> Double { Double(currentPrice - averagePrice)
 | v6 | `portfolio_snapshots` 테이블 생성 |
 | v7 | `portfolio.showInPopover` 컬럼 추가 |
 | v8 | `watchlist.accountId`, `portfolio.accountId` 컬럼 추가 |
+| v9 | `stock_universe` 테이블 생성 |
+| v10 | `stock_universe.isEtf` 컬럼 추가 |
 
 ---
 
