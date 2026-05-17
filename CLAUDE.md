@@ -99,8 +99,8 @@ AppDelegate (NSApplicationDelegate, @MainActor)
 │    keepDays: 보존 기간 (UserDefaults 0 저장 = 365일 적용, UI -1 태그 = 무제한 = 0 저장)
 │
 ├── DatabaseManager (@unchecked Sendable, singleton)
-│    GRDB DatabaseQueue, Migration v1~v7 (현재)
-│    테이블: watchlist / portfolio / alert_conditions / alert_history / portfolio_snapshots
+│    GRDB DatabaseQueue, Migration v1~v9 (현재)
+│    테이블: watchlist / portfolio / alert_conditions / alert_history / portfolio_snapshots / stock_universe
 │
 ├── NotificationManager (UNUserNotificationCenterDelegate)
 │    send(title:body:symbol:urlString:) — urlString이 있으면 userInfo["url"]에 저장
@@ -109,18 +109,21 @@ AppDelegate (NSApplicationDelegate, @MainActor)
 └── KeychainHelper (enum, static)
      KIS: kis.appKey / kis.appSecret / kis.accountNumber
      DART: dart.apiKey
+     KRX: krx.apiKey (openapi.krx.co.kr 발급, 미설정 시 네이버 증권 API 폴백)
+     Screener: anthropic.apiKey (Claude AI 분석용, 선택)
      UserDefaults: KIS.isMock, KIS.loginDate, DART.filterTypes, DART.seenRceptNos
                    SnapshotManager.marketHoursOnly, SnapshotManager.customRanges,
                    SnapshotManager.keepDays
 ```
 
-**SettingsView 탭 구성** (현재 6개):
-1. 계좌 연결 (KIS API 키 + DART API 키 + 공시 종류 필터)
+**SettingsView 탭 구성** (현재 7개):
+1. 계좌 연결 (KIS API 키 + DART API 키 + 공시 종류 필터 + KRX OpenAPI 키 + Claude AI 토글)
 2. 관심종목
 3. 포트폴리오
 4. 알림설정
 5. 알림 이력 (날짜 범위 필터 + 타입 필터 + CSV 내보내기)
 6. 자산 차트 (AssetChartView — Swift Charts 기반)
+7. 종목 추천 (ScreenerView — 조건 스크리너 + Claude AI 분석)
 
 ## 커밋 규칙
 
@@ -182,7 +185,7 @@ pkill -x StockWatch 2>/dev/null; sleep 0.5 && open "$(find ~/Library/Developer/X
 **DB 스키마 변경 시**
 - `DatabaseManager.swift`에 새 `migrator.registerMigration("vN_...")` 추가
 - 기존 Migration은 절대 수정하지 않는다
-- 현재 최신: v8 (`watchlist.accountId`, `portfolio.accountId` 컬럼). 다음 마이그레이션은 v9부터
+- 현재 최신: v9 (`stock_universe` 테이블 추가). 다음 마이그레이션은 v10부터
 
 **AlertCondition.TriggerType 추가 시**
 `TriggerType`은 여러 곳에서 exhaustive switch로 사용된다. 새 케이스 추가 시 아래 모두 업데이트 필요:
@@ -202,7 +205,14 @@ pkill -x StockWatch 2>/dev/null; sleep 0.5 && open "$(find ~/Library/Developer/X
 
 **NSNotification 기반 컴포넌트 간 통신**
 - `AppDelegate.swift`의 `NSNotification.Name` extension에 이름 정의
-- 현재 정의된 이름: `.openSettings`, `.openPopover`, `.popoverWillShow`
+- 현재 정의된 이름: `.openSettings`, `.openPopover`, `.popoverWillShow`, `.krxDataUpdated`
+
+**KRX 시장 데이터 (`KRXManager`)**
+- API 키 있음 → `http://data-dbg.krx.co.kr/svc/apis/sto/stk_bydd_trd` (KOSPI) / `/ksq_bydd_trd` (KOSDAQ), `AUTH_KEY` 헤더, `basDd=YYYYMMDD`
+- API 키 없음 → 네이버 증권 `m.stock.naver.com/api/stocks/marketValue/{market}` 폴백 (PER/PBR·업종 없음)
+- 응답: `{"OutBlock_1": [...]}` — 모든 숫자 필드가 콤마 포함 문자열, `MKTCAP`은 원 단위 (÷ 1,000,000 → 백만원)
+- `open` 컬럼 = 전일 종가 (= `TDD_CLSPRC - CMPPREVDD_PRC`) — `ScreenerEngine.changeRateRange` SQL 수식이 이 규약에 의존
+- Keychain: `krx.apiKey` (openapi.krx.co.kr에서 서비스별 신청 후 발급)
 
 **Swift Charts (`AssetChartView`) 패턴**
 - 중첩 `ForEach` + `LineMark` 조합은 컴파일러 타입 체크 타임아웃 유발 → `chartBody` computed property와 `@ChartContentBuilder` 메서드로 분리
