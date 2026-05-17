@@ -102,7 +102,7 @@ struct ScreenerView: View {
             }
 
             Toggle(isOn: $keepOnReopen) {
-                Text("창 재열 시 조건·결과 유지")
+                Text("설정 창을 다시 열 때 조건·결과 유지")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -305,38 +305,38 @@ private struct ConditionRowView: View {
     @State private var maxText = ""
 
     var body: some View {
-        HStack(spacing: 6) {
-            Picker("", selection: $condition.type) {
-                ForEach(ScreenerCondition.ConditionType.allCases, id: \.self) { t in
-                    Text(t.shortName).tag(t)
+        HStack(alignment: .top, spacing: 6) {
+            VStack(alignment: .leading, spacing: 5) {
+                Picker("", selection: $condition.type) {
+                    ForEach(ScreenerCondition.ConditionType.allCases, id: \.self) { t in
+                        Text(t.shortName).tag(t)
+                    }
                 }
-            }
-            .labelsHidden()
-            .frame(width: 86)
-            .onChange(of: condition.type) { _, _ in
-                condition.minValue = nil
-                condition.maxValue = nil
-                condition.stringValue = nil
-                minText = ""
-                maxText = ""
-            }
+                .labelsHidden()
+                .frame(maxWidth: .infinity)
+                .onChange(of: condition.type) { _, _ in
+                    condition.minValue = nil
+                    condition.maxValue = nil
+                    condition.stringValue = nil
+                    minText = ""
+                    maxText = ""
+                }
 
-            Group {
                 if condition.type.usesStringValue {
                     stringValueInput
                 } else {
                     numericRangeInput
                 }
             }
-            .frame(maxWidth: .infinity)
 
             Button(action: onDelete) {
                 Image(systemName: "minus.circle.fill").foregroundStyle(.red)
             }
             .buttonStyle(.plain)
+            .padding(.top, 4)
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, 7)
+        .padding(.vertical, 8)
         .background(Color.primary.opacity(0.04))
         .clipShape(RoundedRectangle(cornerRadius: 6))
         .onAppear {
