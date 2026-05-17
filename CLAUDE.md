@@ -266,10 +266,14 @@ pkill -x StockWatch 2>/dev/null; sleep 0.5 && open "$(find ~/Library/Developer/X
   - `prdy_vrss_sign` 2=상승 3=보합 4=하락 — 부호를 별도 파싱해야 함
 - 403 오류: 토큰 발급 시 일시적으로 발생할 수 있음 (재시도로 해결된 사례 있음)
 
-## 키움증권 REST API 참고
+## 키움증권 REST API 참고 (미구현 — 추후 어댑터 추가 시 참고)
 
-- 포털: https://openapi.kiwoom.com (앱키·시크릿키 발급)
-- 공식 가이드: https://openapi.kiwoom.com/guide/apiguide
+> **현재 미사용.** `KiwoomAdapter`를 구현할 때 아래 정보를 참고한다.  
+> Base URL·토큰 엔드포인트는 공식 가이드에서 직접 확인했으나, API ID·WebSocket URL 등 일부는 커뮤니티 래퍼(오픈소스)에서 보완한 정보다. **구현 전 공식 포털 로그인 후 재확인 필요.**
+>
+> - 공식 포털 (앱키·시크릿키 발급): https://openapi.kiwoom.com  
+> - 공식 가이드 (로그인 필요): https://openapi.kiwoom.com/guide/apiguide  
+> - 참고한 오픈소스 래퍼: https://github.com/younghwan91/kiwoom-rest-api
 
 | 구분 | REST Base URL | WebSocket URL |
 |------|---------------|----------------|
@@ -278,9 +282,18 @@ pkill -x StockWatch 2>/dev/null; sleep 0.5 && open "$(find ~/Library/Developer/X
 
 > 모의투자는 KRX(국내주식) 시장만 지원
 
-- 토큰 발급: `POST /oauth2/token` (API ID: `au10001`) — `appkey` + `secretkey`로 접근토큰 발급
+**인증**
+- 토큰 발급: `POST /oauth2/token` (API ID: `au10001`) — `appkey` + `secretkey` 전달
 - 토큰 폐기: `au10002`
-- 현재가 조회: `ka10001` (주식기본정보요청) — `stk_cd` 파라미터로 종목코드 전달
-- 인증 헤더: 발급된 접근토큰을 `Authorization: Bearer <token>` 형식으로 전달
-- 실시간 WebSocket: 19종 구독 타입 (`0B`=주식체결, `0C`=주식우선호가, `0D`=주식호가잔량 등)
-- Keychain 키 (추가 시): `kiwoom.appKey` / `kiwoom.appSecret` / `kiwoom.accountNumber`
+- 인증 헤더: `Authorization: Bearer <접근토큰>`
+
+**주요 API ID**
+- 현재가(기본정보): `ka10001` — `stk_cd` 파라미터로 종목코드 전달
+- 실시간 WebSocket 구독 타입 19종: `0B`=주식체결, `0C`=주식우선호가, `0D`=주식호가잔량 등
+
+**어댑터 구현 시 체크리스트**
+1. `actor`로 `BrokerAdapter` 프로토콜 구현 (KISAdapter와 동일 패턴)
+2. Keychain 키: `kiwoom.appKey` / `kiwoom.appSecret` / `kiwoom.accountNumber`
+3. `KIS.isMock`에 대응하는 `Kiwoom.isMock` UserDefaults 키 추가
+4. 토큰 유효기간 및 자동 갱신 로직 확인 (KIS는 24시간, 키움은 공식 문서 확인 필요)
+5. 실전·모의 전환 시 Base URL 분기 처리
