@@ -462,7 +462,12 @@ struct AssetChartView: View {
                 .chartScrollableAxes(.horizontal)
                 .chartXVisibleDomain(length: Double(dayWindowHours) * 3600)
                 .chartScrollPosition(x: $scrollAnchor)
-        } else if period == .week || period == .month || period == .year {
+        } else if period == .week {
+            // 월~금(5일)만 도메인으로 고정 — 토/일 빈 공간 제거
+            let fri = Calendar.current.date(byAdding: .day, value: 5, to: dateRange.start) ?? dateRange.end
+            baseChart
+                .chartXScale(domain: dateRange.start...fri)
+        } else if period == .month || period == .year {
             // 전체 기간 도메인을 명시해야 눈금이 기간 앞부터 올바르게 렌더링됨
             baseChart
                 .chartXScale(domain: dateRange.start...dateRange.end)
