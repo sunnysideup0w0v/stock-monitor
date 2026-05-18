@@ -281,11 +281,15 @@ struct ScreenerView: View {
         isRunning = true
         errorMessage = nil
         AppLogger.log("runScreener: conditions=\(conditions.count)", category: "Screener")
+        let snapshot = conditions
         Task {
             do {
-                results = try ScreenerEngine.shared.run(conditions: conditions)
+                let r = try await Task.detached { [snapshot] in
+                    try ScreenerEngine.shared.run(conditions: snapshot)
+                }.value
+                results = r
                 lastRunDate = Date()
-                AppLogger.log("runScreener: completed results=\(results.count)", category: "Screener")
+                AppLogger.log("runScreener: completed results=\(r.count)", category: "Screener")
             } catch {
                 errorMessage = "스크리닝 오류: \(error.localizedDescription)"
                 AppLogger.log("runScreener: error=\(error)", level: .error, category: "Screener")
@@ -330,9 +334,12 @@ struct ScreenerView: View {
 
     private func autoRunScreener() {
         AppLogger.log("autoRunScreener: conditions=\(conditions.count)", category: "Screener")
+        let snapshot = conditions
         Task {
             do {
-                let r = try ScreenerEngine.shared.run(conditions: conditions)
+                let r = try await Task.detached { [snapshot] in
+                    try ScreenerEngine.shared.run(conditions: snapshot)
+                }.value
                 results = r
                 if !r.isEmpty { lastRunDate = Date() }
                 AppLogger.log("autoRunScreener: completed results=\(r.count)", category: "Screener")
