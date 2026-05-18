@@ -364,6 +364,7 @@ struct AssetChartView: View {
         .onChange(of: selectedDate)  { _, _ in loadData() }
         .onChange(of: showValue)     { _, _ in storedMasterStep = computeMasterStep(); zoomLevel = 1 }
         .onAppear { loadData() }
+        .onReceive(NotificationCenter.default.publisher(for: .snapshotBackfillCompleted)) { _ in loadData() }
     }
 
     // MARK: - Chart Body
@@ -461,6 +462,10 @@ struct AssetChartView: View {
                 .chartScrollableAxes(.horizontal)
                 .chartXVisibleDomain(length: Double(dayWindowHours) * 3600)
                 .chartScrollPosition(x: $scrollAnchor)
+        } else if period == .month || period == .year {
+            // 전체 기간 도메인을 명시해야 눈금이 기간 앞부터 올바르게 렌더링됨
+            baseChart
+                .chartXScale(domain: dateRange.start...dateRange.end)
         } else {
             baseChart
         }

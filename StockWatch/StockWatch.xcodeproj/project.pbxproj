@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		033FCCC91646F543F6762F64 /* SnapshotBackfillManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 355ED5EF3811A436621A0F01 /* SnapshotBackfillManager.swift */; };
 		0C649CA67BBEF3201E143D91 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96036A94BC463B8118C8EB3D /* KeychainHelper.swift */; };
 		0EF0D8B07242A577BA15B2DE /* RealtimeQuoteManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F5A6472AE55E5203993C25F /* RealtimeQuoteManager.swift */; };
 		12390ED79B70CB4BA0D8D1BC /* NumberFormatter+Decimal.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F09EBF441136B9034F96CF /* NumberFormatter+Decimal.swift */; };
@@ -113,6 +114,7 @@
 		2632348A58ACCEA41AF9C8F7 /* AccountManagerCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountManagerCacheTests.swift; sourceTree = "<group>"; };
 		27964784296E0D3236DF6643 /* StockWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = StockWatch.entitlements; sourceTree = "<group>"; };
 		32ACEFDE6676F785B24819F2 /* StockUniverseItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockUniverseItem.swift; sourceTree = "<group>"; };
+		355ED5EF3811A436621A0F01 /* SnapshotBackfillManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotBackfillManager.swift; sourceTree = "<group>"; };
 		3CA6753273E034494E5C9BFE /* AlertHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertHistory.swift; sourceTree = "<group>"; };
 		3D30D3FB5A44BE8ADDC9ECA2 /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
 		409AFB9E7CADA2E56BEDA9C8 /* BrokerSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrokerSessionManager.swift; sourceTree = "<group>"; };
@@ -265,6 +267,7 @@
 				5E5AB112AF506EF87D40BA14 /* QuoteManager.swift */,
 				9F5A6472AE55E5203993C25F /* RealtimeQuoteManager.swift */,
 				7A9C1A99BE2A7EF4A6DACE20 /* ScreenerEngine.swift */,
+				355ED5EF3811A436621A0F01 /* SnapshotBackfillManager.swift */,
 				DDF76FE9576C82370C6293FD /* SnapshotManager.swift */,
 				87911CD83481F76D445A52B8 /* UserDefaultsKey.swift */,
 			);
@@ -583,6 +586,7 @@
 				F5C114213F1DC81C504EBF33 /* ScreenerView.swift in Sources */,
 				5F7ECE0AE5D8ED539393C65C /* SettingsComponents.swift in Sources */,
 				89BE3ADB288DE36A8DF219A2 /* SettingsView.swift in Sources */,
+				033FCCC91646F543F6762F64 /* SnapshotBackfillManager.swift in Sources */,
 				8EA0E82137CCEFF9C26C985E /* SnapshotManager.swift in Sources */,
 				38D2A6E11F5B54BCEAB7E381 /* SnapshotSettingsSection.swift in Sources */,
 				7ED9AE857C8A1EE7F0B46043 /* StockQuote.swift in Sources */,

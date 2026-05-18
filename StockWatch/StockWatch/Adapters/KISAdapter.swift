@@ -1,5 +1,10 @@
 import Foundation
 
+struct KISDailyClose: Sendable {
+    let date: Date
+    let closePrice: Int
+}
+
 actor KISAdapter: BrokerAdapter {
     nonisolated let brokerName = "한국투자증권"
 
@@ -180,6 +185,32 @@ actor KISAdapter: BrokerAdapter {
     }
 
     func fetchDailyVolumes(symbol: String, days: Int) async throws -> [Int] {
+        let decoded = try await fetchDailyPriceResponse(symbol: symbol)
+        return (decoded.output2 ?? [])
+            .prefix(days)
+            .compactMap { Int($0.acmlVol ?? "0") }
+    }
+
+    func fetchDailyCloses(symbol: String, days: Int = 30) async throws -> [KISDailyClose] {
+        let decoded = try await fetchDailyPriceResponse(symbol: symbol)
+
+        let fmt = DateFormatter()
+        fmt.dateFormat = "yyyyMMdd"
+        fmt.timeZone = TimeZone(identifier: "Asia/Seoul")
+
+        return (decoded.output2 ?? [])
+            .prefix(days)
+            .compactMap { item -> KISDailyClose? in
+                guard let dateStr = item.stckBsopDate,
+                      let date = fmt.date(from: dateStr),
+                      let priceStr = item.stckClpr,
+                      let price = Int(priceStr), price > 0
+                else { return nil }
+                return KISDailyClose(date: date, closePrice: price)
+            }
+    }
+
+    private func fetchDailyPriceResponse(symbol: String) async throws -> KISDailyPriceResponse {
         let token = try await validToken()
         guard let creds = credentials else { throw BrokerError.notConnected }
 
@@ -211,10 +242,7 @@ actor KISAdapter: BrokerAdapter {
         guard decoded.rtCd == "0" else {
             throw BrokerError.apiError(decoded.msg1 ?? "일별 시세 오류")
         }
-
-        return (decoded.output2 ?? [])
-            .prefix(days)
-            .compactMap { Int($0.acmlVol ?? "0") }
+        return decoded
     }
 
     // MARK: - Token Management
@@ -277,10 +305,14 @@ private struct KISDailyPriceResponse: Decodable {
 }
 
 private struct KISDailyOutput: Decodable {
+    let stckBsopDate: String?
+    let stckClpr: String?
     let acmlVol: String?
 
     enum CodingKeys: String, CodingKey {
-        case acmlVol = "acml_vol"
+        case stckBsopDate = "stck_bsop_date"
+        case stckClpr     = "stck_clpr"
+        case acmlVol      = "acml_vol"
     }
 }
 

@@ -3,10 +3,11 @@ import SwiftUI
 import Combine
 
 extension NSNotification.Name {
-    static let openSettings    = NSNotification.Name("com.personal.StockWatch.openSettings")
-    static let popoverWillShow = NSNotification.Name("com.personal.StockWatch.popoverWillShow")
-    static let openPopover     = NSNotification.Name("com.personal.StockWatch.openPopover")
-    static let krxDataUpdated  = NSNotification.Name("com.personal.StockWatch.krxDataUpdated")
+    static let openSettings             = NSNotification.Name("com.personal.StockWatch.openSettings")
+    static let popoverWillShow          = NSNotification.Name("com.personal.StockWatch.popoverWillShow")
+    static let openPopover              = NSNotification.Name("com.personal.StockWatch.openPopover")
+    static let krxDataUpdated           = NSNotification.Name("com.personal.StockWatch.krxDataUpdated")
+    static let snapshotBackfillCompleted = NSNotification.Name("com.personal.StockWatch.snapshotBackfillCompleted")
 }
 
 @MainActor
@@ -17,6 +18,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var onboardingWindow: NSWindow?
     private var cancellables = Set<AnyCancellable>()
     private var eventMonitor: Any?
+    private var wakeObserver: Any?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         CrashLogger.install()
@@ -49,6 +51,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] state in self?.updateStatusBarIcon(state) }
             .store(in: &cancellables)
+
+        // 슬립 후 깨어날 때 스냅샷 공백 소급 보완
+        wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            Task { @MainActor in SnapshotBackfillManager.shared.backfillIfNeeded() }
+        }
+
+        // 앱 시작 시 소급 보완 (토큰 발급 경합 방지를 위해 3초 지연)
+        Task {
+            try? await Task.sleep(for: .seconds(3))
+            SnapshotBackfillManager.shared.backfillIfNeeded()
+        }
     }
 
     // 앱 시작 시 DB의 관심종목 + 포트폴리오 종목으로 폴링·DART 시작 (팝업을 열지 않아도 알림이 동작)
