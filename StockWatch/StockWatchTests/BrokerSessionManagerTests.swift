@@ -10,17 +10,38 @@ final class BrokerSessionManagerTests: XCTestCase {
     private let testAppSecret = "TESTSECRET1"
     private let testAccount   = "12345678-01"
 
+    // 테스트 전 실제 자격증명 보존용
+    private var savedKisAppKey: String?
+    private var savedKisAppSecret: String?
+    private var savedKisAccountNumber: String?
+    private var savedKiwoomAppKey: String?
+    private var savedKiwoomAppSecret: String?
+    private var savedKiwoomAccountNumber: String?
+
     override func setUp() async throws {
         try await super.setUp()
-        // 테스트 후 남을 Keychain 항목 미리 정리
+        // 실제 자격증명 저장 후 테스트용 슬레이트 초기화
+        savedKisAppKey         = KeychainHelper.load(account: KeychainKey.kisAppKey)
+        savedKisAppSecret      = KeychainHelper.load(account: KeychainKey.kisAppSecret)
+        savedKisAccountNumber  = KeychainHelper.load(account: KeychainKey.kisAccountNumber)
+        savedKiwoomAppKey      = KeychainHelper.load(account: KeychainKey.kiwoomAppKey)
+        savedKiwoomAppSecret   = KeychainHelper.load(account: KeychainKey.kiwoomAppSecret)
+        savedKiwoomAccountNumber = KeychainHelper.load(account: KeychainKey.kiwoomAccountNumber)
         cleanupKeychain()
     }
 
     override func tearDown() async throws {
+        // 테스트 자격증명 제거
         cleanupKeychain()
-        // BrokerSessionManager 상태 초기화
         BrokerSessionManager.shared.logoutKIS()
         BrokerSessionManager.shared.logoutKiwoom()
+        // 실제 자격증명 복원
+        if let v = savedKisAppKey        { KeychainHelper.save(v, account: KeychainKey.kisAppKey) }
+        if let v = savedKisAppSecret     { KeychainHelper.save(v, account: KeychainKey.kisAppSecret) }
+        if let v = savedKisAccountNumber { KeychainHelper.save(v, account: KeychainKey.kisAccountNumber) }
+        if let v = savedKiwoomAppKey        { KeychainHelper.save(v, account: KeychainKey.kiwoomAppKey) }
+        if let v = savedKiwoomAppSecret     { KeychainHelper.save(v, account: KeychainKey.kiwoomAppSecret) }
+        if let v = savedKiwoomAccountNumber { KeychainHelper.save(v, account: KeychainKey.kiwoomAccountNumber) }
         AccountManager.shared.refresh()
         try await super.tearDown()
     }

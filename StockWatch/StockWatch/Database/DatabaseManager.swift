@@ -309,6 +309,14 @@ final class DatabaseManager: @unchecked Sendable {
         try dbQueue.write { db in try PortfolioSnapshot.deleteAll(db) }
     }
 
+    func deleteSnapshots(from start: Date, to end: Date) throws {
+        try dbQueue.write { db in
+            try PortfolioSnapshot
+                .filter(Column("timestamp") >= start && Column("timestamp") <= end)
+                .deleteAll(db)
+        }
+    }
+
     // MARK: - Stock Universe
 
     func replaceStockUniverse(_ items: [StockUniverseItem]) throws {
