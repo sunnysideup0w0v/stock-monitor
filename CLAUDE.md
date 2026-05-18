@@ -110,32 +110,45 @@ AppDelegate (NSApplicationDelegate, @MainActor)
 │    customRanges: 추가 시간대(JSON) — 프리/애프터 마켓 대응
 │    keepDays: 보존 기간 (UserDefaults 0 저장 = 365일 적용, UI -1 태그 = 무제한 = 0 저장)
 │
+├── BrokerSessionManager (@MainActor, ObservableObject)
+│    로그인·로그아웃·연결 테스트 로직을 SettingsView에서 분리한 세션 관리 레이어
+│    loginKIS() / logoutKIS() / testConnectionKIS() — KIS 세션 제어
+│    loginKiwoom() / logoutKiwoom() / testConnectionKiwoom() — 키움 세션 제어
+│    restoreAllSessions() — 앱 시작 시 Keychain 자격증명 기반 세션 복원
+│
 ├── DatabaseManager (@unchecked Sendable, singleton)
-│    GRDB DatabaseQueue, Migration v1~v9 (현재)
+│    GRDB DatabaseQueue, Migration v1~v13 (현재)
 │    테이블: watchlist / portfolio / alert_conditions / alert_history / portfolio_snapshots / stock_universe
 │
 ├── NotificationManager (UNUserNotificationCenterDelegate)
 │    send(title:body:symbol:urlString:) — urlString이 있으면 userInfo["url"]에 저장
 │    알림 클릭: url 있으면 NSWorkspace.open(url), 없으면 .openPopover 포스트
 │
-└── KeychainHelper (enum, static)
-     KIS: kis.appKey / kis.appSecret / kis.accountNumber
-     DART: dart.apiKey
-     KRX: krx.apiKey (openapi.krx.co.kr 발급, 미설정 시 네이버 증권 API 폴백)
-     Screener: anthropic.apiKey (Claude AI 분석용, 선택)
-     UserDefaults: KIS.isMock, KIS.loginDate, DART.filterTypes, DART.seenRceptNos
-                   SnapshotManager.marketHoursOnly, SnapshotManager.customRanges,
-                   SnapshotManager.keepDays
+├── ToastWindowManager (singleton)
+│    macOS 화면 우하단 토스트 알림 표시 (NSWindow 기반, auto-dismiss)
+│
+└── KeychainKey (enum, static) / UserDefaultsKey (enum, static)
+     KeychainKey: kisAppKey / kisAppSecret / kisAccountNumber
+                  kiwoomAppKey / kiwoomAppSecret / kiwoomAccountNumber
+                  dartApiKey / krxApiKey / anthropicApiKey
+     UserDefaultsKey: kisMock, kisLoginDate, kiwoomLoginDate, dartFilterTypes
+                      dbV8Migrated, onboardingCompleted, disconnectAlert
+                      alertMarketHours, snapshotMarketHours, snapshotCustomRanges
+                      snapshotKeepDays, screenerClaudeEnabled, screenerKeepOnReopen
+                      screenerSavedConditions
+                      (동적) dartSeen(_:) / dartLastCheck(_:)
 ```
 
 **SettingsView 탭 구성** (현재 7개):
-1. 계좌 연결 (KIS API 키 + DART API 키 + 공시 종류 필터 + KRX OpenAPI 키 + Claude AI 토글)
-2. 관심종목
-3. 포트폴리오
-4. 알림설정
-5. 알림 이력 (날짜 범위 필터 + 타입 필터 + CSV 내보내기)
-6. 자산 차트 (AssetChartView — Swift Charts 기반)
-7. 종목 검색 (ScreenerView — 조건 스크리너 + Claude AI 분석)
+1. 계좌 연결 (`AccountSettingsView` — KIS/키움 API 키, DART, KRX, Claude AI 설정)
+2. 관심종목 (`WatchlistSettingsView`)
+3. 포트폴리오 (`PortfolioSettingsView` — "계좌에서 가져오기" 포함)
+4. 알림설정 (`AlertSettingsView` + `DARTSettingsView` + `SnapshotSettingsSection`)
+5. 알림 이력 (`AlertHistoryView` — 날짜 범위 필터 + 타입 필터 + CSV 내보내기)
+6. 자산 차트 (`AssetChartView` — Swift Charts 기반)
+7. 종목 검색 (`ScreenerView` — 조건 스크리너 + Claude AI 분석)
+
+**Settings 뷰 파일 구조**: `SettingsView.swift`가 탭 컨테이너 역할, 각 탭 내용은 `Views/Settings/` 하위 개별 파일로 분리됨. 공통 UI 컴포넌트는 `SettingsComponents.swift`.
 
 ## Git / GitHub 워크플로우 규칙
 
@@ -224,15 +237,21 @@ pkill -x StockWatch 2>/dev/null; sleep 0.5 && open "$(find ~/Library/Developer/X
 - `@unchecked Sendable`은 최후 수단으로만 사용
 
 **BrokerAdapter 추가 시**
-1. `actor`로 `BrokerAdapter` 프로토콜 구현
+1. `actor`로 `BrokerAdapter` 프로토콜 구현 (참고: `MiraeAssetAdapter.swift` stub 패턴)
 2. `nonisolated let brokerName` 선언
 3. `connect()` 에서 토큰/세션 초기화
 4. `fetchQuote()` 응답 필드는 모두 `String?` (옵셔널)로 받아 파싱 — KIS API는 장 시간 외에 일부 필드를 생략함
+5. `BrokerSessionManager`에 `loginXxx()` / `logoutXxx()` / `testConnectionXxx()` 메서드 추가
+6. `KeychainKey.swift`에 Keychain 키 상수 추가
+7. `UserDefaultsKey.swift`에 관련 UserDefaults 키 상수 추가
 
 **DB 스키마 변경 시**
 - `DatabaseManager.swift`에 새 `migrator.registerMigration("vN_...")` 추가
 - 기존 Migration은 절대 수정하지 않는다
-- 현재 최신: v10 (`stock_universe.isEtf` 컬럼 추가). 다음 마이그레이션은 v11부터
+- 현재 최신: v13 (`watchlist.accountId`를 "USER"로 일괄 업데이트). 다음 마이그레이션은 v14부터
+- v11: `alert_history.stockName` 컬럼 추가
+- v12: `alert_history.isHidden` 컬럼 추가 (알림 숨김 기능)
+- v13: `watchlist.accountId`를 브로커 독립적인 `"USER"`로 통일
 
 **AlertCondition.TriggerType 추가 시**
 `TriggerType`은 여러 곳에서 exhaustive switch로 사용된다. 새 케이스 추가 시 아래 모두 업데이트 필요:
@@ -251,11 +270,16 @@ pkill -x StockWatch 2>/dev/null; sleep 0.5 && open "$(find ~/Library/Developer/X
 - 문자열 다중 선택 조건(`usesStringValue = true`)은 `stringValue`에 콤마 구분 저장 → `ScreenerEngine.multiValues(_:)`로 파싱 → GRDB `Collection.contains(Column)` 으로 `IN` 쿼리 생성
 
 **계정 종속 데이터 (관심종목 · 포트폴리오)**
-- `AccountManager.currentAccountId` — `"KIS-" + appKey.prefix(8)`, 미로그인 시 `""`
-- `fetchWatchlist()` / `fetchPortfolio()` — `currentAccountId == ""` 이면 빈 배열 반환 (로그아웃 상태에서 항목 미노출)
-- `insert(WatchlistItem/PortfolioItem)` — 저장 전 `accountId = AccountManager.currentAccountId` 자동 설정
+
+관심종목과 포트폴리오는 accountId 관리 방식이 다르다:
+
+- **관심종목**: `accountId = "USER"` 고정 (브로커 독립적). Migration v13에서 기존 행 일괄 업데이트. `fetchWatchlist()`는 항상 `accountId == "USER"` 쿼리.
+- **포트폴리오**: `accountId = "KIS-" + appKey.prefix(8)` 또는 `"KIWOOM-" + appKey.prefix(8)` (브로커별 분리). `fetchPortfolio()`는 `connectedAccountIds IN` 쿼리로 전체 브로커 합산 반환.
+- `AccountManager.currentAccountId` — 활성 브로커의 accountId, 미로그인 시 `""`
+- `AccountManager.connectedAccountIds` — Keychain 자격증명 기반 모든 로그인 계좌 ID 목록
+- `AccountManager.isAnyConnected: Bool` — 하나 이상 브로커 연결 여부
 - Migration v8: `watchlist.accountId`, `portfolio.accountId` 컬럼 추가 (DEFAULT `''`)
-- 기존 행 일회성 마이그레이션: `AppDelegate.setupAdapter()` + `SettingsView.login()` 에서 `DatabaseManager.assignAccountIdToOrphanedItems()` 동기 호출. UserDefaults `"DB.v8AccountIdMigrated"` 플래그로 중복 방지
+- 포트폴리오 일회성 마이그레이션: `BrokerSessionManager.restoreAllSessions()` 후 `assignAccountIdToOrphanedItems()`. `UserDefaultsKey.dbV8Migrated` 플래그로 중복 방지
 - 백업/복원 시 `insert()` 경로를 타므로 현재 계정에 자동 귀속됨
 
 **NSNotification 기반 컴포넌트 간 통신**
