@@ -210,13 +210,13 @@ struct PortfolioHoldingRowView: View {
             }
             Spacer()
             if let quote {
-                let gain = item.evaluatedGain(currentPrice: quote.price)
+                let rate = item.gainRate(currentPrice: quote.price)
                 VStack(alignment: .trailing, spacing: 1) {
                     Text(formatAmount(quote.price * item.quantity))
                         .font(.system(size: 12, design: .monospaced))
-                    Text((gain >= 0 ? "+" : "") + formatAmount(gain))
+                    Text(String(format: "%@%.2f%%", rate >= 0 ? "+" : "", rate))
                         .font(.system(size: 10, design: .monospaced))
-                        .foregroundStyle(gain >= 0 ? .green : .red)
+                        .foregroundStyle(rate >= 0 ? .green : .red)
                 }
             } else {
                 Text("---")
