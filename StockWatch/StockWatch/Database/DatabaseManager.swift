@@ -311,17 +311,6 @@ final class DatabaseManager: @unchecked Sendable {
         try dbQueue.read { db in try request.fetchAll(db) }
     }
 
-    /// 주어진 종목코드 목록의 symbol → name 매핑을 stock_universe에서 반환한다.
-    func fetchStockNames(for symbols: [String]) throws -> [String: String] {
-        guard !symbols.isEmpty else { return [:] }
-        return try dbQueue.read { db in
-            let items = try StockUniverseItem
-                .filter(symbols.contains(Column("symbol")))
-                .fetchAll(db)
-            return Dictionary(uniqueKeysWithValues: items.map { ($0.symbol, $0.name) })
-        }
-    }
-
     enum UniverseColumn: String {
         case sector, market
     }
