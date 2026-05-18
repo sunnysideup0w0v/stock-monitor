@@ -8,7 +8,7 @@ struct AssetChartView: View {
     @State private var snapshots: [PortfolioSnapshot] = []
     @State private var zoomLevel: Int = 1               // 0=wide … 4=fine. 기본 1 (넓은 단위)
     @State private var storedMasterStep: Double = 1_000_000 // loadData() 때 갱신
-    @State private var dayWindowHours: Int = 2          // 일 뷰 표시 구간(h): 0=전체, 1/2/3시간
+    private let dayWindowHours: Int = 2                  // 일 뷰 가로 스크롤 표시 구간(h)
     @State private var scrollAnchor: Date = Date()      // chartScrollPosition 바인딩
 
     enum ChartPeriod: String, CaseIterable {
@@ -38,6 +38,17 @@ struct AssetChartView: View {
             let start = cal.date(from: cal.dateComponents([.year], from: selectedDate))!
             return (start, cal.date(byAdding: .year, value: 1, to: start)!)
         }
+    }
+
+    // 일 뷰 스크롤 가능 전체 구간: 장 시작(09:00)~장 마감(15:30)
+    private var dayXDomain: ClosedRange<Date> {
+        let cal = Calendar.current
+        var comps = cal.dateComponents([.year, .month, .day], from: selectedDate)
+        comps.hour = 9; comps.minute = 0; comps.second = 0
+        let open  = cal.date(from: comps) ?? dateRange.start
+        comps.hour = 15; comps.minute = 30
+        let close = cal.date(from: comps) ?? dateRange.end
+        return open...close
     }
 
     private var dateRangeLabel: String {
@@ -249,18 +260,6 @@ struct AssetChartView: View {
 
                 Spacer()
 
-                // 일 뷰: 시간 창 선택
-                if period == .day {
-                    Picker("", selection: $dayWindowHours) {
-                        Text("전체").tag(0)
-                        Text("1H").tag(1)
-                        Text("2H").tag(2)
-                        Text("3H").tag(3)
-                    }
-                    .pickerStyle(.segmented)
-                    .frame(width: 120)
-                }
-
                 // Y축 단위 선택
                 HStack(spacing: 2) {
                     Button { zoomLevel = max(0, zoomLevel - 1) } label: {
@@ -334,7 +333,6 @@ struct AssetChartView: View {
         .onChange(of: period)        { _, _ in zoomLevel = 1; loadData() }
         .onChange(of: selectedDate)  { _, _ in loadData() }
         .onChange(of: showValue)     { _, _ in storedMasterStep = computeMasterStep(); zoomLevel = 1 }
-        .onChange(of: dayWindowHours) { _, _ in updateScrollAnchor() }
         .onAppear { loadData() }
     }
 
@@ -401,8 +399,9 @@ struct AssetChartView: View {
 
     @ViewBuilder
     private var chartBody: some View {
-        if period == .day, dayWindowHours > 0 {
+        if period == .day {
             baseChart
+                .chartXScale(domain: dayXDomain)
                 .chartScrollableAxes(.horizontal)
                 .chartXVisibleDomain(length: Double(dayWindowHours) * 3600)
                 .chartScrollPosition(x: $scrollAnchor)
