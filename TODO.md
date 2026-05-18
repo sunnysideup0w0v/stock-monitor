@@ -1,6 +1,6 @@
 # StockWatch — 개발 진행 체크리스트
 
-> 업데이트: 2026-05-18  
+> 업데이트: 2026-05-19  
 > Phase 0~5 완료 기준으로 재작성. 이후 개발 방향을 Phase 6~9로 구성.
 
 ---
@@ -16,7 +16,9 @@
 | Phase 4 | 키움 REST API, 멀티 브로커 동시 연결, 계정 종속 데이터, 관심종목 USER 통합 | ✓ |
 | Phase 5 | KRX 전종목 스크리너, Claude AI 분석, KRX OpenAPI 연동 | ✓ |
 
-**현재 테스트 현황:** 165개 유닛 테스트 전체 통과 (2026-05-18)
+**현재 테스트 현황:** 197개 유닛 테스트 전체 통과 (2026-05-19)
+- `AssetChartHelpersTests` (25개): fmtShort Y축 레이블 포맷터 + niceStep 단계 계산
+- `SnapshotBackfillManagerTests` (7개): findGapDays 공백 탐지 로직
 
 ---
 

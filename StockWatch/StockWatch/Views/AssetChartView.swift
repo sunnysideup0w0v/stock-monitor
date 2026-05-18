@@ -246,7 +246,7 @@ struct AssetChartView: View {
         showValue ? fmtShort(Int(currentStep)) : String(format: "%.2g%%", currentStep)
     }
 
-    private func niceStep(_ rough: Double) -> Double {
+    func niceStep(_ rough: Double) -> Double {
         guard rough > 0 else { return 1 }
         let mag = pow(10.0, floor(log10(rough)))
         let f = rough / mag
@@ -559,7 +559,7 @@ struct AssetChartView: View {
     // Y축 레이블용 축약 표시
     // 1억 이상: 정수 억 + 나머지 만 (예: "1억", "1억2500만")
     // 1만 이상: 만 단위 (예: "9800만")
-    private func fmtShort(_ v: Int) -> String {
+    func fmtShort(_ v: Int) -> String {
         let absV = Swift.abs(v)
         let sign = v < 0 ? "-" : ""
         if absV >= 100_000_000 {

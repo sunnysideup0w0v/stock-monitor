@@ -97,7 +97,7 @@ final class SnapshotBackfillManager {
 
     // MARK: - Gap Detection
 
-    private func findGapDays(lookbackDays: Int) -> [Date] {
+    func findGapDays(lookbackDays: Int) -> [Date] {
         let cal = Self.seoulCalendar
         let today = cal.startOfDay(for: Date())
         let start = cal.date(byAdding: .day, value: -lookbackDays, to: today)!
