@@ -142,8 +142,9 @@ struct AlertHistoryRowView: View {
     let symbolName: String?
 
     private var displaySymbol: String {
-        if item.symbol == "PORTFOLIO" { return "전체 포트폴리오" }
-        if let name = symbolName      { return "\(name)(\(item.symbol))" }
+        if item.symbol == "PORTFOLIO" { return item.stockName ?? "전체 포트폴리오" }
+        let name = item.stockName ?? symbolName
+        if let name { return "\(name)(\(item.symbol))" }
         return item.symbol
     }
 

@@ -125,6 +125,12 @@ final class DatabaseManager: @unchecked Sendable {
             }
         }
 
+        migrator.registerMigration("v11_alert_history_stockName") { db in
+            try db.alter(table: "alert_history") { t in
+                t.add(column: "stockName", .text)
+            }
+        }
+
         try migrator.migrate(dbQueue)
     }
 

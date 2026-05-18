@@ -105,8 +105,8 @@ final class AlertEvaluator {
             var updated = condition
             updated.lastTriggeredAt = now
             if condition.disableAfterTrigger { updated.isActive = false }
-            var history = AlertHistory(id: nil, symbol: "PORTFOLIO", triggerType: condition.triggerType,
-                                       message: message, triggeredAt: now)
+            var history = AlertHistory(id: nil, symbol: "PORTFOLIO", stockName: "전체 포트폴리오",
+                                       triggerType: condition.triggerType, message: message, triggeredAt: now)
             try? DatabaseManager.shared.recordAlertFired(history: &history, condition: updated)
         }
     }
@@ -150,7 +150,8 @@ final class AlertEvaluator {
         if condition.disableAfterTrigger { updated.isActive = false }
 
         // 이력 저장 + 쿨다운 업데이트를 단일 트랜잭션으로 — 쿨다운 미적용으로 인한 중복 알림 방지
-        var history = AlertHistory(id: nil, symbol: quote.symbol, triggerType: condition.triggerType, message: message, triggeredAt: now)
+        var history = AlertHistory(id: nil, symbol: quote.symbol, stockName: quote.name,
+                                   triggerType: condition.triggerType, message: message, triggeredAt: now)
         try? DatabaseManager.shared.recordAlertFired(history: &history, condition: updated)
     }
 

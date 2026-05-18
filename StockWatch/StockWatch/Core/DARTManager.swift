@@ -83,6 +83,7 @@ final class DARTManager {
                 var history = AlertHistory(
                     id: nil,
                     symbol: disclosure.stockCode.isEmpty ? symbol : disclosure.stockCode,
+                    stockName: disclosure.corpName,
                     triggerType: .dartDisclosure,
                     message: disclosure.reportName,
                     triggeredAt: Date(),
