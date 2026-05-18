@@ -108,14 +108,28 @@ struct ScreenerView: View {
                 )
             }
 
-            Button {
-                conditions.append(ScreenerCondition(type: .priceRange))
-            } label: {
-                Label("조건 추가", systemImage: "plus.circle")
-                    .font(.callout)
+            HStack {
+                Button {
+                    conditions.append(ScreenerCondition(type: .priceRange))
+                } label: {
+                    Label("조건 추가", systemImage: "plus.circle")
+                        .font(.callout)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.blue)
+
+                Spacer()
+
+                Button {
+                    clearAllConditions()
+                } label: {
+                    Label("전체 삭제", systemImage: "trash")
+                        .font(.callout)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(conditions.isEmpty ? Color.secondary : Color.red)
+                .disabled(conditions.isEmpty)
             }
-            .buttonStyle(.plain)
-            .foregroundStyle(.blue)
 
             Button {
                 runScreener()
@@ -278,6 +292,11 @@ struct ScreenerView: View {
             }
             isRunning = false
         }
+    }
+
+    private func clearAllConditions() {
+        conditions = []
+        UserDefaults.standard.removeObject(forKey: conditionsKey)
     }
 
     private func cleanEmptyConditions() {
