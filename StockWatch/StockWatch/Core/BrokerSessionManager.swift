@@ -34,11 +34,7 @@ final class BrokerSessionManager: ObservableObject {
             accountNumber: accountNumber.isEmpty ? nil : accountNumber
         )
         let adapter = KISAdapter(isMock: isMock)
-        QuoteManager.shared.addAdapter(id: accountId, adapter: adapter)
-        Task {
-            try? await adapter.connect(credentials: creds)
-            await MainActor.run { BrokerRegistry.shared.register(adapter) }
-        }
+        addBroker(id: accountId, adapter: adapter, credentials: creds)
         QuoteManager.shared.startRealtime(credentials: creds, isMock: isMock)
 
         AccountManager.invalidateCache()
@@ -55,8 +51,7 @@ final class BrokerSessionManager: ObservableObject {
         KeychainHelper.delete(account: KeychainKey.kisAccountNumber)
         UserDefaults.standard.removeObject(forKey: UserDefaultsKey.kisLoginDate)
         QuoteManager.shared.stopRealtime()
-        QuoteManager.shared.removeAdapter(id: accountId)
-        BrokerRegistry.shared.unregister(brokerName: "한국투자증권")
+        removeBroker(id: accountId, brokerName: "한국투자증권")
 
         AccountManager.invalidateCache()
         isKISConnected = false
@@ -91,11 +86,7 @@ final class BrokerSessionManager: ObservableObject {
             accountNumber: accountNumber.isEmpty ? nil : accountNumber
         )
         let adapter = KiwoomAdapter()
-        QuoteManager.shared.addAdapter(id: accountId, adapter: adapter)
-        Task {
-            try? await adapter.connect(credentials: creds)
-            await MainActor.run { BrokerRegistry.shared.register(adapter) }
-        }
+        addBroker(id: accountId, adapter: adapter, credentials: creds)
 
         AccountManager.invalidateCache()
         isKiwoomConnected = true
@@ -109,8 +100,7 @@ final class BrokerSessionManager: ObservableObject {
         KeychainHelper.delete(account: KeychainKey.kiwoomAppSecret)
         KeychainHelper.delete(account: KeychainKey.kiwoomAccountNumber)
         UserDefaults.standard.removeObject(forKey: UserDefaultsKey.kiwoomLoginDate)
-        QuoteManager.shared.removeAdapter(id: accountId)
-        BrokerRegistry.shared.unregister(brokerName: "키움증권")
+        removeBroker(id: accountId, brokerName: "키움증권")
 
         AccountManager.invalidateCache()
         isKiwoomConnected = false
@@ -141,12 +131,8 @@ final class BrokerSessionManager: ObservableObject {
             let creds = BrokerCredentials(appKey: appKey, appSecret: appSecret, accountNumber: accountNumber)
             let adapter = KISAdapter(isMock: isMock)
             let accountId = "KIS-" + String(appKey.prefix(8))
-            QuoteManager.shared.addAdapter(id: accountId, adapter: adapter)
             try? DatabaseManager.shared.assignAccountIdToOrphanedItems(accountId: accountId)
-            Task {
-                try? await adapter.connect(credentials: creds)
-                await MainActor.run { BrokerRegistry.shared.register(adapter) }
-            }
+            addBroker(id: accountId, adapter: adapter, credentials: creds)
             QuoteManager.shared.startRealtime(credentials: creds, isMock: isMock)
             hasRealAdapter = true
         }
@@ -158,12 +144,8 @@ final class BrokerSessionManager: ObservableObject {
             let creds = BrokerCredentials(appKey: appKey, appSecret: appSecret, accountNumber: accountNumber)
             let adapter = KiwoomAdapter()
             let accountId = "KIWOOM-" + String(appKey.prefix(8))
-            QuoteManager.shared.addAdapter(id: accountId, adapter: adapter)
             try? DatabaseManager.shared.assignAccountIdToOrphanedItems(accountId: accountId)
-            Task {
-                try? await adapter.connect(credentials: creds)
-                await MainActor.run { BrokerRegistry.shared.register(adapter) }
-            }
+            addBroker(id: accountId, adapter: adapter, credentials: creds)
             hasRealAdapter = true
         }
 
@@ -172,6 +154,21 @@ final class BrokerSessionManager: ObservableObject {
         }
 
         loadState()
+    }
+
+    // MARK: - 어댑터 등록/해제 래퍼 (QuoteManager + BrokerRegistry 항상 함께 처리)
+
+    private func addBroker(id: String, adapter: some BrokerAdapter, credentials: BrokerCredentials) {
+        QuoteManager.shared.addAdapter(id: id, adapter: adapter)
+        Task {
+            try? await adapter.connect(credentials: credentials)
+            await MainActor.run { BrokerRegistry.shared.register(adapter) }
+        }
+    }
+
+    private func removeBroker(id: String, brokerName: String) {
+        QuoteManager.shared.removeAdapter(id: id)
+        BrokerRegistry.shared.unregister(brokerName: brokerName)
     }
 
     // MARK: - UI 상태 동기화

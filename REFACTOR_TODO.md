@@ -120,7 +120,9 @@ UserDefaults 키와 Keychain 계정 이름이 SettingsView · AppDelegate · Acc
 - [ ] OR 통합안 (더 과감한 접근): `QuoteManager`가 `BrokerRegistry`를 내부적으로 사용하도록 통합
   - `BrokerRegistry.unregister()` → `QuoteManager.removeAdapter()` 연동
   - 장: 이중 관리 제거 / 단: `QuoteManager` 의존성 증가
-- [ ] 팀 검토 후 방향 결정 → 실행
+- [x] BrokerSessionManager에 보호 래퍼 추가 → 실행
+  - `private func addBroker(id:adapter:credentials:)` / `removeBroker(id:brokerName:)` 추가
+  - login/logout/restore 6곳의 중복 QuoteManager+BrokerRegistry 호출을 래퍼로 통합
 
 ---
 
