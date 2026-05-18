@@ -94,10 +94,19 @@ struct AlertHistoryView: View {
         history = (try? DatabaseManager.shared.fetchAlertHistory(limit: 500)) ?? []
 
         var names: [String: String] = [:]
+        // 관심종목·포트폴리오 우선 (alias 포함)
         let watchlist = (try? DatabaseManager.shared.fetchWatchlist()) ?? []
         let portfolio = (try? DatabaseManager.shared.fetchPortfolio()) ?? []
         for item in portfolio { names[item.symbol] = item.name }
         for item in watchlist { names[item.symbol] = item.alias ?? item.name }
+        // 현재 목록에 없는 종목은 stock_universe에서 폴백 조회
+        let missing = Set(history.map { $0.symbol })
+            .subtracting(names.keys)
+            .subtracting(["PORTFOLIO"])
+        if !missing.isEmpty {
+            let universeNames = (try? DatabaseManager.shared.fetchStockNames(for: Array(missing))) ?? [:]
+            names.merge(universeNames) { existing, _ in existing }
+        }
         symbolNames = names
     }
 
