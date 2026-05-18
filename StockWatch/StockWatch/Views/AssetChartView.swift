@@ -46,6 +46,21 @@ struct AssetChartView: View {
         return (0..<5).compactMap { cal.date(byAdding: .day, value: $0, to: dateRange.start) }
     }
 
+    // 월 뷰 X축 눈금: 1일, 8일, 15일, 22일, 29일 (최대 5주)
+    private var monthWeekStartDates: [Date] {
+        let cal = Calendar.current
+        var dates: [Date] = []
+        var offset = 0
+        while let d = cal.date(byAdding: .day, value: offset, to: dateRange.start), d < dateRange.end {
+            dates.append(d)
+            offset += 7
+        }
+        return dates
+    }
+
+    private static let englishMonths = ["JAN","FEB","MAR","APR","MAY","JUN",
+                                        "JUL","AUG","SEP","OCT","NOV","DEC"]
+
     // 일 뷰 스크롤 가능 전체 구간: 장 시작(09:00)~장 마감(15:30)
     private var dayXDomain: ClosedRange<Date> {
         let cal = Calendar.current
@@ -399,15 +414,33 @@ struct AssetChartView: View {
                     AxisGridLine(); AxisTick()
                     AxisValueLabel(format: .dateTime.weekday(.abbreviated))
                 }
-            } else if period == .year {
-                AxisMarks(values: .stride(by: .month, count: 1)) {
+            } else if period == .month {
+                AxisMarks(values: monthWeekStartDates) { value in
                     AxisGridLine(); AxisTick()
-                    AxisValueLabel(format: .dateTime.month(.abbreviated))
+                    AxisValueLabel {
+                        if let date = value.as(Date.self) {
+                            let day = Calendar.current.component(.day, from: date)
+                            Text("\((day - 1) / 7 + 1)주")
+                                .font(.caption2)
+                        }
+                    }
+                }
+            } else if period == .year {
+                AxisMarks(values: .stride(by: .month, count: 1)) { value in
+                    AxisGridLine(); AxisTick()
+                    AxisValueLabel {
+                        if let date = value.as(Date.self) {
+                            let idx = Calendar.current.component(.month, from: date) - 1
+                            Text(Self.englishMonths[idx])
+                                .font(.caption2)
+                        }
+                    }
                 }
             } else {
+                // .day
                 AxisMarks(values: .automatic) {
                     AxisGridLine(); AxisTick()
-                    AxisValueLabel(format: period == .day ? .dateTime.hour().minute() : .dateTime.day())
+                    AxisValueLabel(format: .dateTime.hour().minute())
                 }
             }
         }
