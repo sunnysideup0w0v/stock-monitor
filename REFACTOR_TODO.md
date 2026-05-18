@@ -144,13 +144,12 @@ UserDefaults 키와 Keychain 계정 이름이 SettingsView · AppDelegate · Acc
 `AccountManager.connectedAccountIds`가 호출될 때마다 Keychain I/O가 발생한다.  
 DB 쿼리(`fetchWatchlist`, `fetchPortfolio`), View의 `onAppear`, 필터 계산 등에서 자주 호출된다.
 
-- [ ] `AccountManager`를 `enum` → `@MainActor final class` (ObservableObject)로 전환 검토
-  - `@Published var connectedAccountIds: [String]` — 로그인/로그아웃 시 업데이트
-  - 캐싱으로 반복 Keychain 읽기 제거
-  - **단점**: singleton 참조 패턴 변경 필요, SwiftUI 환경 주입 필요
-- [x] OR 경량 접근: `connectedAccountIds` 계산 결과를 메모리에 캐시 + `BrokerSessionManager` 로그인/아웃 시 무효화
-  - `nonisolated(unsafe) static var _cachedConnectedIds: [String]?` + `invalidateCache()` 구현
-  - KIS/Kiwoom login/logout 4곳에서 `AccountManager.invalidateCache()` 호출
+- [x] `AccountManager`를 `enum` → `@MainActor final class` (ObservableObject)로 전환
+  - `@Published private(set) var connectedAccountIds: [String]` + `func refresh()` 구현
+  - `nonisolated(unsafe) static var _syncedIds` 미러로 DatabaseManager 등 비격리 컨텍스트 지원
+  - 정적 포워딩 프로퍼티 유지로 기존 호출 코드 변경 없음
+  - `nonisolated(unsafe) _cachedConnectedIds` 및 `invalidateCache()` 완전 제거
+- [x] OR 경량 접근 (이전 단계에서 완료, 완전 전환으로 대체)
 
 ---
 

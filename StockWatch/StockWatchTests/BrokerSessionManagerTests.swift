@@ -21,7 +21,7 @@ final class BrokerSessionManagerTests: XCTestCase {
         // BrokerSessionManager 상태 초기화
         BrokerSessionManager.shared.logoutKIS()
         BrokerSessionManager.shared.logoutKiwoom()
-        AccountManager.invalidateCache()
+        AccountManager.shared.refresh()
         try await super.tearDown()
     }
 
@@ -131,6 +131,6 @@ final class BrokerSessionManagerTests: XCTestCase {
         KeychainHelper.delete(account: KeychainKey.kiwoomAppKey)
         KeychainHelper.delete(account: KeychainKey.kiwoomAppSecret)
         KeychainHelper.delete(account: KeychainKey.kiwoomAccountNumber)
-        AccountManager.invalidateCache()
+        AccountManager.shared.refresh()
     }
 }

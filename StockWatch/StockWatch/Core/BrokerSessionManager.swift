@@ -37,7 +37,7 @@ final class BrokerSessionManager: ObservableObject {
         addBroker(id: accountId, adapter: adapter, credentials: creds)
         QuoteManager.shared.startRealtime(credentials: creds, isMock: isMock)
 
-        AccountManager.invalidateCache()
+        AccountManager.shared.refresh()
         isKISConnected = true
         kisLoginDate = now
         kisSavedAccountNumber = accountNumber
@@ -53,7 +53,7 @@ final class BrokerSessionManager: ObservableObject {
         QuoteManager.shared.stopRealtime()
         removeBroker(id: accountId, brokerName: "한국투자증권")
 
-        AccountManager.invalidateCache()
+        AccountManager.shared.refresh()
         isKISConnected = false
         kisLoginDate = nil
     }
@@ -88,7 +88,7 @@ final class BrokerSessionManager: ObservableObject {
         let adapter = KiwoomAdapter()
         addBroker(id: accountId, adapter: adapter, credentials: creds)
 
-        AccountManager.invalidateCache()
+        AccountManager.shared.refresh()
         isKiwoomConnected = true
         kiwoomLoginDate = now
         kiwoomSavedAccountNumber = accountNumber
@@ -102,7 +102,7 @@ final class BrokerSessionManager: ObservableObject {
         UserDefaults.standard.removeObject(forKey: UserDefaultsKey.kiwoomLoginDate)
         removeBroker(id: accountId, brokerName: "키움증권")
 
-        AccountManager.invalidateCache()
+        AccountManager.shared.refresh()
         isKiwoomConnected = false
         kiwoomLoginDate = nil
     }
