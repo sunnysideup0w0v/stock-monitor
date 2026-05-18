@@ -6,7 +6,10 @@ struct AssetChartView: View {
     @State private var selectedDate: Date = Date()
     @State private var showValue: Bool = true   // true=금액, false=수익률
     @State private var snapshots: [PortfolioSnapshot] = []
-    @State private var zoomLevel: Int = 2       // 0=전체(0~최대), 1~4=데이터기반 (높을수록 좁음)
+    @State private var zoomLevel: Int = 1               // 0=wide … 4=fine. 기본 1 (넓은 단위)
+    @State private var storedMasterStep: Double = 1_000_000 // loadData() 때 갱신
+    @State private var dayWindowHours: Int = 2          // 일 뷰 표시 구간(h): 0=전체, 1/2/3시간
+    @State private var scrollAnchor: Date = Date()      // chartScrollPosition 바인딩
 
     enum ChartPeriod: String, CaseIterable {
         case day   = "일"
@@ -142,58 +145,66 @@ struct AssetChartView: View {
         return result
     }
 
-    // MARK: - Y Axis Domain & Ticks
+    // MARK: - Y Axis Unit & Domain
 
-    private var yDomain: ClosedRange<Double> {
-        let values = displaySnapshots.map { chartValue($0) }
-        guard !values.isEmpty else {
-            return showValue ? 0...100_000_000 : -5...5
+    // storedMasterStep 접근자 (항상 일별 intraday 변동폭 기준으로 유지됨)
+    private var masterStep: Double { storedMasterStep }
+
+    // 기간이 바뀌어도 단위가 일관되도록 일별 intraday 변동폭의 중간값으로 계산
+    // snapshots(raw)를 날짜별로 그룹핑 → 각 날의 고저 차이 → 중간값 → niceStep
+    private func computeMasterStep() -> Double {
+        guard !snapshots.isEmpty else { return showValue ? 1_000_000 : 1 }
+        let cal = Calendar.current
+        var byDay: [Date: (lo: Double, hi: Double)] = [:]
+        for snap in snapshots {
+            let day = cal.startOfDay(for: snap.timestamp)
+            let v   = chartValue(snap)
+            if let r = byDay[day] { byDay[day] = (min(r.lo, v), max(r.hi, v)) }
+            else                  { byDay[day] = (v, v) }
         }
-        let minV = values.min()!
-        let maxV = values.max()!
-
-        // 금액 + zoom 0: 0부터 최대값의 110%까지 (전체 자산 맥락)
-        if showValue && zoomLevel == 0 {
-            return 0...max(maxV * 1.1, 1)
-        }
-
+        var spans = byDay.values.map { $0.hi - $0.lo }.filter { $0 > 0 }
+        guard !spans.isEmpty else { return showValue ? 1_000_000 : 1 }
+        spans.sort()
+        let median  = spans[spans.count / 2]
         let minSpan = showValue ? 100_000.0 : 0.1
-        let span = max(maxV - minV, minSpan)
-
-        let paddingRatio: Double
-        switch zoomLevel {
-        case 0: paddingRatio = 0.5   // 수익률 wide (금액은 위에서 처리)
-        case 1: paddingRatio = 0.4
-        case 2: paddingRatio = 0.15
-        case 3: paddingRatio = 0.05
-        case 4: paddingRatio = 0.01
-        default: paddingRatio = 0.15
-        }
-
-        let pad = span * paddingRatio
-        return (minV - pad)...(maxV + pad)
+        return niceStep(max(median, minSpan) / 4)
     }
 
-    // domain에 맞는 nice tick values (~4~6개)
+    // 5단계 프리셋: masterStep의 [50×, 10×, 5×, 2×, 1×]
+    // 예) masterStep=100만 → [5000만, 1000만, 500만, 200만, 100만]
+    private var stepPresets: [Double] {
+        let base = masterStep
+        return [base * 50, base * 10, base * 5, base * 2, base]
+    }
+
+    private var currentStep: Double { stepPresets[min(zoomLevel, stepPresets.count - 1)] }
+
+    // 도메인: 데이터 중심으로부터 ±(step × 2.5) — 항상 5칸 고정, 단위가 바뀔수록 범위 축소
+    private var yDomain: ClosedRange<Double> {
+        let values = displaySnapshots.map { chartValue($0) }
+        guard !values.isEmpty else { return showValue ? 0...100_000_000 : -5...5 }
+        let center = ((values.min()! + values.max()!) / 2)
+        let half   = currentStep * 2.5
+        return (center - half)...(center + half)
+    }
+
+    // currentStep 간격, 0 기준 정렬 눈금
     private var yAxisValues: [Double] {
-        let lo = yDomain.lowerBound
-        let hi = yDomain.upperBound
-        let span = hi - lo
-        guard span > 0 else { return [lo] }
-
-        let step = niceStep(span / 4)
+        let step = currentStep
+        let lo = yDomain.lowerBound, hi = yDomain.upperBound
+        guard step > 0, hi > lo else { return [] }
         let start = ceil(lo / step) * step
-
         var values: [Double] = []
         var v = start
-        while v <= hi + step * 0.001 {
-            values.append(v)
-            v += step
-        }
+        while v <= hi + step * 0.001 { values.append(v); v += step }
         return values
     }
 
-    // "nice" 눈금 간격 계산: 1, 2, 5 × 10^n 단위로 반올림
+    // 버튼 옆에 표시할 현재 단위 레이블
+    private var yStepLabel: String {
+        showValue ? fmtShort(Int(currentStep)) : String(format: "%.2g%%", currentStep)
+    }
+
     private func niceStep(_ rough: Double) -> Double {
         guard rough > 0 else { return 1 }
         let mag = pow(10.0, floor(log10(rough)))
@@ -238,27 +249,37 @@ struct AssetChartView: View {
 
                 Spacer()
 
-                // Y축 범위 조절 버튼
-                HStack(spacing: 2) {
-                    Button {
-                        zoomLevel = max(0, zoomLevel - 1)
-                    } label: {
-                        Image(systemName: "minus.magnifyingglass")
+                // 일 뷰: 시간 창 선택
+                if period == .day {
+                    Picker("", selection: $dayWindowHours) {
+                        Text("전체").tag(0)
+                        Text("1H").tag(1)
+                        Text("2H").tag(2)
+                        Text("3H").tag(3)
                     }
-                    .buttonStyle(.borderless)
-                    .disabled(zoomLevel <= 0)
-                    .help("Y축 범위 넓히기")
-
-                    Button {
-                        zoomLevel = min(4, zoomLevel + 1)
-                    } label: {
-                        Image(systemName: "plus.magnifyingglass")
-                    }
-                    .buttonStyle(.borderless)
-                    .disabled(zoomLevel >= 4)
-                    .help("Y축 범위 좁히기")
+                    .pickerStyle(.segmented)
+                    .frame(width: 120)
                 }
-                .font(.body)
+
+                // Y축 단위 선택
+                HStack(spacing: 2) {
+                    Button { zoomLevel = max(0, zoomLevel - 1) } label: {
+                        Image(systemName: "minus")
+                    }
+                    .buttonStyle(.borderless)
+                    .disabled(zoomLevel <= 0 || displaySnapshots.isEmpty)
+
+                    Text(yStepLabel)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .frame(minWidth: 56, alignment: .center)
+
+                    Button { zoomLevel = min(4, zoomLevel + 1) } label: {
+                        Image(systemName: "plus")
+                    }
+                    .buttonStyle(.borderless)
+                    .disabled(zoomLevel >= 4 || displaySnapshots.isEmpty)
+                }
 
                 Picker("", selection: $showValue) {
                     Text("금액").tag(true)
@@ -310,9 +331,10 @@ struct AssetChartView: View {
                     .frame(height: 200)
             }
         }
-        .onChange(of: period)     { _, _ in zoomLevel = 2; loadData() }
-        .onChange(of: selectedDate) { _, _ in loadData() }
-        .onChange(of: showValue)  { _, _ in zoomLevel = 2 }
+        .onChange(of: period)        { _, _ in zoomLevel = 1; loadData() }
+        .onChange(of: selectedDate)  { _, _ in loadData() }
+        .onChange(of: showValue)     { _, _ in storedMasterStep = computeMasterStep(); zoomLevel = 1 }
+        .onChange(of: dayWindowHours) { _, _ in updateScrollAnchor() }
         .onAppear { loadData() }
     }
 
@@ -348,7 +370,7 @@ struct AssetChartView: View {
         }
     }
 
-    private var chartBody: some View {
+    private var baseChart: some View {
         Chart {
             areaAboveContent   // 기준선 위 초록 면적
             areaBelowContent   // 기준선 아래 빨간 면적
@@ -375,6 +397,18 @@ struct AssetChartView: View {
             }
         }
         .chartLegend(.hidden)
+    }
+
+    @ViewBuilder
+    private var chartBody: some View {
+        if period == .day, dayWindowHours > 0 {
+            baseChart
+                .chartScrollableAxes(.horizontal)
+                .chartXVisibleDomain(length: Double(dayWindowHours) * 3600)
+                .chartScrollPosition(x: $scrollAnchor)
+        } else {
+            baseChart
+        }
     }
 
     @ChartContentBuilder
@@ -436,9 +470,24 @@ struct AssetChartView: View {
         }
     }
 
+    private func updateScrollAnchor() {
+        guard period == .day, dayWindowHours > 0 else { return }
+        let windowSeconds = Double(dayWindowHours) * 3600
+        if let last = displaySnapshots.last {
+            scrollAnchor = last.timestamp.addingTimeInterval(-windowSeconds)
+        } else {
+            let cal = Calendar.current
+            var comps = cal.dateComponents([.year, .month, .day], from: selectedDate)
+            comps.hour = 15; comps.minute = 30
+            scrollAnchor = cal.date(from: comps)?.addingTimeInterval(-windowSeconds) ?? selectedDate
+        }
+    }
+
     private func loadData() {
         let (start, end) = dateRange
         snapshots = (try? DatabaseManager.shared.fetchSnapshots(from: start, to: end)) ?? []
+        storedMasterStep = computeMasterStep()
+        updateScrollAnchor()
     }
 
     private func fmt(_ v: Int) -> String {
