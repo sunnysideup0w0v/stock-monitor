@@ -131,6 +131,12 @@ final class DatabaseManager: @unchecked Sendable {
             }
         }
 
+        migrator.registerMigration("v12_alert_history_isHidden") { db in
+            try db.alter(table: "alert_history") { t in
+                t.add(column: "isHidden", .boolean).notNull().defaults(to: false)
+            }
+        }
+
         try migrator.migrate(dbQueue)
     }
 
@@ -226,7 +232,23 @@ final class DatabaseManager: @unchecked Sendable {
 
     func fetchAlertHistory(limit: Int = 100) throws -> [AlertHistory] {
         try dbQueue.read { db in
-            try AlertHistory.order(Column("triggeredAt").desc).limit(limit).fetchAll(db)
+            try AlertHistory
+                .filter(Column("isHidden") == false)
+                .order(Column("triggeredAt").desc)
+                .limit(limit)
+                .fetchAll(db)
+        }
+    }
+
+    func hideAlertHistory(id: Int64) throws {
+        try dbQueue.write { db in
+            try db.execute(sql: "UPDATE alert_history SET isHidden = 1 WHERE id = ?", arguments: [id])
+        }
+    }
+
+    func hideAllAlertHistory() throws {
+        try dbQueue.write { db in
+            try db.execute(sql: "UPDATE alert_history SET isHidden = 1 WHERE isHidden = 0")
         }
     }
 

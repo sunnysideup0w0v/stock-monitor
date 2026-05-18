@@ -56,6 +56,11 @@ struct AlertHistoryView: View {
                     Button("내보내기") { exportCSV() }
                         .buttonStyle(.borderless)
                         .font(.caption)
+                    Button("전체 삭제") { hideAll() }
+                        .buttonStyle(.borderless)
+                        .font(.caption)
+                        .foregroundStyle(filtered.isEmpty ? Color.secondary : Color.red)
+                        .disabled(filtered.isEmpty)
                     Button("새로고침") { load() }
                         .buttonStyle(.borderless)
                         .font(.caption)
@@ -70,6 +75,13 @@ struct AlertHistoryView: View {
                 List {
                     ForEach(filtered, id: \.id) { item in
                         AlertHistoryRowView(item: item, symbolName: symbolNames[item.symbol])
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    hide(item: item)
+                                } label: {
+                                    Label("삭제", systemImage: "trash")
+                                }
+                            }
                     }
                 }
                 .listStyle(.bordered)
@@ -88,6 +100,17 @@ struct AlertHistoryView: View {
         case "전체": startDate = Date(timeIntervalSince1970: 0)
         default: break
         }
+    }
+
+    private func hide(item: AlertHistory) {
+        guard let id = item.id else { return }
+        try? DatabaseManager.shared.hideAlertHistory(id: id)
+        history.removeAll { $0.id == id }
+    }
+
+    private func hideAll() {
+        try? DatabaseManager.shared.hideAllAlertHistory()
+        history.removeAll()
     }
 
     private func load() {

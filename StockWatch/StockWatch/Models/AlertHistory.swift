@@ -9,6 +9,20 @@ struct AlertHistory: Codable, FetchableRecord, MutablePersistableRecord {
     var message: String
     var triggeredAt: Date
     var metadata: String?   // DART 공시: rcept_no 저장
+    var isHidden: Bool      // true이면 화면에서 숨김 (DB에는 보존)
+
+    init(id: Int64? = nil, symbol: String, stockName: String? = nil,
+         triggerType: TriggerType, message: String, triggeredAt: Date,
+         metadata: String? = nil, isHidden: Bool = false) {
+        self.id = id
+        self.symbol = symbol
+        self.stockName = stockName
+        self.triggerType = triggerType
+        self.message = message
+        self.triggeredAt = triggeredAt
+        self.metadata = metadata
+        self.isHidden = isHidden
+    }
 
     static let databaseTableName = "alert_history"
 
