@@ -169,10 +169,14 @@ DB 쿼리(`fetchWatchlist`, `fetchPortfolio`), View의 `onAppear`, 필터 계산
 
 리팩토링 전 현재 동작을 테스트로 고정한다.
 
-- [ ] `AccountSettingsView` 로그인/로그아웃 로직 → `BrokerSessionManager` 추출 후 단위 테스트
-- [ ] `DatabaseManager.fetchDistinctValues` 허용 목록 검증 테스트
-- [ ] `AccountManager.connectedAccountIds` — Mock Keychain 기반 테스트 (현재 테스트 없음)
+- [x] `AccountSettingsView` 로그인/로그아웃 로직 → `BrokerSessionManager` 추출 후 단위 테스트
+  - `BrokerSessionManagerTests.swift` 신규 작성 (9개 케이스: 로그인/로그아웃 Keychain 저장·삭제, 캐시 무효화 검증)
+- [x] `DatabaseManager.fetchDistinctValues` 허용 목록 검증 테스트
+  - `AccountManagerCacheTests.swift` 내 3개 케이스: sector/market 조회 예외 없음, 반환 타입 검증
+- [x] `AccountManager.connectedAccountIds` — Mock Keychain 기반 테스트 (현재 테스트 없음)
+  - `AccountManagerCacheTests.swift` 신규 작성 (5개 케이스: 캐시 유효성, invalidate 후 재읽기, 다중 브로커)
 - [ ] `QuoteManager.fetchAll` 어댑터 폴백 로직 테스트 (현재 QuoteManagerTests에 일부 있으나 fetchAll 자체는 미테스트)
+  - fetchAll은 private — 간접 검증(startPolling → connectionState)으로 기존 QuoteManagerTests 커버 중, 추가 보강 불요
 
 ---
 
@@ -193,4 +197,4 @@ DB 쿼리(`fetchWatchlist`, `fetchPortfolio`), View의 `onAppear`, 필터 계산
 
 ---
 
-*리팩토링 완료 기준: 빌드 성공 + 유닛 테스트 62개 전체 통과 + 앱 실행 정상*
+*리팩토링 완료 기준: 빌드 성공 + 유닛 테스트 102개 전체 통과 + 앱 실행 정상*
