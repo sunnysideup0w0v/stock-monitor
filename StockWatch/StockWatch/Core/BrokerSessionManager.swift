@@ -153,6 +153,7 @@ final class BrokerSessionManager: ObservableObject {
             QuoteManager.shared.setAdapter(MockBrokerAdapter())
         }
 
+        AccountManager.shared.refresh()
         loadState()
     }
 
