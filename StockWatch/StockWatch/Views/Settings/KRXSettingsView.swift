@@ -83,6 +83,7 @@ struct KRXSettingsView: View {
                         KeychainHelper.save(key, account: KeychainKey.krxApiKey)
                         isApiKeyConfigured = true
                         apiKeyInput = ""
+                        fetch() // 키 저장 즉시 KRX OpenAPI로 재수집 (날짜 체크 우회)
                     }
                     .buttonStyle(.borderedProminent)
                     .disabled(apiKeyInput.trimmingCharacters(in: .whitespaces).isEmpty)
