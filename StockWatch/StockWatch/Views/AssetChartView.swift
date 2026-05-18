@@ -199,7 +199,7 @@ struct AssetChartView: View {
         return (center - half)...(center + half)
     }
 
-    // currentStep 간격, 0 기준 정렬 눈금
+    // currentStep 간격, 0 기준 정렬 눈금. baseline이 기존 눈금과 겹치지 않으면 추가
     private var yAxisValues: [Double] {
         let step = currentStep
         let lo = yDomain.lowerBound, hi = yDomain.upperBound
@@ -208,7 +208,16 @@ struct AssetChartView: View {
         var values: [Double] = []
         var v = start
         while v <= hi + step * 0.001 { values.append(v); v += step }
+        if yDomain.contains(baseline),
+           !values.contains(where: { abs($0 - baseline) < step * 0.1 }) {
+            values.append(baseline)
+            values.sort()
+        }
         return values
+    }
+
+    private func isBaselineTick(_ d: Double) -> Bool {
+        showValue ? abs(d - baseline) < 100 : abs(d - baseline) < 0.001
     }
 
     // 버튼 옆에 표시할 현재 단위 레이블
@@ -376,10 +385,6 @@ struct AssetChartView: View {
             RuleMark(y: .value("기준", baseline))
                 .foregroundStyle(.gray.opacity(0.5))
                 .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 3]))
-                .annotation(position: .trailing, alignment: .trailing) {
-                    Text(showValue ? "기준" : "0%")
-                        .font(.caption2).foregroundStyle(.secondary)
-                }
         }
         .chartYScale(domain: yDomain)
         .chartXAxis {
@@ -453,8 +458,14 @@ struct AssetChartView: View {
     @ViewBuilder
     private func yLabel(_ v: AxisValue) -> some View {
         if let d = v.as(Double.self) {
-            if showValue { Text(fmtShort(Int(d))) }
-            else         { Text(String(format: "%.1f%%", d)) }
+            if isBaselineTick(d) {
+                Text(showValue ? "기준" : "0%")
+                    .foregroundStyle(.secondary)
+            } else if showValue {
+                Text(fmtShort(Int(d)))
+            } else {
+                Text(String(format: "%.1f%%", d))
+            }
         }
     }
 
