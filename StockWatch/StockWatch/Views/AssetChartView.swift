@@ -6,6 +6,7 @@ struct AssetChartView: View {
     @State private var selectedDate: Date = Date()
     @State private var showValue: Bool = true   // true=금액, false=수익률
     @State private var snapshots: [PortfolioSnapshot] = []
+    @State private var zoomLevel: Int = 2       // 0=전체(0~최대), 1~4=데이터기반 (높을수록 좁음)
 
     enum ChartPeriod: String, CaseIterable {
         case day   = "일"
@@ -141,6 +142,68 @@ struct AssetChartView: View {
         return result
     }
 
+    // MARK: - Y Axis Domain & Ticks
+
+    private var yDomain: ClosedRange<Double> {
+        let values = displaySnapshots.map { chartValue($0) }
+        guard !values.isEmpty else {
+            return showValue ? 0...100_000_000 : -5...5
+        }
+        let minV = values.min()!
+        let maxV = values.max()!
+
+        // 금액 + zoom 0: 0부터 최대값의 110%까지 (전체 자산 맥락)
+        if showValue && zoomLevel == 0 {
+            return 0...max(maxV * 1.1, 1)
+        }
+
+        let minSpan = showValue ? 100_000.0 : 0.1
+        let span = max(maxV - minV, minSpan)
+
+        let paddingRatio: Double
+        switch zoomLevel {
+        case 0: paddingRatio = 0.5   // 수익률 wide (금액은 위에서 처리)
+        case 1: paddingRatio = 0.4
+        case 2: paddingRatio = 0.15
+        case 3: paddingRatio = 0.05
+        case 4: paddingRatio = 0.01
+        default: paddingRatio = 0.15
+        }
+
+        let pad = span * paddingRatio
+        return (minV - pad)...(maxV + pad)
+    }
+
+    // domain에 맞는 nice tick values (~4~6개)
+    private var yAxisValues: [Double] {
+        let lo = yDomain.lowerBound
+        let hi = yDomain.upperBound
+        let span = hi - lo
+        guard span > 0 else { return [lo] }
+
+        let step = niceStep(span / 4)
+        let start = ceil(lo / step) * step
+
+        var values: [Double] = []
+        var v = start
+        while v <= hi + step * 0.001 {
+            values.append(v)
+            v += step
+        }
+        return values
+    }
+
+    // "nice" 눈금 간격 계산: 1, 2, 5 × 10^n 단위로 반올림
+    private func niceStep(_ rough: Double) -> Double {
+        guard rough > 0 else { return 1 }
+        let mag = pow(10.0, floor(log10(rough)))
+        let f = rough / mag
+        if f < 1.5 { return 1 * mag }
+        if f < 3.5 { return 2 * mag }
+        if f < 7.5 { return 5 * mag }
+        return 10 * mag
+    }
+
     // MARK: - Summary
 
     private var summary: (diff: Double, changePct: Double)? {
@@ -151,9 +214,6 @@ struct AssetChartView: View {
         let pct  = a != 0 ? diff / abs(a) * 100 : 0
         return (diff, pct)
     }
-
-    @State private var isMockGenerating = false
-    @State private var mockMessage: String? = nil
 
     // MARK: - Body
 
@@ -177,6 +237,28 @@ struct AssetChartView: View {
                     .buttonStyle(.borderless).font(.caption)
 
                 Spacer()
+
+                // Y축 범위 조절 버튼
+                HStack(spacing: 2) {
+                    Button {
+                        zoomLevel = max(0, zoomLevel - 1)
+                    } label: {
+                        Image(systemName: "minus.magnifyingglass")
+                    }
+                    .buttonStyle(.borderless)
+                    .disabled(zoomLevel <= 0)
+                    .help("Y축 범위 넓히기")
+
+                    Button {
+                        zoomLevel = min(4, zoomLevel + 1)
+                    } label: {
+                        Image(systemName: "plus.magnifyingglass")
+                    }
+                    .buttonStyle(.borderless)
+                    .disabled(zoomLevel >= 4)
+                    .help("Y축 범위 좁히기")
+                }
+                .font(.body)
 
                 Picker("", selection: $showValue) {
                     Text("금액").tag(true)
@@ -220,47 +302,18 @@ struct AssetChartView: View {
 
             // 차트
             if snapshots.isEmpty {
-                VStack(spacing: 10) {
-                    Text("선택한 기간에 데이터가 없습니다")
-                        .font(.caption).foregroundStyle(.secondary)
-                    mockDataControls
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                Text("선택한 기간에 데이터가 없습니다")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 chartBody
                     .frame(height: 200)
-                mockDataControls
             }
         }
-        .onChange(of: period)       { _, _ in loadData() }
+        .onChange(of: period)     { _, _ in zoomLevel = 2; loadData() }
         .onChange(of: selectedDate) { _, _ in loadData() }
-        .onChange(of: showValue)    { _, _ in }
+        .onChange(of: showValue)  { _, _ in zoomLevel = 2 }
         .onAppear { loadData() }
-    }
-
-    @ViewBuilder
-    private var mockDataControls: some View {
-        HStack(spacing: 8) {
-            if isMockGenerating {
-                ProgressView().scaleEffect(0.6).frame(width: 16, height: 16)
-                Text("생성 중…").font(.caption).foregroundStyle(.secondary)
-            } else {
-                Button("테스트 데이터 생성 (30일)") { generateMockData() }
-                    .buttonStyle(.borderless).font(.caption).foregroundStyle(.blue)
-            }
-
-            Button("삭제") {
-                try? DatabaseManager.shared.deleteAllSnapshots()
-                mockMessage = "삭제 완료"
-                loadData()
-            }
-            .buttonStyle(.borderless).font(.caption).foregroundStyle(.red)
-            .disabled(isMockGenerating)
-
-            if let msg = mockMessage {
-                Text(msg).font(.caption2).foregroundStyle(.secondary)
-            }
-        }
     }
 
     // MARK: - Chart Body
@@ -308,6 +361,7 @@ struct AssetChartView: View {
                         .font(.caption2).foregroundStyle(.secondary)
                 }
         }
+        .chartYScale(domain: yDomain)
         .chartXAxis {
             AxisMarks(values: .automatic) {
                 AxisGridLine(); AxisTick()
@@ -315,7 +369,7 @@ struct AssetChartView: View {
             }
         }
         .chartYAxis {
-            AxisMarks(values: .automatic) { v in
+            AxisMarks(values: yAxisValues) { v in
                 AxisGridLine(); AxisTick()
                 AxisValueLabel { yLabel(v) }
             }
@@ -387,68 +441,22 @@ struct AssetChartView: View {
         snapshots = (try? DatabaseManager.shared.fetchSnapshots(from: start, to: end)) ?? []
     }
 
-    // Task.detached 대신 Task { } 사용: @MainActor context 상속 → @State 직접 접근 가능
-    // buildMockBatch()는 static으로 분리해 actor isolation 회피
-    private func generateMockData() {
-        guard !isMockGenerating else { return }
-        isMockGenerating = true
-        mockMessage = nil
-
-        Task {
-            await Task.yield()  // UI가 로딩 상태를 렌더링할 틈을 줌
-
-            let batch = Self.buildMockBatch()
-            do {
-                try DatabaseManager.shared.insertSnapshots(batch)
-                mockMessage = "✓ \(batch.count)건 생성됨 — 주 또는 월 뷰로 확인하세요"
-            } catch {
-                mockMessage = "생성 실패: \(error.localizedDescription)"
-            }
-            isMockGenerating = false
-            loadData()
-        }
-    }
-
-    private static func buildMockBatch() -> [PortfolioSnapshot] {
-        let cal = Calendar.current
-        let now = Date()
-        let baseCost = 9_500_000
-        var value = 10_000_000
-        var batch: [PortfolioSnapshot] = []
-
-        for dayOffset in stride(from: -29, through: 0, by: 1) {
-            guard let day = cal.date(byAdding: .day, value: dayOffset, to: now) else { continue }
-            let weekday = cal.component(.weekday, from: day)
-            guard weekday != 1 && weekday != 7 else { continue }
-
-            var minuteCursor = 9 * 60
-            while minuteCursor <= 15 * 60 + 30 {
-                let h = minuteCursor / 60, m = minuteCursor % 60
-                guard let ts = cal.date(bySettingHour: h, minute: m, second: 0, of: day),
-                      ts <= now else { minuteCursor += 5; continue }
-
-                let delta = Double.random(in: -0.003...0.003)
-                value = max(6_000_000, Int(Double(value) * (1 + delta)))
-                let gain = value - baseCost
-                let gainPct = Double(gain) / Double(baseCost) * 100
-                batch.append(PortfolioSnapshot(id: nil, timestamp: ts,
-                                               totalValue: value, totalGain: gain, gainPct: gainPct))
-                minuteCursor += 5
-            }
-        }
-        return batch
-    }
-
     private func fmt(_ v: Int) -> String {
         NumberFormatter.decimal.string(from: NSNumber(value: v)) ?? "\(v)"
     }
 
-    // Y축 레이블용 축약 표시 (1,000,000 → 100만)
+    // Y축 레이블용 축약 표시
+    // 1억 이상: 정수 억 + 나머지 만 (예: "1억", "1억2500만")
+    // 1만 이상: 만 단위 (예: "9800만")
     private func fmtShort(_ v: Int) -> String {
-        let abs = Swift.abs(v)
+        let absV = Swift.abs(v)
         let sign = v < 0 ? "-" : ""
-        if abs >= 100_000_000 { return "\(sign)\(abs / 100_000_000)억" }
-        if abs >= 10_000      { return "\(sign)\(abs / 10_000)만" }
+        if absV >= 100_000_000 {
+            let eok = absV / 100_000_000
+            let man = (absV % 100_000_000) / 10_000
+            return man == 0 ? "\(sign)\(eok)억" : "\(sign)\(eok)억\(man)만"
+        }
+        if absV >= 10_000 { return "\(sign)\(absV / 10_000)만" }
         return fmt(v)
     }
 }
