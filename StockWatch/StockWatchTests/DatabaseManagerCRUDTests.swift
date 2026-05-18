@@ -31,15 +31,15 @@ final class DatabaseManagerCRUDTests: XCTestCase {
 
     // MARK: - Watchlist: insert → accountId 자동 설정
 
-    @MainActor func test_insertWatchlist_setsAccountIdFromManager() throws {
+    @MainActor func test_insertWatchlist_setsUserAccountId() throws {
         let symbol = prefix + "WATCH1"
         var item = WatchlistItem(id: nil, symbol: symbol, name: "테스트종목", alias: nil, group: .watchlist)
         try DatabaseManager.shared.insert(&item)
 
         let fetched = try DatabaseManager.shared.fetchWatchlist().first { $0.symbol == symbol }
         XCTAssertNotNil(fetched)
-        XCTAssertEqual(fetched?.accountId, accountA,
-                       "insert()는 AccountManager.currentAccountId를 accountId로 자동 설정해야 함")
+        XCTAssertEqual(fetched?.accountId, "USER",
+                       "관심종목은 브로커 독립적으로 항상 accountId='USER'로 저장돼야 함")
     }
 
     @MainActor func test_insertWatchlist_assignsRowId() throws {
