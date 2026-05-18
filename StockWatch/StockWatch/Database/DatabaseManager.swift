@@ -137,19 +137,23 @@ final class DatabaseManager: @unchecked Sendable {
             }
         }
 
+        // 관심종목 accountId를 브로커 독립적인 "USER"로 통일
+        migrator.registerMigration("v13_watchlist_user_accountId") { db in
+            try db.execute(sql: "UPDATE watchlist SET accountId = 'USER' WHERE accountId != ''")
+        }
+
         try migrator.migrate(dbQueue)
     }
 
     // MARK: - Account Migration
 
-    /// 기존 accountId == "" 행을 현재 계정으로 일회성 마이그레이션.
+    /// accountId == "" 포트폴리오 항목을 현재 계정으로 일회성 마이그레이션.
+    /// 관심종목은 v13 마이그레이션으로 "USER"로 통일되므로 제외.
     /// UserDefaults UserDefaultsKey.dbV8Migrated 플래그로 중복 실행 방지.
     func assignAccountIdToOrphanedItems(accountId: String) throws {
         guard !accountId.isEmpty,
               !UserDefaults.standard.bool(forKey: UserDefaultsKey.dbV8Migrated) else { return }
         try dbQueue.write { db in
-            try db.execute(sql: "UPDATE watchlist SET accountId = ? WHERE accountId = ''",
-                           arguments: [accountId])
             try db.execute(sql: "UPDATE portfolio SET accountId = ? WHERE accountId = ''",
                            arguments: [accountId])
         }
@@ -159,15 +163,14 @@ final class DatabaseManager: @unchecked Sendable {
     // MARK: - Watchlist
 
     func fetchWatchlist() throws -> [WatchlistItem] {
-        // 관심종목은 브로커 무관 — 어느 계좌든 연결 시 전체 표시, 로그아웃 시만 빈 배열
         guard AccountManager.isAnyConnected else { return [] }
         return try dbQueue.read { db in
-            try WatchlistItem.filter(Column("accountId") != "").fetchAll(db)
+            try WatchlistItem.filter(Column("accountId") == "USER").fetchAll(db)
         }
     }
 
     func insert(_ item: inout WatchlistItem) throws {
-        item.accountId = AccountManager.currentAccountId
+        item.accountId = "USER"
         try dbQueue.write { db in try item.insert(db) }
     }
 
