@@ -25,6 +25,7 @@
 		50B4EEE64EEDAEEDC40EB2DE /* NotificationManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EB723879B41A5C7856EBCD4 /* NotificationManagerTests.swift */; };
 		518D2F18473C4F22C4EB371F /* SnapshotManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05217C2DAD3316E28FE58E77 /* SnapshotManagerTests.swift */; };
 		53EC15C14FD6BAB92EA0D631 /* AlertSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E50DA5520F5C28068BC9704 /* AlertSettingsView.swift */; };
+		55EFB9835A655E8751BE702B /* AccountManagerCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2632348A58ACCEA41AF9C8F7 /* AccountManagerCacheTests.swift */; };
 		57D99242DAA246F7A6594F57 /* MiraeAssetAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77B36BF411BAB00875C41D77 /* MiraeAssetAdapter.swift */; };
 		5892E194860120366CABC7FB /* AlertHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F007132E94AC85871932EEE0 /* AlertHistoryView.swift */; };
 		5C32C172B9F267DD888430FB /* AlertEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 485F5E3B2F81922FF587857A /* AlertEvaluator.swift */; };
@@ -63,6 +64,7 @@
 		B76AA2F6EAAE047116DB0FC7 /* ScreenerEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A9C1A99BE2A7EF4A6DACE20 /* ScreenerEngine.swift */; };
 		B7B1150D7369B12EDF6029A6 /* KeychainHelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52756C172EFCE248A27C3B74 /* KeychainHelperTests.swift */; };
 		C332291B4F4EAF667735DBF8 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D30D3FB5A44BE8ADDC9ECA2 /* AppLogger.swift */; };
+		CA87078C6B21A04593A2664A /* BrokerSessionManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B6B1AB3B903193DBF8C6815 /* BrokerSessionManagerTests.swift */; };
 		D1B18537D3C8A84AEC78959E /* AlertEvaluatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D55D467063C92591D5F3AF32 /* AlertEvaluatorTests.swift */; };
 		D355B90BDD80617758C47DA9 /* WatchlistItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD0E3054289D0C4A03DA88CB /* WatchlistItem.swift */; };
 		D5197D156AD652C931C382A6 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E91457CAFFE46128C1369488 /* OnboardingView.swift */; };
@@ -103,6 +105,7 @@
 		1A8DC0F7F8A2B927ACAF68A1 /* DatabaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseManager.swift; sourceTree = "<group>"; };
 		1BAD612CFF7131DF8678342A /* DARTSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DARTSettingsView.swift; sourceTree = "<group>"; };
 		1DA4EE76E88F846A8FB9E2C8 /* DARTManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DARTManager.swift; sourceTree = "<group>"; };
+		2632348A58ACCEA41AF9C8F7 /* AccountManagerCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountManagerCacheTests.swift; sourceTree = "<group>"; };
 		27964784296E0D3236DF6643 /* StockWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = StockWatch.entitlements; sourceTree = "<group>"; };
 		32ACEFDE6676F785B24819F2 /* StockUniverseItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockUniverseItem.swift; sourceTree = "<group>"; };
 		3CA6753273E034494E5C9BFE /* AlertHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertHistory.swift; sourceTree = "<group>"; };
@@ -129,6 +132,7 @@
 		7B48A2F93F56DFBD853F6C02 /* ScreenerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenerView.swift; sourceTree = "<group>"; };
 		831B19FB962ED8687DF4CBFD /* PortfolioItemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioItemTests.swift; sourceTree = "<group>"; };
 		87911CD83481F76D445A52B8 /* UserDefaultsKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefaultsKey.swift; sourceTree = "<group>"; };
+		8B6B1AB3B903193DBF8C6815 /* BrokerSessionManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrokerSessionManagerTests.swift; sourceTree = "<group>"; };
 		96023ABC9674B6FD06210FF9 /* APILogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APILogger.swift; sourceTree = "<group>"; };
 		96036A94BC463B8118C8EB3D /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		99A0AEAF32224F79E899675E /* ClaudeAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeAnalyzer.swift; sourceTree = "<group>"; };
@@ -329,8 +333,10 @@
 		D1D778DA252F161587718C5D /* StockWatchTests */ = {
 			isa = PBXGroup;
 			children = (
+				2632348A58ACCEA41AF9C8F7 /* AccountManagerCacheTests.swift */,
 				D55D467063C92591D5F3AF32 /* AlertEvaluatorTests.swift */,
 				DF41AE3482D24E4098CDAEF6 /* BackupManagerTests.swift */,
+				8B6B1AB3B903193DBF8C6815 /* BrokerSessionManagerTests.swift */,
 				C52BEC3CD0ED2BB582E51873 /* CrashLoggerTests.swift */,
 				A957540D6B9A8D3899BCA642 /* DatabaseManagerCRUDTests.swift */,
 				52756C172EFCE248A27C3B74 /* KeychainHelperTests.swift */,
@@ -578,8 +584,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				55EFB9835A655E8751BE702B /* AccountManagerCacheTests.swift in Sources */,
 				D1B18537D3C8A84AEC78959E /* AlertEvaluatorTests.swift in Sources */,
 				964B5A628DE1672AAB62983F /* BackupManagerTests.swift in Sources */,
+				CA87078C6B21A04593A2664A /* BrokerSessionManagerTests.swift in Sources */,
 				8079A8FD9C9E5AFA9C525B1D /* CrashLoggerTests.swift in Sources */,
 				4B5C54B9537B9D219D31E87F /* DatabaseManagerCRUDTests.swift in Sources */,
 				B7B1150D7369B12EDF6029A6 /* KeychainHelperTests.swift in Sources */,
@@ -668,7 +676,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.personal.StockWatch;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 6.0;
@@ -691,7 +699,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.personal.StockWatch;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 6.0;
