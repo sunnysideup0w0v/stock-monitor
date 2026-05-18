@@ -40,6 +40,12 @@ struct AssetChartView: View {
         }
     }
 
+    // 주 뷰 X축 눈금: dateRange.start(월요일)부터 5일(월~금)
+    private var weekdayDates: [Date] {
+        let cal = Calendar.current
+        return (0..<5).compactMap { cal.date(byAdding: .day, value: $0, to: dateRange.start) }
+    }
+
     // 일 뷰 스크롤 가능 전체 구간: 장 시작(09:00)~장 마감(15:30)
     private var dayXDomain: ClosedRange<Date> {
         let cal = Calendar.current
@@ -388,9 +394,21 @@ struct AssetChartView: View {
         }
         .chartYScale(domain: yDomain)
         .chartXAxis {
-            AxisMarks(values: .automatic) {
-                AxisGridLine(); AxisTick()
-                AxisValueLabel(format: xAxisFormat)
+            if period == .week {
+                AxisMarks(values: weekdayDates) {
+                    AxisGridLine(); AxisTick()
+                    AxisValueLabel(format: .dateTime.weekday(.abbreviated))
+                }
+            } else if period == .year {
+                AxisMarks(values: .stride(by: .month, count: 1)) {
+                    AxisGridLine(); AxisTick()
+                    AxisValueLabel(format: .dateTime.month(.abbreviated))
+                }
+            } else {
+                AxisMarks(values: .automatic) {
+                    AxisGridLine(); AxisTick()
+                    AxisValueLabel(format: period == .day ? .dateTime.hour().minute() : .dateTime.day())
+                }
             }
         }
         .chartYAxis {
@@ -470,15 +488,6 @@ struct AssetChartView: View {
     }
 
     // MARK: - Helpers
-
-    private var xAxisFormat: Date.FormatStyle {
-        switch period {
-        case .day:   return .dateTime.hour().minute()
-        case .week:  return .dateTime.weekday(.abbreviated)
-        case .month: return .dateTime.day()
-        case .year:  return .dateTime.month(.abbreviated)
-        }
-    }
 
     private func updateScrollAnchor() {
         guard period == .day, dayWindowHours > 0 else { return }
