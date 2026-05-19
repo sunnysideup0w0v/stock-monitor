@@ -25,6 +25,7 @@ struct AccountSettingsView: View {
     @State private var hasBiometricKiwoom = false
     @State private var isAutoFilling = false
     @State private var autoFillError: String? = nil
+    @State private var biometricJustSaved: String? = nil  // "kis" | "kiwoom"
 
     enum BrokerSelection: String, CaseIterable {
         case kis        = "한국투자증권"
@@ -142,10 +143,11 @@ struct AccountSettingsView: View {
                 Divider()
                 biometricStatusRow(
                     hasCredentials: hasBiometricKIS,
+                    justSaved: biometricJustSaved == "kis",
                     onSave: { saveKISBiometric() },
                     onDelete: {
                         BiometricAuthManager.deleteCredentials(keyPrefix: "kis")
-                        hasBiometricKIS = false
+                        withAnimation { hasBiometricKIS = false }
                     }
                 )
             }
@@ -257,10 +259,11 @@ struct AccountSettingsView: View {
                 Divider()
                 biometricStatusRow(
                     hasCredentials: hasBiometricKiwoom,
+                    justSaved: biometricJustSaved == "kiwoom",
                     onSave: { saveKiwoomBiometric() },
                     onDelete: {
                         BiometricAuthManager.deleteCredentials(keyPrefix: "kiwoom")
-                        hasBiometricKiwoom = false
+                        withAnimation { hasBiometricKiwoom = false }
                     }
                 )
             }
@@ -337,13 +340,24 @@ struct AccountSettingsView: View {
     @ViewBuilder
     private func biometricStatusRow(
         hasCredentials: Bool,
+        justSaved: Bool,
         onSave: @escaping () -> Void,
         onDelete: @escaping () -> Void
     ) -> some View {
         HStack(spacing: 8) {
             if hasCredentials {
-                Label("\(BiometricAuthManager.methodName) 보호 저장됨", systemImage: "checkmark.shield.fill")
-                    .font(.caption).foregroundStyle(.green)
+                if justSaved {
+                    Label("저장됐습니다", systemImage: "checkmark.shield.fill")
+                        .font(.caption).fontWeight(.semibold).foregroundStyle(.green)
+                        .transition(.asymmetric(
+                            insertion: .scale(scale: 0.8).combined(with: .opacity),
+                            removal: .opacity
+                        ))
+                } else {
+                    Label("\(BiometricAuthManager.methodName) 보호 저장됨", systemImage: "checkmark.shield.fill")
+                        .font(.caption).foregroundStyle(.green)
+                        .transition(.opacity)
+                }
                 Spacer()
                 Button("삭제", role: .destructive) { onDelete() }
                     .font(.caption)
@@ -482,19 +496,35 @@ struct AccountSettingsView: View {
     private func saveKISBiometric() {
         guard let key    = KeychainHelper.load(account: KeychainKey.kisAppKey),
               let secret = KeychainHelper.load(account: KeychainKey.kisAppSecret) else { return }
-        let acct = session.kisSavedAccountNumber
-        let creds = BiometricAuthManager.Credentials(appKey: key, appSecret: secret, accountNumber: acct)
+        let creds = BiometricAuthManager.Credentials(
+            appKey: key, appSecret: secret, accountNumber: session.kisSavedAccountNumber
+        )
         BiometricAuthManager.saveCredentials(creds, keyPrefix: "kis")
-        hasBiometricKIS = BiometricAuthManager.hasStoredCredentials(keyPrefix: "kis")
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+            hasBiometricKIS = BiometricAuthManager.hasStoredCredentials(keyPrefix: "kis")
+            biometricJustSaved = "kis"
+        }
+        Task {
+            try? await Task.sleep(for: .seconds(2.5))
+            withAnimation(.easeOut(duration: 0.4)) { biometricJustSaved = nil }
+        }
     }
 
     private func saveKiwoomBiometric() {
         guard let key    = KeychainHelper.load(account: KeychainKey.kiwoomAppKey),
               let secret = KeychainHelper.load(account: KeychainKey.kiwoomAppSecret) else { return }
-        let acct = session.kiwoomSavedAccountNumber
-        let creds = BiometricAuthManager.Credentials(appKey: key, appSecret: secret, accountNumber: acct)
+        let creds = BiometricAuthManager.Credentials(
+            appKey: key, appSecret: secret, accountNumber: session.kiwoomSavedAccountNumber
+        )
         BiometricAuthManager.saveCredentials(creds, keyPrefix: "kiwoom")
-        hasBiometricKiwoom = BiometricAuthManager.hasStoredCredentials(keyPrefix: "kiwoom")
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+            hasBiometricKiwoom = BiometricAuthManager.hasStoredCredentials(keyPrefix: "kiwoom")
+            biometricJustSaved = "kiwoom"
+        }
+        Task {
+            try? await Task.sleep(for: .seconds(2.5))
+            withAnimation(.easeOut(duration: 0.4)) { biometricJustSaved = nil }
+        }
     }
 
     private func performAutoFill(

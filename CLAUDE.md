@@ -229,6 +229,23 @@ pkill -x StockWatch 2>/dev/null; sleep 0.5 && open "$(find ~/Library/Developer/X
 - 새 기능을 추가하거나 설계가 변경되면 TODO.md에도 새 항목을 추가/수정한다
 - 날짜 업데이트: 파일 상단 `업데이트: YYYY-MM-DD`를 작업한 날짜로 갱신한다
 
+## UI/UX 규칙
+
+**버튼·액션 피드백**
+- 버튼 클릭 등 사용자 액션의 결과는 반드시 시각적으로 확인할 수 있어야 한다.
+- 상태가 바뀌는 전환은 `withAnimation`으로 감싸 부드럽게 처리한다.
+- 저장·삭제·전송 등 완료 후에는 인라인 성공 메시지(예: "저장됨 ✓")를 2~3초간 표시 후 자동 소멸시킨다.
+- 비동기 작업 중에는 버튼을 `disabled`로 만들고 `ProgressView`를 표시한다.
+- 패턴 예시:
+  ```swift
+  // 저장 완료 후 2.5초간 성공 메시지 표시
+  withAnimation(.spring(response: 0.4)) { justSaved = true }
+  Task {
+      try? await Task.sleep(for: .seconds(2.5))
+      withAnimation(.easeOut) { justSaved = false }
+  }
+  ```
+
 ## 주요 패턴 및 규칙
 
 **Concurrency**
