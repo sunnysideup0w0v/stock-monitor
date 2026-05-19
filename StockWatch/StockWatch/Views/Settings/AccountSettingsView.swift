@@ -665,40 +665,37 @@ struct AccountSettingsView: View {
     // MARK: - API 기능 진단 메서드
 
     private func runKISDiagnosis() async {
-        guard let appKey    = KeychainHelper.load(account: KeychainKey.kisAppKey),
-              let appSecret = KeychainHelper.load(account: KeychainKey.kisAppSecret) else {
+        guard session.isKISConnected,
+              let appKey = KeychainHelper.load(account: KeychainKey.kisAppKey) else {
             kisDiagnosis = BrokerDiagnosis()
-            kisDiagnosis.token = .fail("저장된 자격증명이 없습니다.")
+            kisDiagnosis.token = .fail("로그인된 세션이 없습니다.")
             return
         }
-        let creds = BrokerCredentials(
-            appKey: appKey, appSecret: appSecret,
-            accountNumber: session.kisSavedAccountNumber.isEmpty ? nil : session.kisSavedAccountNumber
-        )
-        let adapter = KISAdapter(isMock: session.kisSavedIsMock)
+        let accountId = "KIS-" + String(appKey.prefix(8))
 
+        // 토큰: 기존 어댑터가 존재하면 세션 유효로 판단 (새 발급 없음)
         kisDiagnosis = BrokerDiagnosis(token: .running, quote: .idle, balance: .idle)
-        do {
-            try await adapter.connect(credentials: creds)
-            kisDiagnosis.token = .ok
-        } catch {
-            kisDiagnosis.token = .fail(error.localizedDescription)
-            return
-        }
+        kisDiagnosis.token = .ok
 
+        // 시세 조회: 기존 어댑터의 캐시된 토큰 사용
         kisDiagnosis.quote = .running
         do {
-            _ = try await adapter.fetchQuote(symbol: "005930")
+            _ = try await QuoteManager.shared.diagnoseFetchQuote(symbol: "005930", for: accountId)
             kisDiagnosis.quote = .ok
         } catch BrokerError.symbolNotFound {
-            kisDiagnosis.quote = .ok  // 장 마감 시 정상
+            kisDiagnosis.quote = .ok
+        } catch BrokerError.notConnected, BrokerError.tokenExpired {
+            kisDiagnosis.token = .fail("세션이 만료됐습니다. 다시 로그인해주세요.")
+            kisDiagnosis.quote = .idle
+            return
         } catch {
             kisDiagnosis.quote = .fail(error.localizedDescription)
         }
 
+        // 잔고 조회
         kisDiagnosis.balance = .running
         do {
-            _ = try await adapter.fetchPortfolio()
+            _ = try await QuoteManager.shared.fetchBalance(for: accountId)
             kisDiagnosis.balance = .ok
         } catch {
             kisDiagnosis.balance = .fail(Self.balancePermissionHint(error))
@@ -706,40 +703,34 @@ struct AccountSettingsView: View {
     }
 
     private func runKiwoomDiagnosis() async {
-        guard let appKey    = KeychainHelper.load(account: KeychainKey.kiwoomAppKey),
-              let appSecret = KeychainHelper.load(account: KeychainKey.kiwoomAppSecret) else {
+        guard session.isKiwoomConnected,
+              let appKey = KeychainHelper.load(account: KeychainKey.kiwoomAppKey) else {
             kiwoomDiagnosis = BrokerDiagnosis()
-            kiwoomDiagnosis.token = .fail("저장된 자격증명이 없습니다.")
+            kiwoomDiagnosis.token = .fail("로그인된 세션이 없습니다.")
             return
         }
-        let creds = BrokerCredentials(
-            appKey: appKey, appSecret: appSecret,
-            accountNumber: session.kiwoomSavedAccountNumber.isEmpty ? nil : session.kiwoomSavedAccountNumber
-        )
-        let adapter = KiwoomAdapter()
+        let accountId = "KIWOOM-" + String(appKey.prefix(8))
 
         kiwoomDiagnosis = BrokerDiagnosis(token: .running, quote: .idle, balance: .idle)
-        do {
-            try await adapter.connect(credentials: creds)
-            kiwoomDiagnosis.token = .ok
-        } catch {
-            kiwoomDiagnosis.token = .fail(error.localizedDescription)
-            return
-        }
+        kiwoomDiagnosis.token = .ok
 
         kiwoomDiagnosis.quote = .running
         do {
-            _ = try await adapter.fetchQuote(symbol: "005930")
+            _ = try await QuoteManager.shared.diagnoseFetchQuote(symbol: "005930", for: accountId)
             kiwoomDiagnosis.quote = .ok
         } catch BrokerError.symbolNotFound {
             kiwoomDiagnosis.quote = .ok
+        } catch BrokerError.notConnected, BrokerError.tokenExpired {
+            kiwoomDiagnosis.token = .fail("세션이 만료됐습니다. 다시 로그인해주세요.")
+            kiwoomDiagnosis.quote = .idle
+            return
         } catch {
             kiwoomDiagnosis.quote = .fail(error.localizedDescription)
         }
 
         kiwoomDiagnosis.balance = .running
         do {
-            _ = try await adapter.fetchPortfolio()
+            _ = try await QuoteManager.shared.fetchBalance(for: accountId)
             kiwoomDiagnosis.balance = .ok
         } catch {
             kiwoomDiagnosis.balance = .fail(Self.balancePermissionHint(error))

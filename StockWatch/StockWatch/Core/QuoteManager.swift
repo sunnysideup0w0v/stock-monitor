@@ -103,6 +103,12 @@ final class QuoteManager: ObservableObject {
         AlertEvaluator.shared.evaluate(quotes: quotes)
     }
 
+    /// 진단용 단일 시세 조회 — 기존 어댑터(캐시된 토큰)를 재사용해 새 토큰 발급을 하지 않는다.
+    func diagnoseFetchQuote(symbol: String, for accountId: String) async throws -> StockQuote {
+        guard let adapter = adapters[accountId] else { throw BrokerError.notConnected }
+        return try await adapter.fetchQuote(symbol: symbol)
+    }
+
     /// 특정 브로커의 잔고 조회. accountId 미지정 시 첫 번째 실 어댑터 사용.
     func fetchBalance(for accountId: String? = nil) async throws -> [PortfolioItem] {
         if let accountId {
