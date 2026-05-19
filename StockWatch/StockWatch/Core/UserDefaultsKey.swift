@@ -15,6 +15,7 @@ enum UserDefaultsKey {
     static let screenerClaudeEnabled = "Screener.claudeEnabled"
     static let screenerKeepOnReopen  = "Screener.keepOnReopen"
     static let screenerSavedConditions = "Screener.savedConditions"
+    static let requireBiometricForSettings = "requireBiometricForSettings"
 
     // per-symbol 동적 키
     static func dartSeen(_ symbol: String) -> String { "DART.seen.\(symbol)" }

@@ -19,6 +19,10 @@ struct AccountSettingsView: View {
 
     @State private var testStatus: TestStatus = .idle
     @State private var launchAtLogin: Bool = (SMAppService.mainApp.status == .enabled)
+    @AppStorage(UserDefaultsKey.requireBiometricForSettings) private var requireBiometric = false
+    @State private var isAuthenticated = false
+    @State private var authError: String? = nil
+    @State private var isAuthenticating = false
 
     enum BrokerSelection: String, CaseIterable {
         case kis        = "한국투자증권"
@@ -52,13 +56,17 @@ struct AccountSettingsView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     brokerPickerSection
                     Divider()
-                    switch selectedBroker {
-                    case .kis:
-                        if session.isKISConnected { loggedInView } else { loginFormView }
-                    case .kiwoom:
-                        if session.isKiwoomConnected { kiwoomLoggedInView } else { kiwoomLoginFormView }
-                    case .miraeAsset:
-                        comingSoonView
+                    if requireBiometric && !isAuthenticated {
+                        lockedCredentialsView
+                    } else {
+                        switch selectedBroker {
+                        case .kis:
+                            if session.isKISConnected { loggedInView } else { loginFormView }
+                        case .kiwoom:
+                            if session.isKiwoomConnected { kiwoomLoggedInView } else { kiwoomLoginFormView }
+                        case .miraeAsset:
+                            comingSoonView
+                        }
                     }
                     launchAtLoginSection
                     DARTSettingsView()
@@ -71,6 +79,12 @@ struct AccountSettingsView: View {
             }
         }
         .onAppear { loadInitialBrokerTab() }
+    .onReceive(NotificationCenter.default.publisher(for: .settingsWillShow)) { _ in
+        if requireBiometric {
+            isAuthenticated = false
+            Task { await authenticate() }
+        }
+    }
     }
 
     // MARK: - 브로커 선택
@@ -189,6 +203,35 @@ struct AccountSettingsView: View {
         .background(.quaternary, in: RoundedRectangle(cornerRadius: 10))
     }
 
+    private var lockedCredentialsView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: BiometricAuthManager.methodIcon)
+                .font(.system(size: 36))
+                .foregroundStyle(.secondary)
+            Text("계좌 정보가 잠겨 있습니다")
+                .font(.headline)
+            if let error = authError {
+                Text(error)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+            Button {
+                Task { await authenticate() }
+            } label: {
+                if isAuthenticating {
+                    ProgressView().scaleEffect(0.7)
+                } else {
+                    Label("\(BiometricAuthManager.methodName)로 인증", systemImage: BiometricAuthManager.methodIcon)
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(isAuthenticating)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 32)
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: 10))
+    }
+
     private var launchAtLoginSection: some View {
         SettingsFormSection(title: "앱 설정") {
             HStack {
@@ -204,6 +247,14 @@ struct AccountSettingsView: View {
                             launchAtLogin = !enabled
                         }
                     }
+                Spacer()
+            }
+            HStack {
+                Toggle("계좌 정보 보호 (\(BiometricAuthManager.methodName))", isOn: $requireBiometric)
+                    .onChange(of: requireBiometric) { _, enabled in
+                        if enabled { isAuthenticated = false }
+                    }
+                    .disabled(!BiometricAuthManager.isAvailable)
                 Spacer()
             }
             HStack(spacing: 12) {
@@ -347,6 +398,18 @@ struct AccountSettingsView: View {
             } catch {
                 testStatus = .failure(error.localizedDescription)
             }
+        }
+    }
+
+    private func authenticate() async {
+        isAuthenticating = true
+        authError = nil
+        let success = await BiometricAuthManager.authenticate(reason: "계좌 API 키에 접근합니다")
+        isAuthenticating = false
+        if success {
+            withAnimation { isAuthenticated = true }
+        } else {
+            authError = "인증에 실패했습니다. 다시 시도하세요."
         }
     }
 
