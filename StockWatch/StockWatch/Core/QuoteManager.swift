@@ -168,11 +168,12 @@ final class QuoteManager: ObservableObject {
             consecutiveFailures += 1
             if consecutiveFailures >= 2 {
                 connectionState = .error
-                if !disconnectNotified && QuoteManager.disconnectAlertEnabled {
+                if !disconnectNotified && QuoteManager.disconnectAlertEnabled
+                    && AccountManager.isAnyConnected {
                     disconnectNotified = true
                     NotificationManager.shared.send(
                         title: "StockWatch 연결 끊김",
-                        body: "시세 수신이 중단됐습니다. 네트워크를 확인해주세요.",
+                        body: "시세 수신이 중단됐습니다. 네트워크 또는 API 키를 확인해주세요.",
                         symbol: "_system"
                     )
                 }

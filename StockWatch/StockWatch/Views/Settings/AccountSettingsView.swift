@@ -178,6 +178,7 @@ struct AccountSettingsView: View {
                     appKey = creds.appKey
                     appSecret = creds.appSecret
                     accountNumber = creds.accountNumber
+                    isMock = creds.isMock
                 }
                 dividerWithLabel("또는")
             }
@@ -477,7 +478,7 @@ struct AccountSettingsView: View {
 
     private func login() {
         let creds = BiometricAuthManager.Credentials(
-            appKey: appKey, appSecret: appSecret, accountNumber: accountNumber
+            appKey: appKey, appSecret: appSecret, accountNumber: accountNumber, isMock: isMock
         )
         session.loginKIS(appKey: appKey, appSecret: appSecret, accountNumber: accountNumber, isMock: isMock)
         BiometricAuthManager.saveCredentials(creds, keyPrefix: "kis")
@@ -505,7 +506,8 @@ struct AccountSettingsView: View {
             return
         }
         let creds = BiometricAuthManager.Credentials(
-            appKey: key, appSecret: secret, accountNumber: session.kisSavedAccountNumber
+            appKey: key, appSecret: secret, accountNumber: session.kisSavedAccountNumber,
+            isMock: session.kisSavedIsMock
         )
         let success = BiometricAuthManager.saveCredentials(creds, keyPrefix: "kis")
         if success {

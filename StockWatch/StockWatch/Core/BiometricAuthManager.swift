@@ -43,6 +43,7 @@ enum BiometricAuthManager {
         let appKey: String
         let appSecret: String
         let accountNumber: String
+        var isMock: Bool = false
     }
 
     enum CredentialError: LocalizedError {
@@ -76,6 +77,7 @@ enum BiometricAuthManager {
             (keyPrefix + ".appKey",        creds.appKey),
             (keyPrefix + ".appSecret",     creds.appSecret),
             (keyPrefix + ".accountNumber", creds.accountNumber),
+            (keyPrefix + ".isMock",        creds.isMock ? "1" : "0"),
         ]
         for (account, value) in pairs {
             // 기존 항목 삭제 후 추가
@@ -115,7 +117,8 @@ enum BiometricAuthManager {
               let accountNumber = readItem(keyPrefix + ".accountNumber") else {
             throw CredentialError.readFailed
         }
-        return Credentials(appKey: appKey, appSecret: appSecret, accountNumber: accountNumber)
+        let isMock = readItem(keyPrefix + ".isMock") == "1"
+        return Credentials(appKey: appKey, appSecret: appSecret, accountNumber: accountNumber, isMock: isMock)
     }
 
     /// 저장 여부 확인 (UserDefaults).
@@ -125,7 +128,7 @@ enum BiometricAuthManager {
 
     /// 저장된 자격증명 삭제.
     static func deleteCredentials(keyPrefix: String) {
-        for suffix in ["appKey", "appSecret", "accountNumber"] {
+        for suffix in ["appKey", "appSecret", "accountNumber", "isMock"] {
             SecItemDelete([
                 kSecClass as String:       kSecClassGenericPassword,
                 kSecAttrService as String: keychainService,
