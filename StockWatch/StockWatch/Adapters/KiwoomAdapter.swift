@@ -101,13 +101,22 @@ actor KiwoomAdapter: BrokerAdapter {
         let status = (response as? HTTPURLResponse)?.statusCode ?? -1
         APILogger.logResponse(tag: "kt00018", status: status, body: rawString)
 
+        if status == 403 {
+            throw BrokerError.apiError("잔고 조회 권한이 없습니다. Open API 포털 → 서비스 신청에서 kt00018(잔고조회) 활성화 여부를 확인해주세요.")
+        }
         guard status == 200 else {
             throw BrokerError.apiError("잔고 조회 실패 (HTTP \(status))")
         }
 
-        let decoded = try JSONDecoder().decode(KiwoomBalanceResponse.self, from: data)
+        let decoded: KiwoomBalanceResponse
+        do {
+            decoded = try JSONDecoder().decode(KiwoomBalanceResponse.self, from: data)
+        } catch {
+            AppLogger.log("KiwoomAdapter 잔고 응답 디코딩 실패 — \(rawString)", level: .error, category: "App")
+            throw BrokerError.apiError("잔고 조회 응답을 해석할 수 없습니다.")
+        }
         guard decoded.returnCode == 0 else {
-            throw BrokerError.apiError(decoded.returnMsg ?? "잔고 조회 오류")
+            throw BrokerError.apiError(Self.kiwoomErrorMessage(decoded.returnMsg))
         }
 
         return (decoded.output ?? []).compactMap { item -> PortfolioItem? in

@@ -27,6 +27,10 @@ struct AccountSettingsView: View {
     @State private var autoFillError: String? = nil
     @State private var biometricJustSaved: String? = nil  // "kis" | "kiwoom"
 
+    // API 기능 진단
+    @State private var kisDiagnosis = BrokerDiagnosis()
+    @State private var kiwoomDiagnosis = BrokerDiagnosis()
+
     enum BrokerSelection: String, CaseIterable {
         case kis        = "한국투자증권"
         case kiwoom     = "키움증권"
@@ -78,7 +82,11 @@ struct AccountSettingsView: View {
             }
         }
         .onAppear { loadInitialBrokerTab() }
-        .onChange(of: selectedBroker) { _, _ in autoFillError = nil }
+        .onChange(of: selectedBroker) { _, _ in
+            autoFillError = nil
+            kisDiagnosis = BrokerDiagnosis()
+            kiwoomDiagnosis = BrokerDiagnosis()
+        }
     }
 
     // MARK: - 브로커 선택
@@ -153,11 +161,17 @@ struct AccountSettingsView: View {
             }
 
             Divider()
+            diagnosisSection(diagnosis: kisDiagnosis) {
+                Task { await runKISDiagnosis() }
+            }
+
+            Divider()
 
             HStack {
                 Button("로그아웃", role: .destructive) {
                     withAnimation { session.logoutKIS() }
                     testStatus = .idle
+                    kisDiagnosis = BrokerDiagnosis()
                 }
                 Spacer()
             }
@@ -270,10 +284,16 @@ struct AccountSettingsView: View {
             }
 
             Divider()
+            diagnosisSection(diagnosis: kiwoomDiagnosis) {
+                Task { await runKiwoomDiagnosis() }
+            }
+
+            Divider()
             HStack {
                 Button("로그아웃", role: .destructive) {
                     withAnimation { session.logoutKiwoom() }
                     testStatus = .idle
+                    kiwoomDiagnosis = BrokerDiagnosis()
                 }
                 Spacer()
             }
@@ -591,4 +611,163 @@ struct AccountSettingsView: View {
             }
         }
     }
+
+    // MARK: - API 기능 진단 뷰
+
+    @ViewBuilder
+    private func diagnosisSection(diagnosis: BrokerDiagnosis, onRun: @escaping () -> Void) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("API 기능 진단").font(.caption).foregroundStyle(.secondary)
+                Spacer()
+                if diagnosis.isRunning {
+                    ProgressView().scaleEffect(0.65).frame(width: 14, height: 14)
+                }
+                Button(diagnosis.hasStarted ? "다시 실행" : "진단 실행") { onRun() }
+                    .font(.caption)
+                    .disabled(diagnosis.isRunning)
+            }
+            if diagnosis.hasStarted {
+                VStack(alignment: .leading, spacing: 5) {
+                    diagnosisRow("토큰 발급", status: diagnosis.token)
+                    diagnosisRow("시세 조회", status: diagnosis.quote)
+                    diagnosisRow("잔고 조회", status: diagnosis.balance)
+                }
+                .font(.caption)
+                .padding(.leading, 4)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func diagnosisRow(_ label: String, status: BrokerDiagnosis.StepStatus) -> some View {
+        switch status {
+        case .idle:
+            Label(label, systemImage: "circle").foregroundStyle(.tertiary)
+        case .running:
+            HStack(spacing: 6) {
+                ProgressView().scaleEffect(0.6).frame(width: 12, height: 12)
+                Text(label).foregroundStyle(.secondary)
+            }
+        case .ok:
+            Label(label, systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+        case .fail(let msg):
+            VStack(alignment: .leading, spacing: 2) {
+                Label(label, systemImage: "xmark.circle.fill").foregroundStyle(.red)
+                Text(msg)
+                    .font(.caption2).foregroundStyle(.red)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.leading, 20)
+            }
+        }
+    }
+
+    // MARK: - API 기능 진단 메서드
+
+    private func runKISDiagnosis() async {
+        guard let appKey    = KeychainHelper.load(account: KeychainKey.kisAppKey),
+              let appSecret = KeychainHelper.load(account: KeychainKey.kisAppSecret) else {
+            kisDiagnosis = BrokerDiagnosis()
+            kisDiagnosis.token = .fail("저장된 자격증명이 없습니다.")
+            return
+        }
+        let creds = BrokerCredentials(
+            appKey: appKey, appSecret: appSecret,
+            accountNumber: session.kisSavedAccountNumber.isEmpty ? nil : session.kisSavedAccountNumber
+        )
+        let adapter = KISAdapter(isMock: session.kisSavedIsMock)
+
+        kisDiagnosis = BrokerDiagnosis(token: .running, quote: .idle, balance: .idle)
+        do {
+            try await adapter.connect(credentials: creds)
+            kisDiagnosis.token = .ok
+        } catch {
+            kisDiagnosis.token = .fail(error.localizedDescription)
+            return
+        }
+
+        kisDiagnosis.quote = .running
+        do {
+            _ = try await adapter.fetchQuote(symbol: "005930")
+            kisDiagnosis.quote = .ok
+        } catch BrokerError.symbolNotFound {
+            kisDiagnosis.quote = .ok  // 장 마감 시 정상
+        } catch {
+            kisDiagnosis.quote = .fail(error.localizedDescription)
+        }
+
+        kisDiagnosis.balance = .running
+        do {
+            _ = try await adapter.fetchPortfolio()
+            kisDiagnosis.balance = .ok
+        } catch {
+            kisDiagnosis.balance = .fail(Self.balancePermissionHint(error))
+        }
+    }
+
+    private func runKiwoomDiagnosis() async {
+        guard let appKey    = KeychainHelper.load(account: KeychainKey.kiwoomAppKey),
+              let appSecret = KeychainHelper.load(account: KeychainKey.kiwoomAppSecret) else {
+            kiwoomDiagnosis = BrokerDiagnosis()
+            kiwoomDiagnosis.token = .fail("저장된 자격증명이 없습니다.")
+            return
+        }
+        let creds = BrokerCredentials(
+            appKey: appKey, appSecret: appSecret,
+            accountNumber: session.kiwoomSavedAccountNumber.isEmpty ? nil : session.kiwoomSavedAccountNumber
+        )
+        let adapter = KiwoomAdapter()
+
+        kiwoomDiagnosis = BrokerDiagnosis(token: .running, quote: .idle, balance: .idle)
+        do {
+            try await adapter.connect(credentials: creds)
+            kiwoomDiagnosis.token = .ok
+        } catch {
+            kiwoomDiagnosis.token = .fail(error.localizedDescription)
+            return
+        }
+
+        kiwoomDiagnosis.quote = .running
+        do {
+            _ = try await adapter.fetchQuote(symbol: "005930")
+            kiwoomDiagnosis.quote = .ok
+        } catch BrokerError.symbolNotFound {
+            kiwoomDiagnosis.quote = .ok
+        } catch {
+            kiwoomDiagnosis.quote = .fail(error.localizedDescription)
+        }
+
+        kiwoomDiagnosis.balance = .running
+        do {
+            _ = try await adapter.fetchPortfolio()
+            kiwoomDiagnosis.balance = .ok
+        } catch {
+            kiwoomDiagnosis.balance = .fail(Self.balancePermissionHint(error))
+        }
+    }
+
+    private static func balancePermissionHint(_ error: Error) -> String {
+        let msg = error.localizedDescription
+        // 이미 권한 안내가 포함된 메시지는 그대로 반환
+        if msg.contains("Open API 포털") { return msg }
+        // 권한 관련 키워드 감지 → 안내 추가
+        if msg.contains("403") || msg.contains("권한") || msg.contains("미신청") {
+            return msg + "\nOpen API 포털 → 서비스 신청에서 잔고조회 활성화 여부를 확인하세요."
+        }
+        return msg
+    }
+}
+
+// MARK: - 진단 상태 모델
+
+private struct BrokerDiagnosis {
+    enum StepStatus: Equatable {
+        case idle, running, ok, fail(String)
+        var isRunning: Bool { if case .running = self { return true }; return false }
+    }
+    var token: StepStatus = .idle
+    var quote: StepStatus = .idle
+    var balance: StepStatus = .idle
+    var isRunning: Bool { token.isRunning || quote.isRunning || balance.isRunning }
+    var hasStarted: Bool { token != .idle }
 }

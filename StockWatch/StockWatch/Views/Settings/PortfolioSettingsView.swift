@@ -92,7 +92,9 @@ struct PortfolioSettingsView: View {
                 }
 
                 if let error = importError {
-                    Text(error).font(.caption).foregroundStyle(.red)
+                    Text(error)
+                        .font(.caption).foregroundStyle(.red)
+                        .fixedSize(horizontal: false, vertical: true)
                 } else if !isMultiBroker {
                     Text(importInfoText).font(.caption).foregroundStyle(.secondary)
                 }
