@@ -495,35 +495,49 @@ struct AccountSettingsView: View {
 
     private func saveKISBiometric() {
         guard let key    = KeychainHelper.load(account: KeychainKey.kisAppKey),
-              let secret = KeychainHelper.load(account: KeychainKey.kisAppSecret) else { return }
+              let secret = KeychainHelper.load(account: KeychainKey.kisAppSecret) else {
+            autoFillError = "저장된 자격증명을 불러올 수 없습니다"
+            return
+        }
         let creds = BiometricAuthManager.Credentials(
             appKey: key, appSecret: secret, accountNumber: session.kisSavedAccountNumber
         )
-        BiometricAuthManager.saveCredentials(creds, keyPrefix: "kis")
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-            hasBiometricKIS = BiometricAuthManager.hasStoredCredentials(keyPrefix: "kis")
-            biometricJustSaved = "kis"
-        }
-        Task {
-            try? await Task.sleep(for: .seconds(2.5))
-            withAnimation(.easeOut(duration: 0.4)) { biometricJustSaved = nil }
+        let success = BiometricAuthManager.saveCredentials(creds, keyPrefix: "kis")
+        if success {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                hasBiometricKIS = true
+                biometricJustSaved = "kis"
+            }
+            Task {
+                try? await Task.sleep(for: .seconds(2.5))
+                withAnimation(.easeOut(duration: 0.4)) { biometricJustSaved = nil }
+            }
+        } else {
+            autoFillError = "Touch ID 저장에 실패했습니다 (Console.app에서 StockWatch 로그 확인)"
         }
     }
 
     private func saveKiwoomBiometric() {
         guard let key    = KeychainHelper.load(account: KeychainKey.kiwoomAppKey),
-              let secret = KeychainHelper.load(account: KeychainKey.kiwoomAppSecret) else { return }
+              let secret = KeychainHelper.load(account: KeychainKey.kiwoomAppSecret) else {
+            autoFillError = "저장된 자격증명을 불러올 수 없습니다"
+            return
+        }
         let creds = BiometricAuthManager.Credentials(
             appKey: key, appSecret: secret, accountNumber: session.kiwoomSavedAccountNumber
         )
-        BiometricAuthManager.saveCredentials(creds, keyPrefix: "kiwoom")
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-            hasBiometricKiwoom = BiometricAuthManager.hasStoredCredentials(keyPrefix: "kiwoom")
-            biometricJustSaved = "kiwoom"
-        }
-        Task {
-            try? await Task.sleep(for: .seconds(2.5))
-            withAnimation(.easeOut(duration: 0.4)) { biometricJustSaved = nil }
+        let success = BiometricAuthManager.saveCredentials(creds, keyPrefix: "kiwoom")
+        if success {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                hasBiometricKiwoom = true
+                biometricJustSaved = "kiwoom"
+            }
+            Task {
+                try? await Task.sleep(for: .seconds(2.5))
+                withAnimation(.easeOut(duration: 0.4)) { biometricJustSaved = nil }
+            }
+        } else {
+            autoFillError = "Touch ID 저장에 실패했습니다 (Console.app에서 StockWatch 로그 확인)"
         }
     }
 
