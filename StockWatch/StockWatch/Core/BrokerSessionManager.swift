@@ -66,7 +66,9 @@ final class BrokerSessionManager: ObservableObject {
         )
         let adapter = KISAdapter(isMock: isMock)
         try await adapter.connect(credentials: creds)
-        _ = try await adapter.fetchQuote(symbol: "005930")
+        // symbolNotFound: 장 시간 외 price=0 응답 — 인증은 정상
+        do { _ = try await adapter.fetchQuote(symbol: "005930") }
+        catch BrokerError.symbolNotFound { }
     }
 
     // MARK: - Kiwoom
@@ -115,7 +117,9 @@ final class BrokerSessionManager: ObservableObject {
         )
         let adapter = KiwoomAdapter()
         try await adapter.connect(credentials: creds)
-        _ = try await adapter.fetchQuote(symbol: "005930")
+        // symbolNotFound: 장 시간 외 price=0 응답 — 인증은 정상
+        do { _ = try await adapter.fetchQuote(symbol: "005930") }
+        catch BrokerError.symbolNotFound { }
     }
 
     // MARK: - 네트워크 재연결 시 브로커별 상태 점검
@@ -140,18 +144,18 @@ final class BrokerSessionManager: ObservableObject {
         )
     }
 
+    /// 토큰 발급만 확인하는 가벼운 헬스체크 (장 시간 외 quote 실패에 영향받지 않음)
     private func checkKIS() async -> String? {
         guard isKISConnected,
               let appKey    = KeychainHelper.load(account: KeychainKey.kisAppKey),
               let appSecret = KeychainHelper.load(account: KeychainKey.kisAppSecret)
         else { return nil }
 
+        let creds = BrokerCredentials(appKey: appKey, appSecret: appSecret,
+                                      accountNumber: kisSavedAccountNumber.isEmpty ? nil : kisSavedAccountNumber)
+        let adapter = KISAdapter(isMock: kisSavedIsMock)
         do {
-            try await testConnectionKIS(
-                appKey: appKey, appSecret: appSecret,
-                accountNumber: kisSavedAccountNumber,
-                isMock: kisSavedIsMock
-            )
+            try await adapter.connect(credentials: creds)
             return nil
         } catch {
             AppLogger.log("checkAllSessions KIS 실패: \(error.localizedDescription)", level: .error, category: "App")
@@ -166,11 +170,11 @@ final class BrokerSessionManager: ObservableObject {
               let appSecret = KeychainHelper.load(account: KeychainKey.kiwoomAppSecret)
         else { return nil }
 
+        let creds = BrokerCredentials(appKey: appKey, appSecret: appSecret,
+                                      accountNumber: kiwoomSavedAccountNumber.isEmpty ? nil : kiwoomSavedAccountNumber)
+        let adapter = KiwoomAdapter()
         do {
-            try await testConnectionKiwoom(
-                appKey: appKey, appSecret: appSecret,
-                accountNumber: kiwoomSavedAccountNumber
-            )
+            try await adapter.connect(credentials: creds)
             return nil
         } catch {
             AppLogger.log("checkAllSessions 키움 실패: \(error.localizedDescription)", level: .error, category: "App")
