@@ -30,6 +30,8 @@ struct AccountSettingsView: View {
     // API 기능 진단
     @State private var kisDiagnosis = BrokerDiagnosis()
     @State private var kiwoomDiagnosis = BrokerDiagnosis()
+    @State private var kisIsInitializing = false
+    @State private var kiwoomIsInitializing = false
 
     enum BrokerSelection: String, CaseIterable {
         case kis        = "한국투자증권"
@@ -57,6 +59,22 @@ struct AccountSettingsView: View {
         }
     }
 
+    private var kisHasIssue: Bool {
+        guard kisDiagnosis.hasStarted, !kisDiagnosis.isRunning else { return false }
+        if case .fail = kisDiagnosis.token  { return true }
+        if case .fail = kisDiagnosis.quote  { return true }
+        if case .fail = kisDiagnosis.balance { return true }
+        return false
+    }
+
+    private var kiwoomHasIssue: Bool {
+        guard kiwoomDiagnosis.hasStarted, !kiwoomDiagnosis.isRunning else { return false }
+        if case .fail = kiwoomDiagnosis.token  { return true }
+        if case .fail = kiwoomDiagnosis.quote  { return true }
+        if case .fail = kiwoomDiagnosis.balance { return true }
+        return false
+    }
+
     var body: some View {
         SettingsTabContainer(title: "계좌 연결") {
             ScrollView {
@@ -65,9 +83,13 @@ struct AccountSettingsView: View {
                     Divider()
                     switch selectedBroker {
                     case .kis:
-                        if session.isKISConnected { loggedInView } else { loginFormView }
+                        if session.isKISConnected {
+                            if kisIsInitializing { connectingView } else { loggedInView }
+                        } else { loginFormView }
                     case .kiwoom:
-                        if session.isKiwoomConnected { kiwoomLoggedInView } else { kiwoomLoginFormView }
+                        if session.isKiwoomConnected {
+                            if kiwoomIsInitializing { connectingView } else { kiwoomLoggedInView }
+                        } else { kiwoomLoginFormView }
                     case .miraeAsset:
                         comingSoonView
                     }
@@ -82,11 +104,7 @@ struct AccountSettingsView: View {
             }
         }
         .onAppear { loadInitialBrokerTab() }
-        .onChange(of: selectedBroker) { _, _ in
-            autoFillError = nil
-            kisDiagnosis = BrokerDiagnosis()
-            kiwoomDiagnosis = BrokerDiagnosis()
-        }
+        .onChange(of: selectedBroker) { _, _ in autoFillError = nil }
     }
 
     // MARK: - 브로커 선택
@@ -104,7 +122,19 @@ struct AccountSettingsView: View {
                         case .miraeAsset: return false
                         }
                     }()
-                    Text(broker.rawValue + (connected ? " ✓" : "")).tag(broker)
+                    let indicator: String = {
+                        guard connected else { return "" }
+                        switch broker {
+                        case .kis:
+                            if kisDiagnosis.isRunning { return "" }
+                            return kisHasIssue ? " ⚠" : " ✓"
+                        case .kiwoom:
+                            if kiwoomDiagnosis.isRunning { return "" }
+                            return kiwoomHasIssue ? " ⚠" : " ✓"
+                        case .miraeAsset: return ""
+                        }
+                    }()
+                    Text(broker.rawValue + indicator).tag(broker)
                 }
             }
             .pickerStyle(.segmented)
@@ -172,6 +202,7 @@ struct AccountSettingsView: View {
                     withAnimation { session.logoutKIS() }
                     testStatus = .idle
                     kisDiagnosis = BrokerDiagnosis()
+                    kisIsInitializing = false
                 }
                 Spacer()
             }
@@ -294,6 +325,7 @@ struct AccountSettingsView: View {
                     withAnimation { session.logoutKiwoom() }
                     testStatus = .idle
                     kiwoomDiagnosis = BrokerDiagnosis()
+                    kiwoomIsInitializing = false
                 }
                 Spacer()
             }
@@ -444,6 +476,18 @@ struct AccountSettingsView: View {
         .padding(.vertical, 4)
     }
 
+    // MARK: - 연결 초기화 중
+
+    private var connectingView: some View {
+        VStack(spacing: 12) {
+            ProgressView()
+            Text("연결 확인 중…").font(.subheadline).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(40)
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: 10))
+    }
+
     // MARK: - 준비 중
 
     private var comingSoonView: some View {
@@ -497,6 +541,7 @@ struct AccountSettingsView: View {
     }
 
     private func login() {
+        kisIsInitializing = true
         let creds = BiometricAuthManager.Credentials(
             appKey: appKey, appSecret: appSecret, accountNumber: accountNumber, isMock: isMock
         )
@@ -504,9 +549,15 @@ struct AccountSettingsView: View {
         BiometricAuthManager.saveCredentials(creds, keyPrefix: "kis")
         hasBiometricKIS = BiometricAuthManager.hasStoredCredentials(keyPrefix: "kis")
         withAnimation { appKey = ""; appSecret = ""; accountNumber = "" }
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            await runKISDiagnosis()
+            kisIsInitializing = false
+        }
     }
 
     private func kiwoomLogin() {
+        kiwoomIsInitializing = true
         let creds = BiometricAuthManager.Credentials(
             appKey: kiwoomAppKey, appSecret: kiwoomAppSecret, accountNumber: kiwoomAccountNumber
         )
@@ -516,6 +567,11 @@ struct AccountSettingsView: View {
         withAnimation {
             kiwoomAppKey = ""; kiwoomAppSecret = ""; kiwoomAccountNumber = ""
             testStatus = .idle
+        }
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            await runKiwoomDiagnosis()
+            kiwoomIsInitializing = false
         }
     }
 
@@ -577,10 +633,13 @@ struct AccountSettingsView: View {
         autoFillError = nil
         do {
             let creds = try await BiometricAuthManager.loadCredentials(keyPrefix: keyPrefix, reason: reason)
+            // Touch ID 다이얼로그 닫힌 후 설정 창이 뒤로 밀리는 현상 방지
+            NSApp.activate(ignoringOtherApps: true)
             onFill(creds)
         } catch BiometricAuthManager.CredentialError.authCancelled {
-            // 사용자 취소: 메시지 불필요
+            NSApp.activate(ignoringOtherApps: true)
         } catch {
+            NSApp.activate(ignoringOtherApps: true)
             autoFillError = error.localizedDescription
         }
         isAutoFilling = false
@@ -667,17 +726,17 @@ struct AccountSettingsView: View {
     private func runKISDiagnosis() async {
         guard session.isKISConnected,
               let appKey = KeychainHelper.load(account: KeychainKey.kisAppKey) else {
-            kisDiagnosis = BrokerDiagnosis()
-            kisDiagnosis.token = .fail("로그인된 세션이 없습니다.")
+            kisDiagnosis = BrokerDiagnosis(token: .fail("로그인된 세션이 없습니다."), quote: .idle, balance: .idle)
             return
         }
         let accountId = "KIS-" + String(appKey.prefix(8))
 
-        // 토큰: 기존 어댑터가 존재하면 세션 유효로 판단 (새 발급 없음)
+        // 토큰: 기존 어댑터 세션 유효 여부 확인 (실 API 호출 없음 — 최소 표시 시간 보장)
         kisDiagnosis = BrokerDiagnosis(token: .running, quote: .idle, balance: .idle)
+        try? await Task.sleep(for: .milliseconds(350))
         kisDiagnosis.token = .ok
 
-        // 시세 조회: 기존 어댑터의 캐시된 토큰 사용
+        // 시세 조회
         kisDiagnosis.quote = .running
         do {
             _ = try await QuoteManager.shared.diagnoseFetchQuote(symbol: "005930", for: accountId)
@@ -705,13 +764,13 @@ struct AccountSettingsView: View {
     private func runKiwoomDiagnosis() async {
         guard session.isKiwoomConnected,
               let appKey = KeychainHelper.load(account: KeychainKey.kiwoomAppKey) else {
-            kiwoomDiagnosis = BrokerDiagnosis()
-            kiwoomDiagnosis.token = .fail("로그인된 세션이 없습니다.")
+            kiwoomDiagnosis = BrokerDiagnosis(token: .fail("로그인된 세션이 없습니다."), quote: .idle, balance: .idle)
             return
         }
         let accountId = "KIWOOM-" + String(appKey.prefix(8))
 
         kiwoomDiagnosis = BrokerDiagnosis(token: .running, quote: .idle, balance: .idle)
+        try? await Task.sleep(for: .milliseconds(350))
         kiwoomDiagnosis.token = .ok
 
         kiwoomDiagnosis.quote = .running
