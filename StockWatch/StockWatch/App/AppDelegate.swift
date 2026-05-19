@@ -8,7 +8,6 @@ extension NSNotification.Name {
     static let openPopover              = NSNotification.Name("com.personal.StockWatch.openPopover")
     static let krxDataUpdated           = NSNotification.Name("com.personal.StockWatch.krxDataUpdated")
     static let snapshotBackfillCompleted = NSNotification.Name("com.personal.StockWatch.snapshotBackfillCompleted")
-    static let settingsWillShow          = NSNotification.Name("com.personal.StockWatch.settingsWillShow")
 }
 
 @MainActor
@@ -202,7 +201,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
         settingsWindow?.makeKeyAndOrderFront(nil)
         settingsWindow?.orderFrontRegardless()
-        NotificationCenter.default.post(name: .settingsWillShow, object: nil)
     }
 }
 
