@@ -283,7 +283,19 @@ actor KISAdapter: BrokerAdapter {
             let expires_in: Int
         }
 
-        let tr = try JSONDecoder().decode(TokenResponse.self, from: data)
+        let rawString = String(data: data, encoding: .utf8) ?? ""
+        let tr: TokenResponse
+        do {
+            tr = try JSONDecoder().decode(TokenResponse.self, from: data)
+        } catch {
+            // KIS는 오류 시 {"rt_cd":"1","msg_cd":"...","msg1":"..."} 형태를 반환하기도 함
+            if let json = try? JSONDecoder().decode(KISErrorResponse.self, from: data),
+               let msg = json.msg1, !msg.isEmpty {
+                throw BrokerError.apiError(msg)
+            }
+            AppLogger.log("KISAdapter 토큰 응답 디코딩 실패 — \(rawString)", level: .error, category: "App")
+            throw BrokerError.apiError("API 응답을 해석할 수 없습니다. API 키와 시크릿을 확인해주세요.")
+        }
         cachedToken = tr.access_token
         // 만료 5분 전에 갱신되도록 여유를 둠
         tokenExpiry = Date().addingTimeInterval(Double(tr.expires_in) - 300)
@@ -291,6 +303,12 @@ actor KISAdapter: BrokerAdapter {
 }
 
 // MARK: - Response Models
+
+private struct KISErrorResponse: Decodable {
+    let rtCd: String?
+    let msg1: String?
+    enum CodingKeys: String, CodingKey { case rtCd = "rt_cd"; case msg1 }
+}
 
 private struct KISDailyPriceResponse: Decodable {
     let rtCd: String

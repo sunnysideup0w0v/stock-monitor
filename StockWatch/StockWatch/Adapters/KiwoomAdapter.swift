@@ -125,6 +125,28 @@ actor KiwoomAdapter: BrokerAdapter {
         return []
     }
 
+    // MARK: - Error Message
+
+    /// 키움 API return_msg를 사용자 친화적 한국어로 변환한다.
+    private static func kiwoomErrorMessage(_ raw: String?) -> String {
+        switch raw?.trimmingCharacters(in: .whitespaces).lowercased() {
+        case "data missing":
+            return "필수 요청 데이터가 누락됐습니다. API 키와 시크릿을 확인해주세요."
+        case "invalid appkey", "appkey error":
+            return "앱 키가 올바르지 않습니다. API 키를 확인해주세요."
+        case "invalid secretkey", "secretkey error":
+            return "앱 시크릿이 올바르지 않습니다. API 시크릿을 확인해주세요."
+        case "invalid token", "token error":
+            return "토큰이 유효하지 않습니다. 다시 로그인해주세요."
+        case "expired token":
+            return "토큰이 만료됐습니다. 다시 로그인해주세요."
+        case "quota exceeded", "limit exceeded":
+            return "API 호출 한도를 초과했습니다. 잠시 후 다시 시도해주세요."
+        default:
+            return raw ?? "토큰 발급 오류가 발생했습니다."
+        }
+    }
+
     // MARK: - Token Management
 
     private func validToken() async throws -> String {
@@ -159,12 +181,23 @@ actor KiwoomAdapter: BrokerAdapter {
             throw BrokerError.apiError("토큰 발급 실패 (HTTP \(status)) — API 키를 확인해주세요")
         }
 
-        let tr = try JSONDecoder().decode(KiwoomTokenResponse.self, from: data)
-        guard tr.returnCode == 0 else {
-            throw BrokerError.apiError(tr.returnMsg ?? "토큰 발급 오류")
+        let tr: KiwoomTokenResponse
+        do {
+            tr = try JSONDecoder().decode(KiwoomTokenResponse.self, from: data)
+        } catch {
+            AppLogger.log("KiwoomAdapter 토큰 응답 디코딩 실패 — \(rawString)", level: .error, category: "App")
+            throw BrokerError.apiError("API 응답을 해석할 수 없습니다. API 키와 시크릿을 확인해주세요.")
         }
 
-        cachedToken = tr.token
+        guard tr.returnCode == 0 else {
+            throw BrokerError.apiError(Self.kiwoomErrorMessage(tr.returnMsg))
+        }
+
+        guard let token = tr.token else {
+            AppLogger.log("KiwoomAdapter 토큰 필드 없음 — \(rawString)", level: .error, category: "App")
+            throw BrokerError.apiError("토큰 발급 응답에 토큰이 없습니다. API 키를 확인해주세요.")
+        }
+        cachedToken = token
 
         // expires_dt: "20251231235959" (YYYYMMDDHHMMSS) → Date, 5분 전 갱신
         let df = DateFormatter()
@@ -181,7 +214,7 @@ actor KiwoomAdapter: BrokerAdapter {
 // MARK: - Response Models
 
 private struct KiwoomTokenResponse: Decodable {
-    let token: String
+    let token: String?      // 오류 응답에는 token 필드가 없으므로 optional
     let expiresDt: String?
     let tokenType: String?
     let returnCode: Int
