@@ -344,29 +344,34 @@ struct AccountSettingsView: View {
         onSave: @escaping () -> Void,
         onDelete: @escaping () -> Void
     ) -> some View {
-        HStack(spacing: 8) {
-            if hasCredentials {
-                if justSaved {
-                    Label("저장됐습니다", systemImage: "checkmark.shield.fill")
-                        .font(.caption).fontWeight(.semibold).foregroundStyle(.green)
-                        .transition(.asymmetric(
-                            insertion: .scale(scale: 0.8).combined(with: .opacity),
-                            removal: .opacity
-                        ))
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 8) {
+                if hasCredentials {
+                    if justSaved {
+                        Label("저장됐습니다", systemImage: "checkmark.shield.fill")
+                            .font(.caption).fontWeight(.semibold).foregroundStyle(.green)
+                            .transition(.asymmetric(
+                                insertion: .scale(scale: 0.8).combined(with: .opacity),
+                                removal: .opacity
+                            ))
+                    } else {
+                        Label("\(BiometricAuthManager.methodName) 보호 저장됨", systemImage: "checkmark.shield.fill")
+                            .font(.caption).foregroundStyle(.green)
+                            .transition(.opacity)
+                    }
+                    Spacer()
+                    Button("삭제", role: .destructive) { onDelete() }
+                        .font(.caption)
                 } else {
-                    Label("\(BiometricAuthManager.methodName) 보호 저장됨", systemImage: "checkmark.shield.fill")
-                        .font(.caption).foregroundStyle(.green)
-                        .transition(.opacity)
+                    Label("\(BiometricAuthManager.methodName) 저장 없음", systemImage: "shield")
+                        .font(.caption).foregroundStyle(.secondary)
+                    Spacer()
+                    Button("\(BiometricAuthManager.methodName)로 저장") { onSave() }
+                        .font(.caption)
                 }
-                Spacer()
-                Button("삭제", role: .destructive) { onDelete() }
-                    .font(.caption)
-            } else {
-                Label("\(BiometricAuthManager.methodName) 저장 없음", systemImage: "shield")
-                    .font(.caption).foregroundStyle(.secondary)
-                Spacer()
-                Button("\(BiometricAuthManager.methodName)로 저장") { onSave() }
-                    .font(.caption)
+            }
+            if let err = autoFillError {
+                Text(err).font(.caption2).foregroundStyle(.red)
             }
         }
     }
