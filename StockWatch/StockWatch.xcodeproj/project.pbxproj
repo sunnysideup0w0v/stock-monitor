@@ -45,6 +45,7 @@
 		719D37B11AAC437EF1F1F00E /* BrokerSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 409AFB9E7CADA2E56BEDA9C8 /* BrokerSessionManager.swift */; };
 		735F9C5A8E2FB9F13FF698F2 /* StockQuoteTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 713FCE641DED6E48FFF016F5 /* StockQuoteTests.swift */; };
 		74A2E886B82508C5D7E02DCA /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC7646622AD611A41C94A421 /* AppDelegate.swift */; };
+		7E3362280BC398EDA5B8B6B4 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D4417D01C6991FE9F91D67 /* NetworkMonitor.swift */; };
 		7ED9AE857C8A1EE7F0B46043 /* StockQuote.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58693606248BA2082C34DD2C /* StockQuote.swift */; };
 		7F82405A564BD9A0824203B2 /* KRXManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FB34D35F6866AFF1E3C7635 /* KRXManager.swift */; };
 		8079A8FD9C9E5AFA9C525B1D /* CrashLoggerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C52BEC3CD0ED2BB582E51873 /* CrashLoggerTests.swift */; };
@@ -85,6 +86,7 @@
 		F2F9D0EE68C04C87CEA667EC /* ToastWindowManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCBB017D66E4027E867F5D48 /* ToastWindowManager.swift */; };
 		F5C114213F1DC81C504EBF33 /* ScreenerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B48A2F93F56DFBD853F6C02 /* ScreenerView.swift */; };
 		F60384C608F29E72014A0671 /* EdgeCaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A10E3F4CD69907D3193BA19 /* EdgeCaseTests.swift */; };
+		FA6B5CDFBBCA304BD5ECA9E0 /* BiometricAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71E3355C9CF1F87CE9C8C560 /* BiometricAuthManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -139,6 +141,7 @@
 		69D6D80E93D69529BF68DA40 /* SnapshotSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotSettingsSection.swift; sourceTree = "<group>"; };
 		6F629436FD4ED83B8E8A6E26 /* StockWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockWatchApp.swift; sourceTree = "<group>"; };
 		713FCE641DED6E48FFF016F5 /* StockQuoteTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockQuoteTests.swift; sourceTree = "<group>"; };
+		71E3355C9CF1F87CE9C8C560 /* BiometricAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricAuthManager.swift; sourceTree = "<group>"; };
 		77B36BF411BAB00875C41D77 /* MiraeAssetAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiraeAssetAdapter.swift; sourceTree = "<group>"; };
 		7A9C1A99BE2A7EF4A6DACE20 /* ScreenerEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenerEngine.swift; sourceTree = "<group>"; };
 		7B48A2F93F56DFBD853F6C02 /* ScreenerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenerView.swift; sourceTree = "<group>"; };
@@ -168,6 +171,7 @@
 		BE5FCA0144A903194491B760 /* ScreenerCondition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenerCondition.swift; sourceTree = "<group>"; };
 		C52BEC3CD0ED2BB582E51873 /* CrashLoggerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashLoggerTests.swift; sourceTree = "<group>"; };
 		C585A3D6FAD355069C1EFC03 /* AlertHistorySoftDeleteTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertHistorySoftDeleteTests.swift; sourceTree = "<group>"; };
+		C5D4417D01C6991FE9F91D67 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
 		C6FF9845DB289424B022E2A4 /* QuoteManagerAdapterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteManagerAdapterTests.swift; sourceTree = "<group>"; };
 		C98C3F9477E7B17A8E9D72F0 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		CA63B73896450B025105068F /* KiwoomAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KiwoomAdapter.swift; sourceTree = "<group>"; };
@@ -261,6 +265,7 @@
 				96023ABC9674B6FD06210FF9 /* APILogger.swift */,
 				3D30D3FB5A44BE8ADDC9ECA2 /* AppLogger.swift */,
 				A21A4E16C58943E49ACCFC79 /* BackupManager.swift */,
+				71E3355C9CF1F87CE9C8C560 /* BiometricAuthManager.swift */,
 				409AFB9E7CADA2E56BEDA9C8 /* BrokerSessionManager.swift */,
 				99A0AEAF32224F79E899675E /* ClaudeAnalyzer.swift */,
 				6082E6170C01C27465D4829F /* CrashLogger.swift */,
@@ -268,6 +273,7 @@
 				96036A94BC463B8118C8EB3D /* KeychainHelper.swift */,
 				B240670EB3EDF97314547715 /* KeychainKey.swift */,
 				4FB34D35F6866AFF1E3C7635 /* KRXManager.swift */,
+				C5D4417D01C6991FE9F91D67 /* NetworkMonitor.swift */,
 				5E5AB112AF506EF87D40BA14 /* QuoteManager.swift */,
 				9F5A6472AE55E5203993C25F /* RealtimeQuoteManager.swift */,
 				7A9C1A99BE2A7EF4A6DACE20 /* ScreenerEngine.swift */,
@@ -560,6 +566,7 @@
 				C332291B4F4EAF667735DBF8 /* AppLogger.swift in Sources */,
 				EBBA37C13D78A1B9BF4040A8 /* AssetChartView.swift in Sources */,
 				E27457020673252EEBC0D7AC /* BackupManager.swift in Sources */,
+				FA6B5CDFBBCA304BD5ECA9E0 /* BiometricAuthManager.swift in Sources */,
 				9895C317774C9E7C480E7D6A /* BrokerAdapter.swift in Sources */,
 				1BA2239BCF2C3CC0B54F8CC0 /* BrokerRegistry.swift in Sources */,
 				719D37B11AAC437EF1F1F00E /* BrokerSessionManager.swift in Sources */,
@@ -579,6 +586,7 @@
 				687F91821C4C630BA708C4A0 /* MenuBarPopoverView.swift in Sources */,
 				57D99242DAA246F7A6594F57 /* MiraeAssetAdapter.swift in Sources */,
 				1D1A8F945D66A67A6CFA06A9 /* MockBrokerAdapter.swift in Sources */,
+				7E3362280BC398EDA5B8B6B4 /* NetworkMonitor.swift in Sources */,
 				68A053190EE46F1D1EBCAA6F /* NotificationManager.swift in Sources */,
 				12390ED79B70CB4BA0D8D1BC /* NumberFormatter+Decimal.swift in Sources */,
 				D5197D156AD652C931C382A6 /* OnboardingView.swift in Sources */,

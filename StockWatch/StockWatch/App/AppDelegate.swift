@@ -25,6 +25,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         setupStatusBar()
         NotificationManager.shared.requestAuthorization()
         BrokerSessionManager.shared.restoreAllSessions()
+        NetworkMonitor.shared.start()
         startPollingFromDB()
         KRXManager.shared.start()
 

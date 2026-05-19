@@ -118,6 +118,67 @@ final class BrokerSessionManager: ObservableObject {
         _ = try await adapter.fetchQuote(symbol: "005930")
     }
 
+    // MARK: - 네트워크 재연결 시 브로커별 상태 점검
+
+    /// 연결된 모든 브로커의 실제 통신 가능 여부를 병렬로 확인하고,
+    /// 문제가 있는 계좌만 macOS 알림으로 보고한다.
+    func checkAllSessions() async {
+        guard isKISConnected || isKiwoomConnected else { return }
+
+        async let kisFailure: String? = checkKIS()
+        async let kiwoomFailure: String? = checkKiwoom()
+        let (k, w) = await (kisFailure, kiwoomFailure)
+        let failures = [k, w].compactMap { $0 }
+
+        guard !failures.isEmpty else { return }
+
+        let body = failures.joined(separator: ", ") + " 계좌 연결에 문제가 있습니다. 설정에서 확인해주세요."
+        NotificationManager.shared.send(
+            title: "계좌 연결 문제 감지",
+            body: body,
+            symbol: "_system"
+        )
+    }
+
+    private func checkKIS() async -> String? {
+        guard isKISConnected,
+              let appKey    = KeychainHelper.load(account: KeychainKey.kisAppKey),
+              let appSecret = KeychainHelper.load(account: KeychainKey.kisAppSecret)
+        else { return nil }
+
+        do {
+            try await testConnectionKIS(
+                appKey: appKey, appSecret: appSecret,
+                accountNumber: kisSavedAccountNumber,
+                isMock: kisSavedIsMock
+            )
+            return nil
+        } catch {
+            AppLogger.log("checkAllSessions KIS 실패: \(error.localizedDescription)", level: .error, category: "App")
+            let suffix = kisSavedAccountNumber.isEmpty ? "" : " (\(kisSavedAccountNumber.prefix(4))…)"
+            return "한국투자증권\(suffix)"
+        }
+    }
+
+    private func checkKiwoom() async -> String? {
+        guard isKiwoomConnected,
+              let appKey    = KeychainHelper.load(account: KeychainKey.kiwoomAppKey),
+              let appSecret = KeychainHelper.load(account: KeychainKey.kiwoomAppSecret)
+        else { return nil }
+
+        do {
+            try await testConnectionKiwoom(
+                appKey: appKey, appSecret: appSecret,
+                accountNumber: kiwoomSavedAccountNumber
+            )
+            return nil
+        } catch {
+            AppLogger.log("checkAllSessions 키움 실패: \(error.localizedDescription)", level: .error, category: "App")
+            let suffix = kiwoomSavedAccountNumber.isEmpty ? "" : " (\(kiwoomSavedAccountNumber.prefix(4))…)"
+            return "키움증권\(suffix)"
+        }
+    }
+
     // MARK: - 앱 시작 시 세션 복원
 
     func restoreAllSessions() {
